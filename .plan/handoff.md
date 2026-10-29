@@ -70,7 +70,7 @@
 - 画面は 1 つのスクロール領域（`.scroller`）の中に CSS Grid で左リスト（`MemberList`）と右タイムライン（`Timeline`）を並べ、日付ヘッダー・左リスト・左上の角を `position: sticky` で固定している。`Timeline` は本体（背景・今日の線・帯）だけで、日付ヘッダーは `TimelineDateHeader` が別に受け持つ。**行の並びと高さは `MemberList` と `Timeline` で同じ**（`MEMBER_ROW_HEIGHT` / `PROJECT_ROW_HEIGHT`）。行を足すときは両方を直す
 - **今日の日付は `useSyncExternalStore` で取っている**（サーバー側は null）。`cacheComponents` が有効なため、レンダリング中に `new Date()` を読むと静的シェルに焼き込まれる。日付をレンダリング中に読む処理を足すときは `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/io.md` を読むこと。データの読み込みは `useEffect` 内（クライアント側）で行っている
 - `useMembers` / `useProjects` は読み込みと `reloadMembers` / `reloadProjects` だけを持つ。フェーズ 6・7 で追加・編集・削除の操作をここに足す（repository はコンポーネントの外で 1 回だけ作り、`useGanttPage.ts` の先頭で生成して引数で渡している）
-- 「案件を追加」「担当者を管理」ボタンの処理は、`useGanttPage` の `addProject` / `manageMembers`（今は空の関数で `TODO:` が付いている）を差し替える。`ProjectBar` はまだクリックできない（フェーズ 6 でサイドパネルを開く、フェーズ 8 でドラッグを足す）
+- 「案件を追加」は**各担当者の案件リストの下**（開いているときだけ）に置いてある（2026-10-29 に最下部から変更）。押すと `addProject(memberId)` が呼ばれるので、フェーズ 6 ではその担当者を担当者の初期値にしてサイドパネルを開く。`Timeline` 側にも同じ高さの空行があり、左右の行をそろえている。「担当者を管理」は最下部のまま。ボタンの処理は `useGanttPage` の `addProject` / `manageMembers`（今は空の関数で `TODO:` が付いている）を差し替える。`ProjectBar` はまだクリックできない（フェーズ 6 でサイドパネルを開く、フェーズ 8 でドラッグを足す）
 - 「サンプルデータを入れる（開発用）」は担当者が 0 人のときの空の画面にだけ出る（本番ビルドでは出ない）。再度入れたいときはブラウザの localStorage（`gantt:*`）を消す
 - `gantt.utils.ts` に追加した関数: `getDayColumns` / `getMonthSegments` / `formatYearMonth` / `groupProjectsByMember`（担当者ごとの案件のまとまり。開始日順）/ `toError`。型は `IDayColumn` / `IMonthSegment` / `IMemberGroup`
 - `isRangeOverlapping` は引き続きどこからも呼ばれていない（`getBarLayout` が `null` を返すことで代用している）。使わないなら、フェーズ 9 で削除を検討する
