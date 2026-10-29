@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react"
-import type { CSSProperties } from "react"
+import type { CSSProperties, MouseEvent } from "react"
 
 import { BAR_COLORS } from "../../gantt.constants"
 import type { IProject, TDateString } from "../../gantt.type"
@@ -49,11 +49,15 @@ export function useProjectBar({
   })
   const { consumeClickSuppression } = drag
 
-  // ドラッグ・取り消しの直後の click ではパネルを開かない。キーボード（Enter / Space）の click はそのまま開く
-  const handleClick = useCallback(() => {
-    if (consumeClickSuppression()) return
-    onSelect(projectId)
-  }, [consumeClickSuppression, onSelect, projectId])
+  // ドラッグ・取り消しの直後の click ではパネルを開かない。キーボード（Enter / Space）の click はそのまま開く。
+  // キーボード由来の click は detail（クリック回数）が 0 になるので、それでポインター由来と区別する
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      if (consumeClickSuppression(event.detail > 0)) return
+      onSelect(projectId)
+    },
+    [consumeClickSuppression, onSelect, projectId],
+  )
 
   // 伸縮のつかみを出すかは、ドラッグ前の位置で決める（ドラッグ中につかみが消えたり出たりしないように）。
   // 表示期間の外にはみ出している側の端は、見えていないので伸縮させない。編集中はつかみ自体を出さない

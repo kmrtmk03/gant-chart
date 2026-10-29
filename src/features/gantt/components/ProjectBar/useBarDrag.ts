@@ -159,7 +159,13 @@ export function useBarDrag({
       if (result.type !== "commit") return
 
       setSavingPeriod(result.period)
-      onCommit(result.period).finally(() => setSavingPeriod(null))
+      onCommit(result.period)
+        .catch((caught: unknown) => {
+          // MEMO: 失敗の表示は呼び出し側の責務（onCommit は例外を投げない契約）。
+          // 契約が崩れて例外が来ても unhandled rejection にしないよう、ここではコンソールに残すだけにする
+          console.error("帯の期間を保存できませんでした", caught)
+        })
+        .finally(() => setSavingPeriod(null))
     }
 
     const handlePointerCancel = (event: PointerEvent) => {
@@ -189,13 +195,17 @@ export function useBarDrag({
   }, [isDragActive, period, onCommit, applyDragState, cancelDrag])
 
   /**
-   * click のハンドラーの先頭で必ず呼ぶこと。ドラッグ・取り消しの直後の click なら true を返し、印を消す。
-   * true のときはパネルを開かない（ドラッグのあとにパネルが勝手に開くのを防ぐ）
+   * click のハンドラーの先頭で必ず呼ぶこと。ドラッグ・取り消しの直後のポインターの click なら true を返す。
+   * true のときはパネルを開かない（ドラッグのあとにパネルが勝手に開くのを防ぐ）。
+   * 印は click のたびに消す。キーボード（Enter / Space）の click は抑止しない。
+   * 取り消しの後に click が来ず印が残っていても、キーボードではパネルを開けるようにするため
+   *
+   * @param isPointerClick ポインター（マウス・タッチ・ペン）による click か。`MouseEvent.detail > 0` で判定する
    */
-  const consumeClickSuppression = useCallback(() => {
+  const consumeClickSuppression = useCallback((isPointerClick: boolean) => {
     const shouldSuppress = shouldSuppressClickRef.current
     shouldSuppressClickRef.current = false
-    return shouldSuppress
+    return shouldSuppress && isPointerClick
   }, [])
 
   // 描く期間: 保存中はその期間、ドラッグ中は仮の期間、それ以外は保存済みの期間
