@@ -21,6 +21,10 @@ interface ITimelineProps {
   rangeStart: TDateString
   rangeDays: number
   today: TDateString
+  /** サイドパネルで編集中の案件 ID（なければ null） */
+  editingProjectId: string | null
+  /** 帯をクリックしたとき。React.memo を効かせるため、参照が変わらない関数を渡すこと */
+  onSelectProject: (projectId: string) => void
 }
 
 /**
@@ -35,6 +39,8 @@ export const Timeline = memo(function Timeline({
   rangeStart,
   rangeDays,
   today,
+  editingProjectId,
+  onSelectProject,
 }: ITimelineProps) {
   return (
     <div
@@ -67,6 +73,8 @@ export const Timeline = memo(function Timeline({
                     project={project}
                     rangeStart={rangeStart}
                     rangeDays={rangeDays}
+                    isEditing={project.id === editingProjectId}
+                    onSelect={onSelectProject}
                   />
                 </div>
               ))}

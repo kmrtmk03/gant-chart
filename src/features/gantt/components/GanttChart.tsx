@@ -10,6 +10,7 @@ import { useGanttPage } from "../hooks/useGanttPage"
 import styles from "./GanttChart.module.scss"
 import { GanttHeader } from "./GanttHeader"
 import { MemberList } from "./MemberList"
+import { ProjectSidePanel } from "./ProjectSidePanel"
 import { Timeline } from "./Timeline"
 import { TimelineDateHeader } from "./TimelineDateHeader"
 
@@ -24,7 +25,7 @@ import { TimelineDateHeader } from "./TimelineDateHeader"
  */
 export function GanttChart() {
   const page = useGanttPage()
-  const { memberGroups, range } = page
+  const { memberGroups, range, sidePanel } = page
   const {
     attachScroller,
     handleScroll,
@@ -54,6 +55,17 @@ export function GanttChart() {
 
   const { rangeStart, rangeDays, today, columns } = range
   const headerHeight = DATE_HEADER_MONTH_ROW_HEIGHT + DATE_HEADER_DAY_ROW_HEIGHT
+
+  // サイドパネルを出すか。追加のときは常に出し、編集のときは案件が見つかるときだけ出す。
+  // key は、別の案件・別の担当者で開き直したときにフォームを作り直すためのもの
+  const { state: sidePanelState, editingProject } = sidePanel
+  const isSidePanelVisible =
+    sidePanelState.mode === "create" ||
+    (sidePanelState.mode === "edit" && editingProject !== null)
+  const sidePanelKey =
+    sidePanelState.mode === "create"
+      ? `create:${sidePanelState.defaultMemberId ?? ""}`
+      : `edit:${editingProject?.id ?? ""}`
 
   return (
     <div className={styles.root}>
@@ -104,6 +116,7 @@ export function GanttChart() {
               collapsedMemberIds={page.collapsedMemberIds}
               onToggleMember={page.toggleMember}
               onAddProject={page.addProject}
+              onSelectProject={sidePanel.selectProject}
               onManageMembers={page.manageMembers}
             />
             <Timeline
@@ -113,9 +126,28 @@ export function GanttChart() {
               rangeStart={rangeStart}
               rangeDays={rangeDays}
               today={today}
+              editingProjectId={editingProject?.id ?? null}
+              onSelectProject={sidePanel.selectProject}
             />
           </div>
         </div>
+      )}
+
+      {isSidePanelVisible && (
+        <ProjectSidePanel
+          key={sidePanelKey}
+          members={sidePanel.members}
+          project={editingProject}
+          defaultMemberId={
+            sidePanelState.mode === "create"
+              ? sidePanelState.defaultMemberId
+              : null
+          }
+          today={today}
+          onSubmit={sidePanel.save}
+          onDelete={sidePanel.remove}
+          onClose={sidePanel.close}
+        />
       )}
     </div>
   )

@@ -33,6 +33,23 @@
   padding: 0 tokens.$space-3 0 tokens.$space-6;
 }
 
+// 案件行いっぱいに広げ、色の丸と案件名をまとめてクリックできるようにする
+.projectButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: tokens.$space-2;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .addProjectButton {
   padding: 0;
   border: 0;

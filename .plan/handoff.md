@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 5 の実装完了。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 5 が完了し `develop` にマージ済み。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -27,8 +27,8 @@
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
-| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
-| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
+| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
@@ -45,20 +45,51 @@
   - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
   - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
   - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
-  - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（`develop` から作成。PR は未作成）
+  - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4. フェーズ 5 の完了状況
+## 4. フェーズ 6 の完了状況
 
-フェーズ 5 は実装完了（ブランチ `feat/gantt-layout`）。フェーズ 6 は未着手。
+フェーズ 6 は実装完了（ブランチ `feat/gantt-side-panel`。PR は未作成、push もしていない）。
+
+### フェーズ 6 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（181 件。うち `projectForm.utils.test.ts` が 13 件）/ `format:check` / `build` が成功
+- ブラウザ（`BASIC_AUTH_USER= BASIC_AUTH_PASSWORD= pnpm dev:http`）で確認済み:
+  - 担当者（鈴木）の「＋ 案件を追加」→ その担当者が初期選択で開き、案件名にフォーカスが当たる。開始日・終了日は今日。保存すると正しい担当者の下・正しい日付に出る
+  - 帯・**左リストの案件名**のどちらをクリックしても編集パネルが開き、編集中の帯が枠で強調される。保存すると帯と左リストの両方が更新され、再読み込みしても残る
+  - 案件名が空のまま保存すると、項目の下にエラーが出て保存されない
+  - 削除 → 確認ダイアログ（フォーカスはキャンセル）→ 削除でき、localStorage からも消える。確認ダイアログ表示中の Esc は確認だけ閉じ、もう一度 Esc でパネルが閉じる
+  - 確認中に見つけた不具合を修正済み: フォームの項目が縦に引き伸ばされて間が空いていた（`.field` の `flex: 1` は日付の 2 列だけに限定）
+- **未確認**: 101 文字の案件名・開始日 > 終了日のエラー表示（単体テストでは確認済み）、「✕」・キャンセルボタンでの閉じ方、スマホ幅での見た目、保存失敗時のパネル内エラー表示。ブラウザ操作の注意: 再読み込みするとビューポートの設定が戻り、スクリーンショットの座標系（800x600）が実際のビューポートより小さくなってパネルが見切れることがある
+
+### フェーズ 7 以降への申し送り（サイドパネル）
+
+- 構成: `useSidePanel`（`TSidePanelState`: closed / create / edit の 1 つの state）→ `useGanttPage` が `sidePanel` グループで公開 → `GanttChart` が `ProjectSidePanel` を置く。編集中の案件は state に持たず、`projectId` から `projects` を引く（見つからなければパネルは出さない）
+- `useProjects` に `createProject` / `updateProject` / `deleteProject` を追加。repository の保存が成功してから state を更新し、失敗は例外のまま投げる（フォームが `submitError` としてパネル内に出す）。フェーズ 7 の `useMembers` も同じ形にそろえるとよい
+- フォームは `components/hooks/` に置いた（`useProjectForm` / `projectForm.type.ts` / `projectForm.utils.ts`）。入力値の初期値は初回の描画で 1 度だけ決めるので、別の案件・担当者で開き直すときは `GanttChart` が `ProjectSidePanel` の `key` を変えて作り直している
+- 案件名の必須・100 文字チェックは `validateProjectForm`（`PROJECT_NAME_MAX_LENGTH`）。フェーズ 7 の担当者名も同じ観点（前後の空白を除いて空なら不可）で検証すること
+- `ConfirmDialog`（`<dialog>` + `showModal`）はフェーズ 7 の担当者の削除でも使える。開閉は `isOpen` の props が正で、Esc は `onCancel` 経由で親が閉じる
+- パネルの Esc は `document` の keydown で受けており、確認ダイアログの表示中・保存中は無効にしている
+- 左リストの案件名（`MemberList` の `projectButton`）も、クリックで同じ `selectProject` を呼ぶ（`onSelectProject`。`React.memo` を保つため参照が変わらない関数を渡す）。左リスト側には編集中の強調は付けていない
+- `ProjectBar` は `button` になり、クリックで `onSelect(projectId)`、編集中は `isEditing` で枠線を出す。`Timeline` に `editingProjectId` / `onSelectProject` を渡している（`onSelectProject` は参照が変わらない関数にして `React.memo` を保つこと）。フェーズ 8 のドラッグは、このクリックとの区別に `DRAG_THRESHOLD_PX` を使う
+- 「担当者が 0 人のときは追加ボタンを押せない」は、案件を追加するボタンが担当者ごとの案件リスト下にあるため、担当者がいなければボタン自体が存在しない（空の画面に「まず担当者を追加してください」を出している）ことで満たしている
+- 新しいトークン `$color-danger`（削除ボタン・エラー文字）を `_tokens.scss` に追加。パネルの幅（360px）は `ProjectSidePanel.module.scss` の Sass 変数
+- 追加時の開始日・終了日の初期値は今日の 1 日だけ。担当者が他のタブで消えたときは、保存時に「担当者を選択してください」になる
+- **別タブでの同時編集は後勝ちで、古いフォームの値が先の変更を上書きする**（PR #7 の Codex レビュー指摘。意図的に未対応）: `handleSaveProject` はフォームの全項目を `updateProject` に渡すため、別タブで日付を変えて保存した後、古いタブで案件名だけ変えて保存すると日付も元に戻る。他タブの変更を取り込む仕組み（`storage` イベントの購読など）もない。localStorage・身内利用では同じ案件を複数タブで同時に編集する場面がほぼないため、フェーズ 6 では対応しない。Firestore へ移行して複数人が同時に編集できるようになる時点で、`updatedAt` の照合による競合検知（`IGanttRepository` の API 変更を伴う）として設計する。それまでの暫定策としては、フォームの初期値との差分だけを送る方法がある（`TProjectUpdate` と repository は部分更新に対応済み）
+- 開発サーバーがすでに別で動いているとき（`https://localhost:3000`）、2 つ目の `pnpm dev:http` は「Another next dev server is already running」で失敗する。その場合は動いているサーバーを止めてもらってから起動する
+
+## 5. フェーズ 5 の完了状況
+
+フェーズ 5 は完了（ブランチ `feat/gantt-layout`、PR #6 を `develop` にマージ済み）。フェーズ 6 は未着手。
 
 ### フェーズ 5 の確認結果
 
 - `pnpm lint` / `typecheck` / `test`（168 件）/ `build` が成功（`/` は静的にプリレンダリングされる）
 - ブラウザ（`pnpm dev:http`）で確認済み: 空の状態 →「サンプルデータを入れる」→ 担当者 → 案件の 2 階層と帯、今日の線、土日祝の色分け、月またぎ、期間の外にはみ出す帯の角（切れた側は丸めない）、折りたたみ、無限スクロール（右端・左端に近づくと範囲が 90 日ずつ広がり、左に広がっても見ている位置が動かない）、横スクロールしても左リストと日付ヘッダーが残る
-- **未確認**: 縦スクロール（サンプルデータが少なく画面に収まったため。同じ `position: sticky` の仕組み）、「今日」「◀」「▶」ボタンの動作、スマホ幅の見た目。ブラウザ操作の確認では、バックグラウンドのペインだと scroll イベントの到着が遅れた（実機では即時のはず）
+- **未確認**（フェーズ 5 時点）: 縦スクロール（サンプルデータが少なく画面に収まったため。同じ `position: sticky` の仕組み）、「今日」「◀」「▶」ボタンの動作、スマホ幅の見た目。ブラウザ操作の確認では、バックグラウンドのペインだと scroll イベントの到着が遅れた（実機では即時のはず）
 
 ### フェーズ 6 以降への申し送り（画面）
 
@@ -176,7 +207,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。その前に、フェーズ 5（`feat/gantt-layout`）の確認・PR・`develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
+- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。フェーズ 5 は `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 

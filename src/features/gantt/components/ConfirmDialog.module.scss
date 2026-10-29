@@ -1,0 +1,36 @@
+@use "tokens";
+
+.dialog {
+  width: min(360px, calc(100vw - #{tokens.$space-6} * 2));
+  padding: tokens.$space-4;
+  border: 1px solid tokens.$color-border;
+  border-radius: tokens.$radius-md;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-text;
+
+  &::backdrop {
+    background: rgb(0 0 0 / 30%);
+  }
+}
+
+.title {
+  margin: 0 0 tokens.$space-2;
+  font-size: tokens.$font-size-lg;
+}
+
+.message {
+  margin: 0 0 tokens.$space-4;
+  color: tokens.$color-text-muted;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: tokens.$space-2;
+}
+
+.confirm {
+  border-color: tokens.$color-danger;
+  background: tokens.$color-danger;
+  color: #fff;
+}

@@ -15,6 +15,8 @@ interface IMemberListProps {
   onToggleMember: (memberId: string) => void
   /** 担当者の案件リスト下の「案件を追加」を押したとき。追加先の担当者 ID を渡す */
   onAddProject: (memberId: string) => void
+  /** 案件名をクリックしたとき。編集する案件の ID を渡す（React.memo を保つため、参照が変わらない関数を渡すこと） */
+  onSelectProject: (projectId: string) => void
   onManageMembers: () => void
 }
 
@@ -22,12 +24,14 @@ interface IMemberListProps {
  * 左のリスト。担当者（親）→ 案件（子）の 2 階層で並べる。
  * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
  * 各担当者の案件の下（開いているときだけ）に「案件を追加」、最下部に「担当者を管理」ボタンを置く。
+ * 案件名をクリックすると、帯のクリックと同じく編集用のサイドパネルを開く。
  */
 export const MemberList = memo(function MemberList({
   memberGroups,
   collapsedMemberIds,
   onToggleMember,
   onAddProject,
+  onSelectProject,
   onManageMembers,
 }: IMemberListProps) {
   return (
@@ -60,13 +64,19 @@ export const MemberList = memo(function MemberList({
                     className={styles.projectRow}
                     style={{ height: PROJECT_ROW_HEIGHT }}
                   >
-                    <span
-                      className={styles.colorDot}
-                      style={{
-                        background: `var(${BAR_COLORS[project.color].cssVariable})`,
-                      }}
-                    />
-                    <span className={styles.name}>{project.name}</span>
+                    <button
+                      type="button"
+                      className={styles.projectButton}
+                      onClick={() => onSelectProject(project.id)}
+                    >
+                      <span
+                        className={styles.colorDot}
+                        style={{
+                          background: `var(${BAR_COLORS[project.color].cssVariable})`,
+                        }}
+                      />
+                      <span className={styles.name}>{project.name}</span>
+                    </button>
                   </div>
                 ))}
                 <div
