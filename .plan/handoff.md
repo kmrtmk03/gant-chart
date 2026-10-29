@@ -53,11 +53,13 @@
 ### フェーズ 2 の確認結果
 
 - 自動で確認できたこと: `pnpm lint` / `typecheck` / `test`（21 件）/ `format:check` / `build` が成功。`https://localhost:3000` が証明書の検証エラーなしで開ける。Basic 認証は curl で、認証なし・誤り → 401（`WWW-Authenticate` 付き）、正しい資格情報 → 200、環境変数未設定 → 開発 200 / 本番 401 を確認。`manifest.webmanifest` / アイコン / `sw.js` のヘッダーとセキュリティヘッダーも確認
-- **ユーザーの手動確認が必要**: Chrome でのアプリとしてのインストールと、アプリのウィンドウでの起動（ブラウザの操作が必要なため未確認）。Basic 認証のダイアログの表示も実ブラウザでは未確認
+- ユーザーが Chrome で確認済み: 本番ビルド（`pnpm build` → `pnpm start`、`http://localhost:3000`）でインストールアイコンが表示される。`next start` には `--experimental-https` がないが、`localhost` なら HTTP でも Service Worker の登録とインストールができる
+- **ユーザーの手動確認が残っている**: インストール後のアプリのウィンドウでの起動
 
 ### フェーズ 3 への申し送り
 
 - `src/proxy.ts` に Basic 認証を実装。解析・比較の関数（`parseBasicAuthHeader` / `isSafeEqual` / `isAuthorized`）は同じファイルから export し、`src/proxy.test.ts` でテストしている。ID とパスワードは `.env.local` の `BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`（`.env.example` にひな形あり）
+- **manifest とアイコンは Basic 認証の対象外**（`src/proxy.ts` の `matcher`）。ブラウザは manifest とアイコンを資格情報なしで取得するため、認証をかけるとインストールアイコンが出ない（フェーズ 2 の途中で判明。プランの当初の想定は誤りだったため修正済み）。静的ファイルを `public/` に足すときも、認証が必要かどうかを同じ観点で判断する
 - PWA: `src/app/manifest.ts`、`public/sw.js`（fetch を持たない最小構成）、`src/app/ServiceWorkerRegister.tsx`（本番ビルドのときだけ登録）。アイコンは `scripts/generate-icons.mjs` で生成できる（`node scripts/generate-icons.mjs`）。デザインはシンプルな帯の図形で、希望があれば作り直す
 - `typecheck` は `next typegen && tsc --noEmit`（`LayoutProps` の型が生成物のため）
 - mkcert は導入済みで、`certificates/` に証明書がある（`.gitignore` 済み）
