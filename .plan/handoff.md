@@ -57,12 +57,16 @@
 ### フェーズ 5 の確認結果
 
 - `pnpm lint` / `typecheck` / `test`（168 件）/ `build` が成功（`/` は静的にプリレンダリングされる）
-- ブラウザ（`pnpm dev:http`）で確認済み: 空の状態 →「サンプルデータを入れる」→ 担当者 → 案件の 2 階層と帯、今日の線、土日祝の色分け、月またぎ、期間の外にはみ出す帯の角（切れた側は丸めない）、折りたたみ、◀ / ▶ での期間移動、横スクロールしても左リストと日付ヘッダーが残る
-- **未確認**: 縦スクロール（サンプルデータが少なく画面に収まったため。同じ `position: sticky` の仕組み）、「今日」ボタンの動作、スマホ幅の見た目
+- ブラウザ（`pnpm dev:http`）で確認済み: 空の状態 →「サンプルデータを入れる」→ 担当者 → 案件の 2 階層と帯、今日の線、土日祝の色分け、月またぎ、期間の外にはみ出す帯の角（切れた側は丸めない）、折りたたみ、無限スクロール（右端・左端に近づくと範囲が 90 日ずつ広がり、左に広がっても見ている位置が動かない）、横スクロールしても左リストと日付ヘッダーが残る
+- **未確認**: 縦スクロール（サンプルデータが少なく画面に収まったため。同じ `position: sticky` の仕組み）、「今日」「◀」「▶」ボタンの動作、スマホ幅の見た目。ブラウザ操作の確認では、バックグラウンドのペインだと scroll イベントの到着が遅れた（実機では即時のはず）
 
 ### フェーズ 6 以降への申し送り（画面）
 
-- 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/`、フックは `hooks/`、サンプルデータは `devSeed.ts`
+- **表示期間は「無限スクロール」**（2026-10-29 に「2 か月ごと」から変更）。`useTimelineRange` が用意する日付の範囲（初期は今日の 60 日前から 180 日分。`gantt.constants.ts` の `DEFAULT_RANGE_*` / `RANGE_EXTEND_DAYS`）を持ち、`useTimelineScroll` がスクロール位置を見て端（`RANGE_EDGE_THRESHOLD_PX`）に近づいたら範囲を広げる。過去側に広げたときは `flushSync` で描画を済ませてから `scrollLeft` を広げた分だけ補正する（見ている位置を保つため）。範囲は広げるだけで縮めない。◀ / ▶ は 14 日ぶんのスクロール、「今日」は今日が見える位置へのスクロール。帯の位置は `rangeStart`（広がると変わる）基準なので、フェーズ 8 のドラッグでも `getBarLayout` に今の `rangeStart` を渡すこと
+- **lint の注意**: `react-hooks/refs` が、`ref={}` に渡す関数を持つフックの戻り値オブジェクト全体を「ref を含む」と誤検知する。`GanttChart.tsx` では `page.scroll` を先に分割代入して回避している。スクロール領域の要素は ref ではなく state で持っている
+- **sticky の注意**: `.grid`（`GanttChart.module.scss`）は `width: max-content` が必須。スクロール領域の幅のままだと、左リストが領域の幅までしか追従しない
+- 月の行の年月ラベルは区間の左端に置いているため、スクロールで区間の左が画面外に出るとラベルが切れて見える（`position: sticky` で追従させる改善の余地あり）
+- 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useTimelineScroll` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/`、フックは `hooks/`、サンプルデータは `devSeed.ts`
 - 画面は 1 つのスクロール領域（`.scroller`）の中に CSS Grid で左リスト（`MemberList`）と右タイムライン（`Timeline`）を並べ、日付ヘッダー・左リスト・左上の角を `position: sticky` で固定している。`Timeline` は本体（背景・今日の線・帯）だけで、日付ヘッダーは `TimelineDateHeader` が別に受け持つ。**行の並びと高さは `MemberList` と `Timeline` で同じ**（`MEMBER_ROW_HEIGHT` / `PROJECT_ROW_HEIGHT`）。行を足すときは両方を直す
 - **今日の日付は `useSyncExternalStore` で取っている**（サーバー側は null）。`cacheComponents` が有効なため、レンダリング中に `new Date()` を読むと静的シェルに焼き込まれる。日付をレンダリング中に読む処理を足すときは `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/io.md` を読むこと。データの読み込みは `useEffect` 内（クライアント側）で行っている
 - `useMembers` / `useProjects` は読み込みと `reloadMembers` / `reloadProjects` だけを持つ。フェーズ 6・7 で追加・編集・削除の操作をここに足す（repository はコンポーネントの外で 1 回だけ作り、`useGanttPage.ts` の先頭で生成して引数で渡している）
