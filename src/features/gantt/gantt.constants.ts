@@ -32,6 +32,9 @@ export const BAR_COLORS: Record<TBarColor, IBarColorPreset> = {
 /** 案件を新しく作るときの帯の色 */
 export const DEFAULT_BAR_COLOR: TBarColor = "blue"
 
+/** 案件名の最大文字数 */
+export const PROJECT_NAME_MAX_LENGTH = 100
+
 /** タイムラインの 1 日分の列幅（px） */
 export const DAY_COLUMN_WIDTH = 32
 

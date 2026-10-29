@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react"
 
-import type { IProject } from "../gantt.type"
+import type { IProject, TProjectInput, TProjectUpdate } from "../gantt.type"
 import { toError } from "../gantt.utils"
 import type { IGanttRepository } from "../repositories/ganttRepository.type"
 
 /**
- * 案件の一覧を repository から読み込んで保持する。
+ * 案件の一覧を repository から読み込んで保持し、追加・編集・削除の操作を提供する。
  * 読み込みはクライアント側の useEffect で行う（localStorage はサーバー側で読めないため）。
- * TODO: 追加・編集・削除の操作はフェーズ 6 でここに足す。
+ * 追加・編集・削除は repository への保存が成功してから state を更新する。
+ * 失敗したときは state を変えずにエラーをそのまま投げるので、呼び出し側（フォーム）で表示すること。
  *
  * @param repository コンポーネントの外で 1 回だけ作ったものを渡すこと（毎回変わると再読み込みが走る）
  */
@@ -43,11 +44,50 @@ export function useProjects(repository: IGanttRepository) {
     }
   }, [repository])
 
+  /** 案件を追加する。保存に成功したら一覧の末尾に足す（表示順は画面側で開始日順に並べる） */
+  const createProject = useCallback(
+    async (input: TProjectInput) => {
+      const created = await repository.createProject(input)
+      // 未読み込み（null）の間は触らない。読み込み完了時に保存済みの内容が入る
+      setProjects((prev) => (prev === null ? prev : [...prev, created]))
+      return created
+    },
+    [repository],
+  )
+
+  /** 案件を書き換える。保存に成功したら一覧の該当の 1 件を差し替える */
+  const updateProject = useCallback(
+    async (id: string, input: TProjectUpdate) => {
+      const updated = await repository.updateProject(id, input)
+      setProjects((prev) =>
+        prev === null
+          ? prev
+          : prev.map((project) => (project.id === id ? updated : project)),
+      )
+      return updated
+    },
+    [repository],
+  )
+
+  /** 案件を削除する。保存に成功したら一覧から取り除く */
+  const deleteProject = useCallback(
+    async (id: string) => {
+      await repository.deleteProject(id)
+      setProjects((prev) =>
+        prev === null ? prev : prev.filter((project) => project.id !== id),
+      )
+    },
+    [repository],
+  )
+
   return {
     // 状態
     projects,
     projectsError: error,
     // 操作
     reloadProjects,
+    createProject,
+    updateProject,
+    deleteProject,
   }
 }

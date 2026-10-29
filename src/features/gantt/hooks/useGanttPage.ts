@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState } from "react"
 
 import { seedSampleData } from "../devSeed"
+import type { TProjectInput } from "../gantt.type"
 import { getDayColumns, groupProjectsByMember, toError } from "../gantt.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
 import { useCollapsedMembers } from "./useCollapsedMembers"
 import { useMembers } from "./useMembers"
 import { useProjects } from "./useProjects"
+import { useSidePanel } from "./useSidePanel"
 import { useTimelineRange } from "./useTimelineRange"
 import { useTimelineScroll } from "./useTimelineScroll"
 
@@ -21,7 +23,16 @@ const CAN_SEED_SAMPLE_DATA = process.env.NODE_ENV !== "production"
  */
 export function useGanttPage() {
   const { members, membersError, reloadMembers } = useMembers(repository)
-  const { projects, projectsError, reloadProjects } = useProjects(repository)
+  const {
+    projects,
+    projectsError,
+    reloadProjects,
+    createProject,
+    updateProject,
+    deleteProject,
+  } = useProjects(repository)
+  const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
+    useSidePanel()
   const timelineRange = useTimelineRange()
   const timelineScroll = useTimelineScroll({
     rangeStart: timelineRange.rangeStart,
@@ -69,10 +80,39 @@ export function useGanttPage() {
     }
   }, [isSeeding, reloadMembers, reloadProjects])
 
-  // TODO: フェーズ 6 で案件の追加（サイドパネルを開き、memberId の担当者を初期値にする）に置き換える
-  const handleAddProject = useCallback((memberId: string) => {
-    void memberId
-  }, [])
+  // 編集中の案件は state に持たず、projectId から一覧を引いて求める（データと表示をずらさない）。
+  // 他のタブで削除されるなどして見つからないときは null になり、パネルは出さない
+  const editingProject =
+    sidePanelState.mode === "edit" && projects !== null
+      ? (projects.find((project) => project.id === sidePanelState.projectId) ??
+        null)
+      : null
+
+  /**
+   * パネルのフォームの保存。追加か編集かはパネルの状態で決め、保存に成功してからパネルを閉じる。
+   * 失敗したら例外をそのまま投げる（フォームが受け取ってパネル内に表示し、パネルは開いたままにする）。
+   */
+  const handleSaveProject = useCallback(
+    async (input: TProjectInput) => {
+      if (sidePanelState.mode === "create") {
+        await createProject(input)
+      } else if (sidePanelState.mode === "edit") {
+        await updateProject(sidePanelState.projectId, input)
+      } else {
+        return
+      }
+      closePanel()
+    },
+    [sidePanelState, createProject, updateProject, closePanel],
+  )
+
+  /** 編集中の案件を削除する。削除に成功してからパネルを閉じる。失敗は例外のまま投げる */
+  const handleDeleteProject = useCallback(async () => {
+    if (sidePanelState.mode !== "edit") return
+    await deleteProject(sidePanelState.projectId)
+    closePanel()
+  }, [sidePanelState, deleteProject, closePanel])
+
   // TODO: フェーズ 7 で担当者の管理画面を開く処理に置き換える
   const handleManageMembers = useCallback(() => {}, [])
 
@@ -94,6 +134,16 @@ export function useGanttPage() {
     },
     // スクロール（attachScroller / handleScroll はスクロール領域に渡す。visibleDate は画面の左端の日付）
     scroll: timelineScroll,
+    // サイドパネル（state は追加 / 編集 / 閉じている。editingProject は編集中の案件で、見つからなければ null）
+    sidePanel: {
+      state: sidePanelState,
+      members: members ?? [],
+      editingProject,
+      selectProject: openEditPanel,
+      save: handleSaveProject,
+      remove: handleDeleteProject,
+      close: closePanel,
+    },
     // 折りたたみ
     collapsedMemberIds,
     toggleMember,
@@ -102,7 +152,7 @@ export function useGanttPage() {
     isSeeding,
     seedError,
     seedSampleData: handleSeedSampleData,
-    addProject: handleAddProject,
+    addProject: openCreatePanel,
     manageMembers: handleManageMembers,
   }
 }

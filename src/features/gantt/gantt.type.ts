@@ -47,6 +47,17 @@ export interface IProject {
   updatedAt: string
 }
 
+/**
+ * サイドパネルの状態。編集中の案件そのものは持たず、`projectId` から案件の一覧を引いて求める
+ * （保存や他の操作でデータが変わっても、パネルの表示とずれないようにするため）。
+ */
+export type TSidePanelState =
+  | { mode: "closed" }
+  /** 追加。`defaultMemberId` は担当者の初期選択（未指定は null） */
+  | { mode: "create"; defaultMemberId: string | null }
+  /** 編集 */
+  | { mode: "edit"; projectId: string }
+
 /** 担当者を作成するときの入力。id・sortOrder・日時は repository が付ける */
 export type TMemberInput = Pick<IMember, "name">
 

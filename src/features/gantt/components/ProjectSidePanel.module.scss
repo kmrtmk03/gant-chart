@@ -1,0 +1,165 @@
+@use "tokens";
+
+$panel-width: 360px;
+
+// タイムラインの上に重ねる（タイムラインの幅は変えない）
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: tokens.$z-index-panel;
+  display: flex;
+  flex-direction: column;
+  width: min(#{$panel-width}, 100vw);
+  border-left: 1px solid tokens.$color-border;
+  background: tokens.$color-bg;
+  box-shadow: tokens.$shadow-panel;
+  animation: slide-in 0.2s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: tokens.$space-3 tokens.$space-4;
+  border-bottom: 1px solid tokens.$color-border;
+}
+
+.title {
+  margin: 0;
+  font-size: tokens.$font-size-lg;
+}
+
+.form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: tokens.$space-4;
+  padding: tokens.$space-4;
+  overflow-y: auto;
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: tokens.$space-1;
+  min-width: 0;
+
+  label {
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-sm;
+  }
+
+  input[aria-invalid="true"],
+  select[aria-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+.dateRow {
+  display: flex;
+  gap: tokens.$space-3;
+}
+
+.error {
+  margin: 0;
+  color: tokens.$color-danger;
+  font-size: tokens.$font-size-sm;
+}
+
+.colorField {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0;
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-sm;
+  }
+}
+
+.colors {
+  display: flex;
+  gap: tokens.$space-2;
+  margin-top: tokens.$space-1;
+}
+
+.colorOption {
+  position: relative;
+  cursor: pointer;
+}
+
+// ラジオ本体は見えなくして、色の丸で選択を表す（キーボード操作は残す）
+.colorInput {
+  position: absolute;
+  opacity: 0;
+}
+
+.colorSwatch {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background-clip: padding-box;
+}
+
+.colorInput:checked + .colorSwatch {
+  outline: 2px solid tokens.$color-text;
+  outline-offset: 1px;
+}
+
+.colorInput:focus-visible + .colorSwatch {
+  outline: 2px solid tokens.$color-primary;
+  outline-offset: 2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: tokens.$space-2;
+  margin-top: auto;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.saveButton {
+  border-color: tokens.$color-primary;
+  background: tokens.$color-primary;
+  color: #fff;
+}
+
+.deleteButton {
+  border-color: tokens.$color-danger;
+  background: none;
+  color: tokens.$color-danger;
+}
