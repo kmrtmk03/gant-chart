@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 5 が完了し `develop` にマージ済み。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 6 が完了し `develop` にマージ済み。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -28,7 +28,7 @@
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
-| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
+| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 完了（PR #7 を `develop` にマージ済み。下記 4 章） |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
@@ -46,13 +46,14 @@
   - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
   - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
   - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
+  - `feat/gantt-side-panel`: フェーズ 6 の作業ブランチ（PR #7 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
 ## 4. フェーズ 6 の完了状況
 
-フェーズ 6 は実装完了（ブランチ `feat/gantt-side-panel`。PR は未作成、push もしていない）。
+フェーズ 6 は完了（ブランチ `feat/gantt-side-panel`、PR #7 を `develop` にマージ済み）。フェーズ 7 は未着手。
 
 ### フェーズ 6 の確認結果
 
@@ -207,10 +208,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。フェーズ 5 は `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める
+- 次にやること: **フェーズ 7**（[8-phase7-member-management.md](8-phase7-member-management.md)）。フェーズ 6 は `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4 章の「フェーズ 7 以降への申し送り（サイドパネル）」（`ConfirmDialog` の再利用、名前の検証、`useMembers` を `useProjects` と同じ形にそろえる、など）を先に読むこと
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 6 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 7 を進めてください。
   ```
