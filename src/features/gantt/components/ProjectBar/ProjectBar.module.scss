@@ -43,8 +43,9 @@ $handle-width: 6px;
   }
 }
 
-// 編集中の帯を枠で強調する
+// 編集中の帯を枠で強調する。編集中はドラッグできないので、つかめる見た目（grab）にしない
 .editing {
+  cursor: pointer;
   box-shadow:
     tokens.$shadow-bar,
     0 0 0 2px tokens.$color-bg,

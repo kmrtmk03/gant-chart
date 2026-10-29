@@ -41,7 +41,12 @@ export function useProjectBar({
   )
   // useBarDrag の effect が描画のたびに登録し直さないよう、期間のオブジェクトの参照を保つ
   const period = useMemo(() => ({ startDate, endDate }), [startDate, endDate])
-  const drag = useBarDrag({ period, onCommit: handleCommit })
+  // サイドパネルで編集中の案件はドラッグできない（クリックだけ受け付ける）
+  const drag = useBarDrag({
+    period,
+    onCommit: handleCommit,
+    isDisabled: isEditing,
+  })
   const { consumeClickSuppression } = drag
 
   // ドラッグ・取り消しの直後の click ではパネルを開かない。キーボード（Enter / Space）の click はそのまま開く
@@ -51,8 +56,10 @@ export function useProjectBar({
   }, [consumeClickSuppression, onSelect, projectId])
 
   // 伸縮のつかみを出すかは、ドラッグ前の位置で決める（ドラッグ中につかみが消えたり出たりしないように）。
-  // 表示期間の外にはみ出している側の端は、見えていないので伸縮させない
-  const originalLayout = getBarLayout(project, rangeStart, rangeDays)
+  // 表示期間の外にはみ出している側の端は、見えていないので伸縮させない。編集中はつかみ自体を出さない
+  const originalLayout = isEditing
+    ? null
+    : getBarLayout(project, rangeStart, rangeDays)
   const layout = getBarLayout(drag.displayPeriod, rangeStart, rangeDays)
 
   // 帯（button）そのものに渡すハンドラー。帯を描かないときも同じ形で返す
@@ -95,7 +102,7 @@ export function useProjectBar({
       title: `${project.name}（${startDate} 〜 ${endDate}）`,
       label: project.name,
       periodLabel,
-      // 伸縮のつかみ。はみ出している側（または描けない）ときは null
+      // 伸縮のつかみ。編集中・はみ出している側（または描けない）ときは null
       resizeStartHandle:
         originalLayout !== null && !originalLayout.isClippedStart
           ? {

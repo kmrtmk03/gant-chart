@@ -45,12 +45,11 @@ export function useGanttChart() {
     sidePanelState.mode === "create" ||
     (sidePanelState.mode === "edit" && editingProject !== null)
   // key は、別の案件・別の担当者で開き直したときにフォームを作り直すためのもの。
-  // 編集中の案件の帯をドラッグして期間が変わったときも作り直し、フォームの日付を新しい期間にそろえる
-  // （古い日付のまま保存して、ドラッグの結果を戻してしまわないため。入力途中の内容は破棄される）
+  // MEMO: 編集中の案件の帯はドラッグできない（useProjectBar）ので、期間がパネルの外で変わることはない
   const sidePanelKey =
     sidePanelState.mode === "create"
       ? `create:${sidePanelState.defaultMemberId ?? ""}`
-      : `edit:${editingProject?.id ?? ""}:${editingProject?.startDate ?? ""}:${editingProject?.endDate ?? ""}`
+      : `edit:${editingProject?.id ?? ""}`
 
   // 左上の角の高さは、日付ヘッダー（月の行 + 日の行）に合わせる
   const cornerStyle: CSSProperties = {

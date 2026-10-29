@@ -23,6 +23,11 @@ interface IUseBarDragParams {
    * 完了したら仮の期間を捨てて `period` の位置に戻す（成功していれば `period` が新しい値になっている）
    */
   onCommit: (period: TProjectPeriod) => Promise<void>
+  /**
+   * true の間はドラッグを始めない（クリックだけ受け付ける）。サイドパネルで編集中の案件に使う。
+   * パネルのフォームの日付と、ドラッグで変えた期間が食い違わないようにするため
+   */
+  isDisabled: boolean
 }
 
 /**
@@ -38,7 +43,11 @@ interface IUseBarDragParams {
  * ドラッグや取り消しのあとに来る click は `consumeClickSuppression` が true を返すので、呼び出し側は
  * click のハンドラーの先頭で必ず呼び、true ならパネルを開かないこと。
  */
-export function useBarDrag({ period, onCommit }: IUseBarDragParams) {
+export function useBarDrag({
+  period,
+  onCommit,
+  isDisabled,
+}: IUseBarDragParams) {
   // ドラッグ中の状態。描画用の state と、イベントのハンドラーから最新値を読むための ref を同時に更新する
   // （pointermove が描画より速く続けて来ても、古い値で計算しないため）
   const [dragState, setDragState] = useState<IBarDragState | null>(null)
@@ -78,13 +87,15 @@ export function useBarDrag({ period, onCommit }: IUseBarDragParams) {
       if (savingPeriod !== null || dragStateRef.current !== null) return
 
       // 前回の click が来なかった場合に印が残っていると、今回のクリックまで消えてしまうので戻す
+      // （ドラッグできないときも、この後の click でパネルを開けるように戻しておく）
       shouldSuppressClickRef.current = false
+      if (isDisabled) return
       // 帯の外にポインターが出ても、このあとのイベントがこの要素に届くようにする
       event.currentTarget.setPointerCapture(event.pointerId)
       capturedElementRef.current = event.currentTarget
       applyDragState(startBarDrag(mode, event.pointerId, event.clientX))
     },
-    [savingPeriod, applyDragState],
+    [savingPeriod, isDisabled, applyDragState],
   )
 
   const handleMovePointerDown = useCallback(

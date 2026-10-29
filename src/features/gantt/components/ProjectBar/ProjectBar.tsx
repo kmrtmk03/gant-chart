@@ -18,7 +18,8 @@ interface IProjectBarProps {
  * 案件の帯。案件名を中に出し、入りきらない分は省略記号にする。
  * 表示期間に入らない案件は何も描かない。位置や見た目の計算・ドラッグの操作は `useProjectBar` が受け持つ。
  * - クリックすると `onSelect` でサイドパネルを開く（キーボードでも操作できるよう button にしている）
- * - 中央をドラッグすると移動、左右の端（つかみ）をドラッグすると伸縮し、離すと `onChangePeriod` で保存する
+ * - 中央をドラッグすると移動、左右の端（つかみ）をドラッグすると伸縮し、離すと `onChangePeriod` で保存する。
+ *   サイドパネルで編集中（`isEditing`）の帯はドラッグできない
  */
 export function ProjectBar({
   project,
