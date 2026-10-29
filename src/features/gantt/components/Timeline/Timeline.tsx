@@ -1,17 +1,13 @@
 import { memo } from "react"
 
-import {
-  DAY_COLUMN_WIDTH,
-  MEMBER_ROW_HEIGHT,
-  PROJECT_ROW_HEIGHT,
-} from "../gantt.constants"
-import type { TDateString } from "../gantt.type"
-import type { IDayColumn, IMemberGroup } from "../gantt.utils"
-import { MemberSummaryBar } from "./MemberSummaryBar"
-import { ProjectBar } from "./ProjectBar"
+import type { TDateString } from "../../gantt.type"
+import type { IDayColumn, IMemberGroup } from "../../gantt.utils"
+import { MemberSummaryBar } from "../MemberSummaryBar"
+import { ProjectBar } from "../ProjectBar"
+import { TimelineGrid } from "../TimelineGrid"
+import { TodayLine } from "../TodayLine"
 import styles from "./Timeline.module.scss"
-import { TimelineGrid } from "./TimelineGrid"
-import { TodayLine } from "./TodayLine"
+import { useTimeline } from "./useTimeline"
 
 interface ITimelineProps {
   memberGroups: IMemberGroup[]
@@ -42,38 +38,40 @@ export const Timeline = memo(function Timeline({
   editingProjectId,
   onSelectProject,
 }: ITimelineProps) {
+  const { bodyWidth, memberRowHeight, projectRowHeight, memberRows } =
+    useTimeline({
+      memberGroups,
+      collapsedMemberIds,
+      rangeDays,
+      editingProjectId,
+    })
+
   return (
-    <div
-      className={styles.body}
-      style={{ width: rangeDays * DAY_COLUMN_WIDTH }}
-    >
+    <div className={styles.body} style={{ width: bodyWidth }}>
       <TimelineGrid columns={columns} />
       <TodayLine rangeStart={rangeStart} rangeDays={rangeDays} today={today} />
-      {memberGroups.map(({ member, projects }) => (
-        <div key={member.id}>
-          <div
-            className={styles.memberRow}
-            style={{ height: MEMBER_ROW_HEIGHT }}
-          >
+      {memberRows.map((memberRow) => (
+        <div key={memberRow.memberId}>
+          <div className={styles.memberRow} style={{ height: memberRowHeight }}>
             <MemberSummaryBar
-              projects={projects}
+              projects={memberRow.projects}
               rangeStart={rangeStart}
               rangeDays={rangeDays}
             />
           </div>
-          {!collapsedMemberIds.has(member.id) && (
+          {memberRow.isExpanded && (
             <>
-              {projects.map((project) => (
+              {memberRow.projectViews.map(({ project, isEditing }) => (
                 <div
                   key={project.id}
                   className={styles.projectRow}
-                  style={{ height: PROJECT_ROW_HEIGHT }}
+                  style={{ height: projectRowHeight }}
                 >
                   <ProjectBar
                     project={project}
                     rangeStart={rangeStart}
                     rangeDays={rangeDays}
-                    isEditing={project.id === editingProjectId}
+                    isEditing={isEditing}
                     onSelect={onSelectProject}
                   />
                 </div>
@@ -81,7 +79,7 @@ export const Timeline = memo(function Timeline({
               {/* 左リストの「案件を追加」行と高さをそろえるための空行 */}
               <div
                 className={styles.projectRow}
-                style={{ height: PROJECT_ROW_HEIGHT }}
+                style={{ height: projectRowHeight }}
               />
             </>
           )}

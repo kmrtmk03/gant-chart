@@ -1,6 +1,6 @@
-import { formatYearMonth } from "../gantt.utils"
-import type { TDateString } from "../gantt.type"
+import type { TDateString } from "../../gantt.type"
 import styles from "./GanttHeader.module.scss"
+import { useGanttHeader } from "./useGanttHeader"
 
 interface IGanttHeaderProps {
   /** 画面の左端に見えている日付。表示中の年月の表示に使う */
@@ -17,6 +17,8 @@ export function GanttHeader({
   onScrollForward,
   onScrollToToday,
 }: IGanttHeaderProps) {
+  const { rangeLabel } = useGanttHeader({ visibleDate })
+
   return (
     <header className={styles.header}>
       <h1 className={styles.title}>ガントチャート</h1>
@@ -31,7 +33,7 @@ export function GanttHeader({
           ▶
         </button>
       </div>
-      <span className={styles.range}>{formatYearMonth(visibleDate)}</span>
+      <span className={styles.range}>{rangeLabel}</span>
     </header>
   )
 }
