@@ -8,7 +8,7 @@ import {
 } from "date-fns"
 
 import { DAY_COLUMN_WIDTH } from "./gantt.constants"
-import type { IProject, TDateString } from "./gantt.type"
+import type { IMember, IProject, TDateString } from "./gantt.type"
 
 // MEMO: 日付は "YYYY-MM-DD" の文字列で受け渡し、Date はこのファイルの関数の内側でだけ扱う。
 // Date はローカル時刻で組み立てる（UTC だと日本時間の早朝に日付がずれるため）。
@@ -81,6 +81,81 @@ export function getDateRange(start: TDateString, days: number): TDateString[] {
   return Array.from({ length: Math.max(days, 0) }, (_, index) =>
     addDays(start, index),
   )
+}
+
+/** タイムラインの 1 日分の列の情報。日付ヘッダーと背景の色分けに使う */
+export interface IDayColumn {
+  date: TDateString
+  /** 土曜・日曜か */
+  isWeekend: boolean
+  /** 祝日名。祝日でなければ null */
+  holidayName: string | null
+}
+
+/** 日付ヘッダーの「月の行」の 1 区間（同じ月が続く列のまとまり） */
+export interface IMonthSegment {
+  /** "YYYY-MM"。React の key に使う */
+  key: string
+  /** 表示名（例: "2026年10月"） */
+  label: string
+  /** この月が表示期間の中で占める日数 */
+  days: number
+}
+
+/** 担当者と、その配下の案件のまとまり。左リストとタイムラインが同じ並びで描くために使う */
+export interface IMemberGroup {
+  member: IMember
+  /** 開始日の昇順（同じなら終了日の昇順）に並んだ案件 */
+  projects: IProject[]
+}
+
+/** "YYYY-MM-DD" から "YYYY年M月" の表示名を作る */
+export function formatYearMonth(value: TDateString): string {
+  return `${value.slice(0, 4)}年${Number(value.slice(5, 7))}月`
+}
+
+/** `start` から `days` 日分の、色分けと日付ヘッダーに必要な情報を返す */
+export function getDayColumns(start: TDateString, days: number): IDayColumn[] {
+  return getDateRange(start, days).map((date) => ({
+    date,
+    isWeekend: isWeekend(date),
+    holidayName: getHolidayName(date),
+  }))
+}
+
+/** 日の列を、同じ月が続く区間にまとめる（日付ヘッダーの月の行用） */
+export function getMonthSegments(columns: IDayColumn[]): IMonthSegment[] {
+  const segments: IMonthSegment[] = []
+  for (const { date } of columns) {
+    const key = date.slice(0, 7)
+    const last = segments.at(-1)
+    if (last?.key === key) {
+      last.days += 1
+    } else {
+      segments.push({ key, label: formatYearMonth(date), days: 1 })
+    }
+  }
+  return segments
+}
+
+/**
+ * 担当者ごとに案件をまとめる。担当者の並びは渡した順のまま、案件は開始日順に並べる。
+ * 担当者が見つからない案件（memberId が不正）は、どの担当者にも属さないので含めない。
+ */
+export function groupProjectsByMember(
+  members: IMember[],
+  projects: IProject[],
+): IMemberGroup[] {
+  return members.map((member) => ({
+    member,
+    projects: projects
+      .filter((project) => project.memberId === member.id)
+      .sort(
+        (a, b) =>
+          a.startDate.localeCompare(b.startDate) ||
+          a.endDate.localeCompare(b.endDate),
+      ),
+  }))
 }
 
 /** 土曜・日曜か */
@@ -199,4 +274,9 @@ export function resizeProjectDates(
     startDate: project.startDate,
     endDate: movedEnd < project.startDate ? project.startDate : movedEnd,
   }
+}
+
+/** catch で受けた unknown を Error にそろえる（Error 以外が投げられたときは文字列化して包む） */
+export function toError(caught: unknown): Error {
+  return caught instanceof Error ? caught : new Error(String(caught))
 }

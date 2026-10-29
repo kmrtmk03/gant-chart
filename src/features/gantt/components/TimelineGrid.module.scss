@@ -1,0 +1,21 @@
+@use "tokens";
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.column {
+  flex-shrink: 0;
+  border-right: 1px solid tokens.$color-border;
+}
+
+.weekend {
+  background: tokens.$color-weekend;
+}
+
+.holiday {
+  background: tokens.$color-holiday;
+}

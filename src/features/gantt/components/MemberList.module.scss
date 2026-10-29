@@ -1,0 +1,79 @@
+@use "tokens";
+
+// 横スクロールしても左に残す。背景を塗らないと後ろのタイムラインが透けて見える
+.list {
+  position: sticky;
+  left: 0;
+  z-index: tokens.$z-index-sticky;
+  border-right: 1px solid tokens.$color-border;
+  background: tokens.$color-bg;
+}
+
+.memberRow,
+.projectRow,
+.addProjectRow {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-2;
+  border-bottom: 1px solid tokens.$color-border;
+}
+
+.memberRow {
+  padding: 0 tokens.$space-2;
+  background: tokens.$color-surface;
+  font-weight: 600;
+}
+
+.projectRow {
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
+  font-size: tokens.$font-size-sm;
+}
+
+.addProjectRow {
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
+}
+
+.addProjectButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: tokens.$color-primary;
+  font-size: tokens.$font-size-sm;
+  cursor: pointer;
+}
+
+.toggle {
+  padding: 0 tokens.$space-1;
+  border: 0;
+  background: none;
+  color: tokens.$color-text-muted;
+  cursor: pointer;
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-xs;
+  font-weight: 400;
+}
+
+// 色は動的な値なので、背景色だけインラインスタイルで渡す
+.colorDot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$space-2;
+  padding: tokens.$space-3;
+}

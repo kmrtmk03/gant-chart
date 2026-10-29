@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 4 の実装完了。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 5 の実装完了。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -26,8 +26,8 @@
 | 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
-| 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
-| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
+| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
@@ -44,14 +44,42 @@
   - `feat/gantt-chart-mvp`: フェーズ 1 で使った作業ブランチ（マージ済み）
   - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
   - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
-  - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（`develop` から作成。PR #5 を作成済み）
+  - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
+  - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（`develop` から作成。PR は未作成）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4. フェーズ 5 の着手状況
+## 4. フェーズ 5 の完了状況
 
-フェーズ 4 は実装完了（ブランチ `feat/gantt-utils`）。フェーズ 5 は未着手。
+フェーズ 5 は実装完了（ブランチ `feat/gantt-layout`）。フェーズ 6 は未着手。
+
+### フェーズ 5 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（168 件）/ `build` が成功（`/` は静的にプリレンダリングされる）
+- ブラウザ（`pnpm dev:http`）で確認済み: 空の状態 →「サンプルデータを入れる」→ 担当者 → 案件の 2 階層と帯、今日の線、土日祝の色分け、月またぎ、期間の外にはみ出す帯の角（切れた側は丸めない）、折りたたみ、無限スクロール（右端・左端に近づくと範囲が 90 日ずつ広がり、左に広がっても見ている位置が動かない）、横スクロールしても左リストと日付ヘッダーが残る
+- **未確認**: 縦スクロール（サンプルデータが少なく画面に収まったため。同じ `position: sticky` の仕組み）、「今日」「◀」「▶」ボタンの動作、スマホ幅の見た目。ブラウザ操作の確認では、バックグラウンドのペインだと scroll イベントの到着が遅れた（実機では即時のはず）
+
+### フェーズ 6 以降への申し送り（画面）
+
+- **表示期間は「無限スクロール」**（2026-10-29 に「2 か月ごと」から変更）。`useTimelineRange` が用意する日付の範囲（初期は今日の 60 日前から 180 日分。`gantt.constants.ts` の `DEFAULT_RANGE_*` / `RANGE_EXTEND_DAYS`）を持ち、`useTimelineScroll` がスクロール位置を見て端（`RANGE_EDGE_THRESHOLD_PX`）に近づいたら範囲を広げる。過去側に広げたときは `flushSync` で描画を済ませてから `scrollLeft` を広げた分だけ補正する（見ている位置を保つため）。範囲は広げるだけで縮めない。◀ / ▶ は 14 日ぶんのスクロール、「今日」は今日が見える位置へのスクロール。帯の位置は `rangeStart`（広がると変わる）基準なので、フェーズ 8 のドラッグでも `getBarLayout` に今の `rangeStart` を渡すこと
+- **lint の注意**: `react-hooks/refs` が、`ref={}` に渡す関数を持つフックの戻り値オブジェクト全体を「ref を含む」と誤検知する。`GanttChart.tsx` では `page.scroll` を先に分割代入して回避している。スクロール領域の要素は ref ではなく state で持っている
+- **「範囲の起点」と「今日」は別に管理している**（PR #6 のレビュー指摘）: `useSyncExternalStore` は再描画のたびに getSnapshot を呼び直すため、起点（`rangeStart` の基準）まで毎回 `getToday()` にすると、日付をまたいだ後の再描画で範囲だけが 1 日進み、`scrollLeft` とずれる。そこで `useTimelineRange.ts` では、範囲の起点はモジュール変数 `rangeAnchorDate`（最初に開いた日）で固定し、`today`（今日の線・日付の強調・今日ボタン）は `subscribeToToday` で最新を追いかける（次の 0 時の少し後のタイマー、画面にフォーカスが戻ったとき、タブが表示されたとき）。日付をまたいでも見ている位置は動かず、今日の線だけが正しい日に進む。範囲の起点は再読み込みするまで変わらない。起点は固定なので、範囲の端の判定や `getBarLayout` に渡す `rangeStart` は日付をまたいでも一定
+- **再描画の範囲**: 画面左端の日付（`visibleDate`）が変わるたびに `GanttChart` が走り直すため、`memberGroups` / `columns` は `useGanttPage` の `useMemo` で参照を保ち、重い `Timeline` / `TimelineDateHeader` / `MemberList` は `React.memo` にしてある。これらに渡す props に、毎回新しく作るオブジェクト・関数を足さないこと（足すと memo が効かなくなる）
+- **smooth スクロールと範囲の拡張**: `scrollLeft` を書き換えると smooth スクロールのアニメーションが止まる。◀ / 今日は `scrollToPosition` が、目的地が左端に近いときに先に範囲を広げて（`flushSync` + `scrollBy` の instant）から smooth を始める。補正には `scrollLeft` の代入ではなく `scrollBy({ behavior: "instant" })` を使う。拡張は左右とも `flushSync` で描画を済ませ、二重に走らせない
+- サンプルデータの投入は `isSeeding` で二重実行を防ぎ、失敗は `seedError` として空の画面に出す
+- **sticky の注意**: `.grid`（`GanttChart.module.scss`）は `width: max-content` が必須。スクロール領域の幅のままだと、左リストが領域の幅までしか追従しない
+- 月の行の年月ラベルは区間の左端に置いているため、スクロールで区間の左が画面外に出るとラベルが切れて見える（`position: sticky` で追従させる改善の余地あり）
+- 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useTimelineScroll` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/`、フックは `hooks/`、サンプルデータは `devSeed.ts`
+- 画面は 1 つのスクロール領域（`.scroller`）の中に CSS Grid で左リスト（`MemberList`）と右タイムライン（`Timeline`）を並べ、日付ヘッダー・左リスト・左上の角を `position: sticky` で固定している。`Timeline` は本体（背景・今日の線・帯）だけで、日付ヘッダーは `TimelineDateHeader` が別に受け持つ。**行の並びと高さは `MemberList` と `Timeline` で同じ**（`MEMBER_ROW_HEIGHT` / `PROJECT_ROW_HEIGHT`）。行を足すときは両方を直す
+- **今日の日付は `useSyncExternalStore` で取っている**（サーバー側は null）。`cacheComponents` が有効なため、レンダリング中に `new Date()` を読むと静的シェルに焼き込まれる。日付をレンダリング中に読む処理を足すときは `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/io.md` を読むこと。データの読み込みは `useEffect` 内（クライアント側）で行っている
+- `useMembers` / `useProjects` は読み込みと `reloadMembers` / `reloadProjects` だけを持つ。フェーズ 6・7 で追加・編集・削除の操作をここに足す（repository はコンポーネントの外で 1 回だけ作り、`useGanttPage.ts` の先頭で生成して引数で渡している）
+- 「案件を追加」は**各担当者の案件リストの下**（開いているときだけ）に置いてある（2026-10-29 に最下部から変更）。押すと `addProject(memberId)` が呼ばれるので、フェーズ 6 ではその担当者を担当者の初期値にしてサイドパネルを開く。`Timeline` 側にも同じ高さの空行があり、左右の行をそろえている。「担当者を管理」は最下部のまま。ボタンの処理は `useGanttPage` の `addProject` / `manageMembers`（今は空の関数で `TODO:` が付いている）を差し替える。`ProjectBar` はまだクリックできない（フェーズ 6 でサイドパネルを開く、フェーズ 8 でドラッグを足す）
+- 「サンプルデータを入れる（開発用）」は担当者が 0 人のときの空の画面にだけ出る（本番ビルドでは出ない）。再度入れたいときはブラウザの localStorage（`gantt:*`）を消す
+- `gantt.utils.ts` に追加した関数: `getDayColumns` / `getMonthSegments` / `formatYearMonth` / `groupProjectsByMember`（担当者ごとの案件のまとまり。開始日順）/ `toError`。型は `IDayColumn` / `IMonthSegment` / `IMemberGroup`
+- `isRangeOverlapping` は引き続きどこからも呼ばれていない（`getBarLayout` が `null` を返すことで代用している）。使わないなら、フェーズ 9 で削除を検討する
+- スタイル: 土日祝の文字色のうち祝日の赤は `TimelineDateHeader.module.scss` に生の色コード（`#e5575b`）を書いてしまっている。`--color-bar-red` と同じ値なので、必要なら `_tokens.scss` に `$color-holiday-text` を足して置き換える
+- 開発サーバーを Basic 認証なしで起動するには `BASIC_AUTH_USER= BASIC_AUTH_PASSWORD= pnpm dev:http`（`.env.local` に値があると 401 になるため）
 
 ### フェーズ 4 の確認結果
 
@@ -148,10 +176,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 5**（[6-phase5-chart-layout.md](6-phase5-chart-layout.md)）。その前に、フェーズ 4（`feat/gantt-utils`）のレビューと `develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
+- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。その前に、フェーズ 5（`feat/gantt-layout`）の確認・PR・`develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 5 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 6 を進めてください。
   ```

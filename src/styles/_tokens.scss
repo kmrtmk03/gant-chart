@@ -12,6 +12,7 @@ $color-primary: #2f6fed;
 $color-weekend: #f1f3f6;
 $color-holiday: #fdecec;
 $color-today: #ffe9a8;
+$color-row-member: rgb(31 36 48 / 4%);
 
 // ---- 帯の色プリセット ----
 // キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）
@@ -68,6 +69,7 @@ $font-family-base:
   --color-weekend: #{$color-weekend};
   --color-holiday: #{$color-holiday};
   --color-today: #{$color-today};
+  --color-row-member: #{$color-row-member};
   --color-bar-blue: #{$color-bar-blue};
   --color-bar-green: #{$color-bar-green};
   --color-bar-orange: #{$color-bar-orange};
