@@ -69,3 +69,6 @@ export type TProjectInput = Omit<IProject, "id" | "createdAt" | "updatedAt">
 
 /** 案件を更新するときの入力。指定したフィールドだけを書き換える（対象の id は別の引数で渡す） */
 export type TProjectUpdate = Partial<TProjectInput>
+
+/** 担当者の並び替えで動かす向き（up は一覧の上、down は下） */
+export type TMoveDirection = "up" | "down"

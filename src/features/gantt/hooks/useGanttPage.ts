@@ -5,6 +5,7 @@ import type { TProjectInput } from "../gantt.type"
 import { getDayColumns, groupProjectsByMember, toError } from "../gantt.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
 import { useCollapsedMembers } from "./useCollapsedMembers"
+import { useMemberManagement } from "./useMemberManagement"
 import { useMembers } from "./useMembers"
 import { useProjects } from "./useProjects"
 import { useSidePanel } from "./useSidePanel"
@@ -22,7 +23,15 @@ const CAN_SEED_SAMPLE_DATA = process.env.NODE_ENV !== "production"
  * データ（担当者・案件）と表示期間のどれかが未確定の間は `isLoading` が true になる。
  */
 export function useGanttPage() {
-  const { members, membersError, reloadMembers } = useMembers(repository)
+  const {
+    members,
+    membersError,
+    reloadMembers,
+    createMember,
+    renameMember,
+    reorderMembers,
+    deleteMember,
+  } = useMembers(repository)
   const {
     projects,
     projectsError,
@@ -30,9 +39,19 @@ export function useGanttPage() {
     createProject,
     updateProject,
     deleteProject,
+    removeProjectsOfMember,
   } = useProjects(repository)
   const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
     useSidePanel()
+  const memberManagement = useMemberManagement({
+    members,
+    createMember,
+    renameMember,
+    reorderMembers,
+    deleteMember,
+    removeProjectsOfMember,
+    closeSidePanel: closePanel,
+  })
   const timelineRange = useTimelineRange()
   const timelineScroll = useTimelineScroll({
     rangeStart: timelineRange.rangeStart,
@@ -57,6 +76,14 @@ export function useGanttPage() {
     () => (rangeStart === null ? null : getDayColumns(rangeStart, rangeDays)),
     [rangeStart, rangeDays],
   )
+
+  /**
+   * 読み込みに失敗した画面から、担当者と案件を読み込み直す。成功すると両方のエラーが消えて画面に戻る。
+   * 失敗したときはエラーが残るので、もう一度押せる（再読み込みの失敗は各フックが state に載せる）
+   */
+  const handleRetryLoad = useCallback(async () => {
+    await Promise.all([reloadMembers(), reloadProjects()])
+  }, [reloadMembers, reloadProjects])
 
   const [isSeeding, setIsSeeding] = useState(false)
   const [seedError, setSeedError] = useState<Error | null>(null)
@@ -113,9 +140,6 @@ export function useGanttPage() {
     closePanel()
   }, [sidePanelState, deleteProject, closePanel])
 
-  // TODO: フェーズ 7 で担当者の管理画面を開く処理に置き換える
-  const handleManageMembers = useCallback(() => {}, [])
-
   return {
     // 読み込みの状態
     isLoading:
@@ -123,6 +147,7 @@ export function useGanttPage() {
       timelineRange.today === null ||
       rangeStart === null,
     loadError: membersError ?? projectsError,
+    retryLoad: handleRetryLoad,
     // データ
     memberGroups,
     // 表示期間（rangeStart / today / columns は未確定の間 null）
@@ -144,6 +169,8 @@ export function useGanttPage() {
       remove: handleDeleteProject,
       close: closePanel,
     },
+    // 担当者の管理ダイアログ（開閉と、追加・名前変更・並び替え・削除の操作）
+    memberManagement,
     // 折りたたみ
     collapsedMemberIds,
     toggleMember,
@@ -153,6 +180,6 @@ export function useGanttPage() {
     seedError,
     seedSampleData: handleSeedSampleData,
     addProject: openCreatePanel,
-    manageMembers: handleManageMembers,
+    manageMembers: memberManagement.openDialog,
   }
 }

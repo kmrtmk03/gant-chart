@@ -80,6 +80,18 @@ export function useProjects(repository: IGanttRepository) {
     [repository],
   )
 
+  /**
+   * 指定した担当者の案件を、読み込み直さずに一覧から取り除く。
+   * 担当者の削除で repository が配下の案件も消したあとに呼ぶ（再読み込みの失敗を挟まないため）
+   */
+  const removeProjectsOfMember = useCallback((memberId: string) => {
+    setProjects((prev) =>
+      prev === null
+        ? prev
+        : prev.filter((project) => project.memberId !== memberId),
+    )
+  }, [])
+
   return {
     // 状態
     projects,
@@ -89,5 +101,6 @@ export function useProjects(repository: IGanttRepository) {
     createProject,
     updateProject,
     deleteProject,
+    removeProjectsOfMember,
   }
 }

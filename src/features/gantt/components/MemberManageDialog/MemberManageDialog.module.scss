@@ -1,0 +1,76 @@
+@use "tokens";
+
+.dialog {
+  width: min(520px, calc(100vw - #{tokens.$space-6} * 2));
+  max-height: calc(100vh - #{tokens.$space-6} * 2);
+  padding: tokens.$space-4;
+  border: 1px solid tokens.$color-border;
+  border-radius: tokens.$radius-md;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-text;
+
+  &::backdrop {
+    background: rgb(0 0 0 / 30%);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: tokens.$space-2;
+}
+
+.title {
+  margin: 0;
+  font-size: tokens.$font-size-lg;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty {
+  margin: tokens.$space-3 0;
+  color: tokens.$color-text-muted;
+}
+
+.addForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: tokens.$space-2;
+  margin-top: tokens.$space-3;
+}
+
+.addInput {
+  flex: 1;
+  min-width: 0;
+
+  &[aria-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+.addButton {
+  border-color: tokens.$color-primary;
+  background: tokens.$color-primary;
+  color: #fff;
+}
+
+// 追加欄の下に、行の幅いっぱいで出す
+.error,
+.warning {
+  flex-basis: 100%;
+  margin: tokens.$space-2 0 0;
+  font-size: tokens.$font-size-sm;
+}
+
+.error {
+  color: tokens.$color-danger;
+}
+
+.warning {
+  color: tokens.$color-warning;
+}

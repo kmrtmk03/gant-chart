@@ -2,6 +2,7 @@
 
 import { GanttHeader } from "../GanttHeader"
 import { MemberList } from "../MemberList"
+import { MemberManageDialog } from "../MemberManageDialog"
 import { ProjectSidePanel } from "../ProjectSidePanel"
 import { Timeline } from "../Timeline"
 import { TimelineDateHeader } from "../TimelineDateHeader"
@@ -23,9 +24,12 @@ export function GanttChart() {
 
   if (chart.status === "error") {
     return (
-      <p className={styles.message} role="alert">
-        データを読み込めませんでした。{chart.loadErrorMessage}
-      </p>
+      <div className={styles.message} role="alert">
+        <p>データを読み込めませんでした。{chart.loadErrorMessage}</p>
+        <button type="button" onClick={chart.retryLoad}>
+          再読み込み
+        </button>
+      </div>
     )
   }
 
@@ -36,7 +40,7 @@ export function GanttChart() {
   // scrollArea（ref を持つ）を先に分割代入する。lint の react-hooks/refs が、
   // ref を渡す関数を持つ戻り値の全体を「ref を含む」と誤検知するのを避けるため
   const { attachScroller, handleScroll } = chart.scrollArea
-  const { emptyState, sidePanel } = chart
+  const { emptyState, sidePanel, memberDialog } = chart
 
   return (
     <div className={styles.root}>
@@ -98,6 +102,17 @@ export function GanttChart() {
             />
           </div>
         </div>
+      )}
+
+      {memberDialog.isOpen && (
+        <MemberManageDialog
+          memberGroups={chart.memberGroups}
+          onCreate={memberDialog.create}
+          onRename={memberDialog.rename}
+          onMove={memberDialog.move}
+          onDelete={memberDialog.remove}
+          onClose={memberDialog.close}
+        />
       )}
 
       {sidePanel.isVisible && (

@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 6 が完了し `develop` にマージ済み。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-30（フェーズ 7 の実装が完了。PR 待ち。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -29,7 +29,7 @@
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 完了（PR #7 を `develop` にマージ済み。下記 4 章） |
-| 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 実装完了（ブランチ `feat/gantt-member-management`。PR・ユーザーの確認待ち。下記 4 章） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
 
@@ -47,11 +47,36 @@
   - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
   - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
   - `feat/gantt-side-panel`: フェーズ 6 の作業ブランチ（PR #7 で `develop` にマージ済み）
+  - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（`develop` から作成。PR は未作成）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4. フェーズ 6 の完了状況
+## 4. フェーズ 7 の完了状況
+
+フェーズ 7 は実装完了（ブランチ `feat/gantt-member-management`。PR は未作成・push 前）。フェーズ 8 は未着手。
+
+### フェーズ 7 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（191 件。うち `gantt.utils.test.ts` が 60 件）/ `format:check` / `build` が成功
+- ブラウザ（`BASIC_AUTH_USER= BASIC_AUTH_PASSWORD= pnpm dev:http`）で確認済み: 管理ダイアログが開く / 同じ名前の追加は警告だけで登録できる（追加欄・行の両方に警告）/ 名前の変更が左リストに反映 / 上へ・下へで並びが変わり再読み込みしても残る / 名前を空にするとエラーが出て保存されない / 削除の確認に「案件 3 件も一緒に削除されます」が出る / 削除すると配下の案件も localStorage と左リストから消える / 確認ダイアログの Esc は確認だけを閉じる
+- 確認中に見つけた不具合を修正済み: 確認ダイアログの Esc が管理ダイアログまで閉じていた（React では `cancel` が親の `onCancel` へ伝わる。`useMemberManageDialog.handleCancel` で発生元が自分自身のときだけ処理する）
+- **未確認**: 51 文字の名前のエラー表示（単体テストでは確認済み）、保存失敗時のダイアログ内エラー表示、スマホ幅の見た目、担当者が 0 人になった後に空の画面から再度追加する流れ、読み込み失敗の画面の「再読み込み」ボタン。ブラウザ操作の注意: 画面を操作した直後のスクリーンショットが古い状態のことがある（ペインがバックグラウンドのとき）。状態の確認は `read_page` や JavaScript で DOM・localStorage を見るほうが確実
+- 動作確認のため、ブラウザペインの localStorage のサンプルデータを変更した（担当者「佐藤」を削除、「山田」を追加）。サンプルを戻したいときは `gantt:*` を消して「サンプルデータを入れる」
+
+### フェーズ 8 以降への申し送り（担当者の管理）
+
+- 構成: `useMembers`（`createMember` / `renameMember` / `reorderMembers` / `deleteMember`。`useProjects` と同じく、保存成功後に state を更新し、失敗は例外のまま投げる）→ `useMemberManagement`（ダイアログの開閉と、ダイアログから呼ぶ操作。削除後は `removeProjectsOfMember` で手元の案件の一覧から取り除く。再読み込みは挟まないので、削除後に失敗する経路がない）→ `useGanttPage` が `memberManagement` グループで公開 → `GanttChart` が `MemberManageDialog` を置く。左リスト・空の画面の「担当者を管理」は `manageMembers`（= ダイアログを開く）を呼ぶ
+- コンポーネントは `components/MemberManageDialog/`（`<dialog>` + `showModal`、`useMemberManageDialog`）と `components/MemberManageRow/`（1 行。名前の下書き・検証は `useMemberManageRow`）。**ダイアログは開いている間だけマウントする**（`isOpen` の props はない。外すと閉じ、入力途中の値も破棄される）。保存系の操作は 1 つずつ実行し（二重実行は `isBusyRef` で弾く）、実行中は `isBusy` で全ボタンを止める。失敗は `actionError` としてダイアログ内に出す
+- 担当者名の検証は `gantt.utils.ts` の `validateMemberName`（必須・50 文字。`MEMBER_NAME_MAX_LENGTH`）、重複の警告は `hasSameNameMember`（登録は止めない）、並び替えは `moveId`（`TMoveDirection`）。ダイアログと行の 2 コンポーネントで使うため feature 共通の utils に置いた
+- 管理ダイアログを開くときは**サイドパネルを閉じる**（入力途中の内容は破棄される）。パネルの Esc が `document` の keydown で、ダイアログの Esc と二重に効くのを避け、削除した担当者の案件を編集中のままにしないため
+- 並び替えは上へ・下へボタンのみ（プラン通りドラッグはなし）。`reorderMembers` は全 id を渡す必要があり、別タブで担当者が増減していると repository がエラーを返す（ダイアログ内に表示される）
+- 読み込み失敗の画面（`loadError`）に「再読み込み」ボタンを追加（`retryLoad` が担当者・案件の両方を読み込み直す。初回の読み込み失敗からも復帰できる）
+- PR #11 のレビュー指摘「名前を編集したまま他のボタンを押すと 1 回目のクリックが効かない」は、ブラウザの実クリックで再現しなかった（編集直後の「↓」「✕」が 1 回目で効き、名前も保存された。「削除」は未実測）。対処は不要と判断した
+- 新しいトークン `$color-warning`（重複の警告の文字色）を `_tokens.scss` に追加
+- lint の注意: `react-hooks/refs` の誤検知は `MemberManageDialog` でも出たため、`useMemberManageDialog` の戻り値を分割代入して使っている（`ConfirmDialog` と同じ対処）
+
+## 4-2. フェーズ 6 の完了状況
 
 フェーズ 6 は完了（ブランチ `feat/gantt-side-panel`、PR #7 を `develop` にマージ済み）。フェーズ 7 は未着手。
 
@@ -208,10 +233,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 7**（[8-phase7-member-management.md](8-phase7-member-management.md)）。フェーズ 6 は `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4 章の「フェーズ 7 以降への申し送り（サイドパネル）」（`ConfirmDialog` の再利用、名前の検証、`useMembers` を `useProjects` と同じ形にそろえる、など）を先に読むこと
-- 担当: Sonnet 5.5
+- 次にやること: **フェーズ 7 の PR とユーザーの確認**。確認が取れて `develop` にマージされたら **フェーズ 8**（[9-phase8-bar-drag.md](9-phase8-bar-drag.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4 章（担当者の管理）と 4-2 章（サイドパネル。`DRAG_THRESHOLD_PX` でのクリックとの区別など）を先に読むこと
+- 担当: フェーズ 8 は Opus 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 7 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 8 を進めてください。
   ```
