@@ -1,0 +1,54 @@
+@use "tokens";
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: tokens.$space-2;
+  padding: tokens.$space-2 0;
+  border-bottom: 1px solid tokens.$color-border;
+}
+
+.nameForm {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+
+  &[aria-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+.count {
+  min-width: 3em;
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-sm;
+  text-align: right;
+}
+
+.deleteButton {
+  border-color: tokens.$color-danger;
+  background: none;
+  color: tokens.$color-danger;
+}
+
+// 入力欄の下に、行の幅いっぱいで出す
+.error,
+.warning {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: tokens.$font-size-sm;
+}
+
+.error {
+  color: tokens.$color-danger;
+}
+
+.warning {
+  color: tokens.$color-warning;
+}

@@ -13,14 +13,17 @@ import {
   getMonthSegments,
   getTodayOffset,
   groupProjectsByMember,
+  hasSameNameMember,
   isHoliday,
   isRangeOverlapping,
   isWeekend,
+  moveId,
   moveProjectDates,
   parseDateString,
   pxToDays,
   resizeProjectDates,
   toDateString,
+  validateMemberName,
 } from "./gantt.utils"
 
 describe("toDateString / parseDateString", () => {
@@ -506,5 +509,69 @@ describe("groupProjectsByMember", () => {
 
   it("担当者が 0 人なら空配列", () => {
     expect(groupProjectsByMember([], [])).toEqual([])
+  })
+})
+
+describe("validateMemberName", () => {
+  it("名前があればエラーなし", () => {
+    expect(validateMemberName("鈴木")).toBeNull()
+  })
+
+  it("空文字・空白だけは必須エラー", () => {
+    expect(validateMemberName("")).not.toBeNull()
+    expect(validateMemberName("  \u3000 ")).not.toBeNull()
+  })
+
+  it("前後の空白を除いて 50 文字までは通り、51 文字は文字数エラー", () => {
+    expect(validateMemberName(` ${"あ".repeat(50)} `)).toBeNull()
+    expect(validateMemberName("あ".repeat(51))).toContain("50")
+  })
+})
+
+describe("hasSameNameMember", () => {
+  const createNamedMember = (id: string): IMember => ({
+    id,
+    name: id,
+    sortOrder: 0,
+    createdAt: "",
+    updatedAt: "",
+  })
+  const members = [createNamedMember("a"), createNamedMember("b")]
+
+  it("同じ名前の担当者がいれば true（前後の空白は無視）", () => {
+    expect(hasSameNameMember(" a ", members)).toBe(true)
+  })
+
+  it("いなければ false、空の名前も false", () => {
+    expect(hasSameNameMember("c", members)).toBe(false)
+    expect(hasSameNameMember("  ", members)).toBe(false)
+  })
+
+  it("excludeMemberId の担当者自身は数えない", () => {
+    expect(hasSameNameMember("a", members, "a")).toBe(false)
+    expect(hasSameNameMember("a", members, "b")).toBe(true)
+  })
+})
+
+describe("moveId", () => {
+  it("1 つ上・下へ動かした並びを返す", () => {
+    expect(moveId(["a", "b", "c"], "b", "up")).toEqual(["b", "a", "c"])
+    expect(moveId(["a", "b", "c"], "b", "down")).toEqual(["a", "c", "b"])
+  })
+
+  it("端でこれ以上動かせないときは null", () => {
+    expect(moveId(["a", "b"], "a", "up")).toBeNull()
+    expect(moveId(["a", "b"], "b", "down")).toBeNull()
+  })
+
+  it("含まれない id・1 件だけの並びは null", () => {
+    expect(moveId(["a", "b"], "x", "up")).toBeNull()
+    expect(moveId(["a"], "a", "down")).toBeNull()
+  })
+
+  it("元の配列は変更しない", () => {
+    const ids = ["a", "b"]
+    moveId(ids, "a", "down")
+    expect(ids).toEqual(["a", "b"])
   })
 })

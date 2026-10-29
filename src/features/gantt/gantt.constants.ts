@@ -35,6 +35,9 @@ export const DEFAULT_BAR_COLOR: TBarColor = "blue"
 /** 案件名の最大文字数 */
 export const PROJECT_NAME_MAX_LENGTH = 100
 
+/** 担当者名の最大文字数 */
+export const MEMBER_NAME_MAX_LENGTH = 50
+
 /** タイムラインの 1 日分の列幅（px） */
 export const DAY_COLUMN_WIDTH = 32
 

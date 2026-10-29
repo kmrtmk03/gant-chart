@@ -7,8 +7,13 @@ import {
   parse,
 } from "date-fns"
 
-import { DAY_COLUMN_WIDTH } from "./gantt.constants"
-import type { IMember, IProject, TDateString } from "./gantt.type"
+import { DAY_COLUMN_WIDTH, MEMBER_NAME_MAX_LENGTH } from "./gantt.constants"
+import type {
+  IMember,
+  IProject,
+  TDateString,
+  TMoveDirection,
+} from "./gantt.type"
 
 // MEMO: 日付は "YYYY-MM-DD" の文字列で受け渡し、Date はこのファイルの関数の内側でだけ扱う。
 // Date はローカル時刻で組み立てる（UTC だと日本時間の早朝に日付がずれるため）。
@@ -279,4 +284,56 @@ export function resizeProjectDates(
 /** catch で受けた unknown を Error にそろえる（Error 以外が投げられたときは文字列化して包む） */
 export function toError(caught: unknown): Error {
   return caught instanceof Error ? caught : new Error(String(caught))
+}
+
+/**
+ * 担当者名を検証し、問題があればエラーメッセージ、なければ null を返す。
+ * repository は名前の中身を見ないため、必須・文字数のチェックは画面側（これ）が唯一の砦になる。
+ * 前後の空白は除いて判定するので、呼び出し側も保存する値は `trim()` したものにすること。
+ */
+export function validateMemberName(name: string): string | null {
+  const trimmed = name.trim()
+  if (trimmed === "") return "担当者名を入力してください"
+  if (trimmed.length > MEMBER_NAME_MAX_LENGTH) {
+    return `担当者名は ${MEMBER_NAME_MAX_LENGTH} 文字以内で入力してください`
+  }
+  return null
+}
+
+/**
+ * 同じ名前の担当者がすでにいるか。同姓の人がいる場合を考えて登録は許すため、警告の表示にだけ使う。
+ * `excludeMemberId` に名前変更中の担当者を渡すと、自分自身は数えない。前後の空白は除いて比べる。
+ */
+export function hasSameNameMember(
+  name: string,
+  members: IMember[],
+  excludeMemberId: string | null = null,
+): boolean {
+  const trimmed = name.trim()
+  if (trimmed === "") return false
+  return members.some(
+    (member) => member.id !== excludeMemberId && member.name === trimmed,
+  )
+}
+
+/**
+ * id の並びのうち `id` を 1 つ上 / 下へ動かした新しい並びを返す。
+ * `id` が含まれない、または端でこれ以上動かせないときは null（元の配列は変更しない）。
+ */
+export function moveId(
+  ids: string[],
+  id: string,
+  direction: TMoveDirection,
+): string[] | null {
+  const index = ids.indexOf(id)
+  if (index === -1) return null
+  const targetIndex = direction === "up" ? index - 1 : index + 1
+  if (targetIndex < 0 || targetIndex >= ids.length) return null
+  const moved = [...ids]
+  const target = moved[targetIndex]
+  const current = moved[index]
+  if (target === undefined || current === undefined) return null
+  moved[index] = target
+  moved[targetIndex] = current
+  return moved
 }

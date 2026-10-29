@@ -17,7 +17,7 @@ import { useGanttPage } from "../../hooks/useGanttPage"
  */
 export function useGanttChart() {
   const page = useGanttPage()
-  const { memberGroups, range, sidePanel, scroll } = page
+  const { memberGroups, range, sidePanel, scroll, memberManagement } = page
 
   if (page.loadError) {
     return {
@@ -93,6 +93,15 @@ export function useGanttChart() {
     toggleMember: page.toggleMember,
     addProject: page.addProject,
     manageMembers: page.manageMembers,
+    // 担当者の管理ダイアログ
+    memberDialog: {
+      isOpen: memberManagement.isDialogOpen,
+      create: memberManagement.createMember,
+      rename: memberManagement.renameMember,
+      move: memberManagement.moveMember,
+      remove: memberManagement.deleteMember,
+      close: memberManagement.closeDialog,
+    },
     // サイドパネル
     sidePanel: {
       isVisible: isSidePanelVisible,
