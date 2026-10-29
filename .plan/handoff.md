@@ -70,7 +70,7 @@
 
 - 構成: `useSidePanel`（`TSidePanelState`: closed / create / edit の 1 つの state）→ `useGanttPage` が `sidePanel` グループで公開 → `GanttChart` が `ProjectSidePanel` を置く。編集中の案件は state に持たず、`projectId` から `projects` を引く（見つからなければパネルは出さない）
 - `useProjects` に `createProject` / `updateProject` / `deleteProject` を追加。repository の保存が成功してから state を更新し、失敗は例外のまま投げる（フォームが `submitError` としてパネル内に出す）。フェーズ 7 の `useMembers` も同じ形にそろえるとよい
-- フォームは `components/hooks/` に置いた（`useProjectForm` / `projectForm.type.ts` / `projectForm.utils.ts`）。入力値の初期値は初回の描画で 1 度だけ決めるので、別の案件・担当者で開き直すときは `GanttChart` が `ProjectSidePanel` の `key` を変えて作り直している
+- フォームは `components/ProjectSidePanel/` に置いた（`useProjectForm` / `projectForm.type.ts` / `projectForm.utils.ts`。パネル全体の表示用の値は `useProjectSidePanel`）。入力値の初期値は初回の描画で 1 度だけ決めるので、別の案件・担当者で開き直すときは `GanttChart` が `ProjectSidePanel` の `key` を変えて作り直している
 - 案件名の必須・100 文字チェックは `validateProjectForm`（`PROJECT_NAME_MAX_LENGTH`）。フェーズ 7 の担当者名も同じ観点（前後の空白を除いて空なら不可）で検証すること
 - `ConfirmDialog`（`<dialog>` + `showModal`）はフェーズ 7 の担当者の削除でも使える。開閉は `isOpen` の props が正で、Esc は `onCancel` 経由で親が閉じる
 - パネルの Esc は `document` の keydown で受けており、確認ダイアログの表示中・保存中は無効にしている
@@ -95,14 +95,14 @@
 ### フェーズ 6 以降への申し送り（画面）
 
 - **表示期間は「無限スクロール」**（2026-10-29 に「2 か月ごと」から変更）。`useTimelineRange` が用意する日付の範囲（初期は今日の 60 日前から 180 日分。`gantt.constants.ts` の `DEFAULT_RANGE_*` / `RANGE_EXTEND_DAYS`）を持ち、`useTimelineScroll` がスクロール位置を見て端（`RANGE_EDGE_THRESHOLD_PX`）に近づいたら範囲を広げる。過去側に広げたときは `flushSync` で描画を済ませてから `scrollLeft` を広げた分だけ補正する（見ている位置を保つため）。範囲は広げるだけで縮めない。◀ / ▶ は 14 日ぶんのスクロール、「今日」は今日が見える位置へのスクロール。帯の位置は `rangeStart`（広がると変わる）基準なので、フェーズ 8 のドラッグでも `getBarLayout` に今の `rangeStart` を渡すこと
-- **lint の注意**: `react-hooks/refs` が、`ref={}` に渡す関数を持つフックの戻り値オブジェクト全体を「ref を含む」と誤検知する。`GanttChart.tsx` では `page.scroll` を先に分割代入して回避している。スクロール領域の要素は ref ではなく state で持っている
+- **lint の注意**: `react-hooks/refs` が、`ref={}` に渡す関数を持つフックの戻り値オブジェクト全体を「ref を含む」と誤検知する。`GanttChart.tsx` では `chart.scrollArea` の `attachScroller` / `handleScroll` を先に個別に分割代入して回避している。スクロール領域の要素は ref ではなく state で持っている
 - **「範囲の起点」と「今日」は別に管理している**（PR #6 のレビュー指摘）: `useSyncExternalStore` は再描画のたびに getSnapshot を呼び直すため、起点（`rangeStart` の基準）まで毎回 `getToday()` にすると、日付をまたいだ後の再描画で範囲だけが 1 日進み、`scrollLeft` とずれる。そこで `useTimelineRange.ts` では、範囲の起点はモジュール変数 `rangeAnchorDate`（最初に開いた日）で固定し、`today`（今日の線・日付の強調・今日ボタン）は `subscribeToToday` で最新を追いかける（次の 0 時の少し後のタイマー、画面にフォーカスが戻ったとき、タブが表示されたとき）。日付をまたいでも見ている位置は動かず、今日の線だけが正しい日に進む。範囲の起点は再読み込みするまで変わらない。起点は固定なので、範囲の端の判定や `getBarLayout` に渡す `rangeStart` は日付をまたいでも一定
 - **再描画の範囲**: 画面左端の日付（`visibleDate`）が変わるたびに `GanttChart` が走り直すため、`memberGroups` / `columns` は `useGanttPage` の `useMemo` で参照を保ち、重い `Timeline` / `TimelineDateHeader` / `MemberList` は `React.memo` にしてある。これらに渡す props に、毎回新しく作るオブジェクト・関数を足さないこと（足すと memo が効かなくなる）
 - **smooth スクロールと範囲の拡張**: `scrollLeft` を書き換えると smooth スクロールのアニメーションが止まる。◀ / 今日は `scrollToPosition` が、目的地が左端に近いときに先に範囲を広げて（`flushSync` + `scrollBy` の instant）から smooth を始める。補正には `scrollLeft` の代入ではなく `scrollBy({ behavior: "instant" })` を使う。拡張は左右とも `flushSync` で描画を済ませ、二重に走らせない
 - サンプルデータの投入は `isSeeding` で二重実行を防ぎ、失敗は `seedError` として空の画面に出す
 - **sticky の注意**: `.grid`（`GanttChart.module.scss`）は `width: max-content` が必須。スクロール領域の幅のままだと、左リストが領域の幅までしか追従しない
 - 月の行の年月ラベルは区間の左端に置いているため、スクロールで区間の左が画面外に出るとラベルが切れて見える（`position: sticky` で追従させる改善の余地あり）
-- 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useTimelineScroll` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/`、フックは `hooks/`、サンプルデータは `devSeed.ts`
+- 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useTimelineScroll` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/<名前>/`（tsx・scss・専用フック・`index.ts` を同じディレクトリに置く。画面の値の組み立ては `GanttChart/useGanttChart.ts` が `useGanttPage` の結果から行う）、ページ全体のフックは `hooks/`、サンプルデータは `devSeed.ts`
 - 画面は 1 つのスクロール領域（`.scroller`）の中に CSS Grid で左リスト（`MemberList`）と右タイムライン（`Timeline`）を並べ、日付ヘッダー・左リスト・左上の角を `position: sticky` で固定している。`Timeline` は本体（背景・今日の線・帯）だけで、日付ヘッダーは `TimelineDateHeader` が別に受け持つ。**行の並びと高さは `MemberList` と `Timeline` で同じ**（`MEMBER_ROW_HEIGHT` / `PROJECT_ROW_HEIGHT`）。行を足すときは両方を直す
 - **今日の日付は `useSyncExternalStore` で取っている**（サーバー側は null）。`cacheComponents` が有効なため、レンダリング中に `new Date()` を読むと静的シェルに焼き込まれる。日付をレンダリング中に読む処理を足すときは `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/io.md` を読むこと。データの読み込みは `useEffect` 内（クライアント側）で行っている
 - `useMembers` / `useProjects` は読み込みと `reloadMembers` / `reloadProjects` だけを持つ。フェーズ 6・7 で追加・編集・削除の操作をここに足す（repository はコンポーネントの外で 1 回だけ作り、`useGanttPage.ts` の先頭で生成して引数で渡している）
