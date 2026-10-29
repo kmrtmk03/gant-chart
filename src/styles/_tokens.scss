@@ -1,0 +1,77 @@
+// デザイントークン。
+// Sass 変数（*.module.scss から @use "tokens" で参照）と、
+// CSS カスタムプロパティ（:root に出力。実行時に参照したい場合用）の両方を定義する。
+
+// ---- 色 ----
+$color-bg: #ffffff;
+$color-surface: #f6f7f9;
+$color-border: #d9dde3;
+$color-text: #1f2430;
+$color-text-muted: #6b7280;
+$color-primary: #2f6fed;
+$color-weekend: #f1f3f6;
+$color-holiday: #fdecec;
+$color-today: #ffe9a8;
+
+// ---- 余白 ----
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-6: 24px;
+
+// ---- フォントサイズ ----
+$font-size-xs: 11px;
+$font-size-sm: 12px;
+$font-size-md: 14px;
+$font-size-lg: 16px;
+
+// ---- 角丸 ----
+$radius-sm: 4px;
+$radius-md: 8px;
+
+// ---- 影 ----
+$shadow-panel: 0 4px 16px rgb(0 0 0 / 12%);
+
+// ---- z-index ----
+$z-index-bar: 1;
+$z-index-sticky: 10;
+$z-index-panel: 100;
+
+// ---- フォント ----
+$font-family-base:
+  system-ui,
+  -apple-system,
+  "Hiragino Sans",
+  "Yu Gothic UI",
+  "Noto Sans JP",
+  sans-serif;
+
+// CSS カスタムプロパティとして出力するためのミックスイン。
+// globals.scss の :root 内で一度だけ呼ぶこと。
+@mixin export-css-variables {
+  --color-bg: #{$color-bg};
+  --color-surface: #{$color-surface};
+  --color-border: #{$color-border};
+  --color-text: #{$color-text};
+  --color-text-muted: #{$color-text-muted};
+  --color-primary: #{$color-primary};
+  --color-weekend: #{$color-weekend};
+  --color-holiday: #{$color-holiday};
+  --color-today: #{$color-today};
+  --space-1: #{$space-1};
+  --space-2: #{$space-2};
+  --space-3: #{$space-3};
+  --space-4: #{$space-4};
+  --space-6: #{$space-6};
+  --font-size-xs: #{$font-size-xs};
+  --font-size-sm: #{$font-size-sm};
+  --font-size-md: #{$font-size-md};
+  --font-size-lg: #{$font-size-lg};
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --shadow-panel: #{$shadow-panel};
+  --z-index-bar: #{$z-index-bar};
+  --z-index-sticky: #{$z-index-sticky};
+  --z-index-panel: #{$z-index-panel};
+}
