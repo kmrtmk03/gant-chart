@@ -64,6 +64,9 @@
 
 - **表示期間は「無限スクロール」**（2026-10-29 に「2 か月ごと」から変更）。`useTimelineRange` が用意する日付の範囲（初期は今日の 60 日前から 180 日分。`gantt.constants.ts` の `DEFAULT_RANGE_*` / `RANGE_EXTEND_DAYS`）を持ち、`useTimelineScroll` がスクロール位置を見て端（`RANGE_EDGE_THRESHOLD_PX`）に近づいたら範囲を広げる。過去側に広げたときは `flushSync` で描画を済ませてから `scrollLeft` を広げた分だけ補正する（見ている位置を保つため）。範囲は広げるだけで縮めない。◀ / ▶ は 14 日ぶんのスクロール、「今日」は今日が見える位置へのスクロール。帯の位置は `rangeStart`（広がると変わる）基準なので、フェーズ 8 のドラッグでも `getBarLayout` に今の `rangeStart` を渡すこと
 - **lint の注意**: `react-hooks/refs` が、`ref={}` に渡す関数を持つフックの戻り値オブジェクト全体を「ref を含む」と誤検知する。`GanttChart.tsx` では `page.scroll` を先に分割代入して回避している。スクロール領域の要素は ref ではなく state で持っている
+- **再描画の範囲**: 画面左端の日付（`visibleDate`）が変わるたびに `GanttChart` が走り直すため、`memberGroups` / `columns` は `useGanttPage` の `useMemo` で参照を保ち、重い `Timeline` / `TimelineDateHeader` / `MemberList` は `React.memo` にしてある。これらに渡す props に、毎回新しく作るオブジェクト・関数を足さないこと（足すと memo が効かなくなる）
+- **smooth スクロールと範囲の拡張**: `scrollLeft` を書き換えると smooth スクロールのアニメーションが止まる。◀ / 今日は `scrollToPosition` が、目的地が左端に近いときに先に範囲を広げて（`flushSync` + `scrollBy` の instant）から smooth を始める。補正には `scrollLeft` の代入ではなく `scrollBy({ behavior: "instant" })` を使う。拡張は左右とも `flushSync` で描画を済ませ、二重に走らせない
+- サンプルデータの投入は `isSeeding` で二重実行を防ぎ、失敗は `seedError` として空の画面に出す
 - **sticky の注意**: `.grid`（`GanttChart.module.scss`）は `width: max-content` が必須。スクロール領域の幅のままだと、左リストが領域の幅までしか追従しない
 - 月の行の年月ラベルは区間の左端に置いているため、スクロールで区間の左が画面外に出るとラベルが切れて見える（`position: sticky` で追従させる改善の余地あり）
 - 構成: `GanttChart`（`page.tsx` から置く唯一のコンポーネント）→ `useGanttPage`（`useMembers` / `useProjects` / `useTimelineRange` / `useTimelineScroll` / `useCollapsedMembers` を束ねる）。コンポーネントは `components/`、フックは `hooks/`、サンプルデータは `devSeed.ts`
