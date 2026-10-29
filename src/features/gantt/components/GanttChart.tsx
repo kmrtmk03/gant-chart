@@ -116,6 +116,7 @@ export function GanttChart() {
               collapsedMemberIds={page.collapsedMemberIds}
               onToggleMember={page.toggleMember}
               onAddProject={page.addProject}
+              onSelectProject={sidePanel.selectProject}
               onManageMembers={page.manageMembers}
             />
             <Timeline
