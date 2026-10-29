@@ -2,6 +2,9 @@
 
 // 伸縮用のつかみの幅。1 日だけの帯（32px）でも、移動用の中央部分が 20px 残る
 $handle-width: 6px;
+// タッチなど指で操作する端末でのつかみの幅。指では 6px を狙いにくいので広げる。
+// 1 日だけの帯でも、移動用の中央部分が 12px 残る（つかみと中央の両方を最低限つかめる幅にとどめる）
+$handle-width-coarse: 10px;
 
 // 位置・幅・色は動的な値なので、インラインスタイルで渡す。
 // 背景色の上に上から下へ薄い白のグラデーションを重ね、立体感を出す
@@ -70,6 +73,10 @@ $handle-width: 6px;
   width: $handle-width;
   cursor: ew-resize;
   transition: background-color tokens.$transition-fast;
+
+  @media (pointer: coarse) {
+    width: $handle-width-coarse;
+  }
 
   &:hover {
     background-color: tokens.$color-border-hover;
