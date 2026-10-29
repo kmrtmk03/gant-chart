@@ -71,6 +71,7 @@
   - **サイドパネルで編集中の帯はドラッグできない**（ユーザーの希望で追加）。ドラッグしても動かず保存もされず、パネルも開いたまま。カーソルは grab ではなく pointer、つかみも出ない。他の帯はパネルを開いたままドラッグでき、パネルを閉じれば同じ帯もドラッグできる
   - 保存に失敗させる（`Storage.prototype.setItem` を一時的に例外にする）と、帯が元の位置に戻り、左下に「期間を保存できませんでした。…」が出る。「閉じる」で消える
   - 再読み込みしても変更が残る
+  - PR #13 のレビュー指摘の修正後: Esc で取り消して帯の外で離した（click が来ない）あと、フォーカスして Enter を押すと 1 回目でパネルが開く。通常のドラッグのあとはパネルが開かない。タッチの端末を模した表示（375×812、`pointer: coarse`）でつかみが 10px になる
   - 確認中に見つけた不具合を修正済み: エラーのお知らせを画面下の中央に出していたため、サイドパネルを開いていると右半分が隠れた（左下に移し、`$z-index-notice` でパネルより上に出す）
 - **未確認**: タッチ操作（スマホ・タブレット実機）、`pointercancel` が来る場面、ドラッグ中に帯が表示期間の外まで出て描かれなくなったときの離す操作（window で受けているので動く想定）、スマホ幅の見た目
 - 動作確認のため、ブラウザペインの localStorage のサンプルデータの日付を変えた（「Web サイト改修 v2」が 11/12〜11/16、「バナー制作（1 日だけ）」が 11/14）
@@ -81,11 +82,12 @@
 - ドラッグの状態は**帯 1 本ごと**のフックに持つ（ドラッグ中に `Timeline` 全体を再描画しないため）。担当者行のまとめ帯（`MemberSummaryBar`）はドラッグ中は動かず、保存後に変わる
 - プランの `IDragState` は `IBarDragState` として実装。`projectId` は持たず（帯ごとのフックなので自明）、代わりに `pointerId` を持つ（2 本目の指の動きを無視するため）
 - イベント: `pointerdown` は帯（中央 = 移動）と左右のつかみ（`span`。`stopPropagation` で移動と区別）の React の props。`setPointerCapture` したうえで、`pointermove` / `pointerup` / `pointercancel` / `keydown`（Esc）は**ドラッグ中だけ window に登録**し、同じ `useEffect` で解除する（帯が表示期間の外へ出て描かれなくなっても離す操作を受けるため）。Esc は window のキャプチャ段階で受けて `stopPropagation` し、サイドパネルの Esc（`document` の keydown）まで届かないようにしている
-- クリックとの区別: 移動量が `DRAG_THRESHOLD_PX` 以上になった時点で `isDragging`（戻しても true のまま）。離したとき `isDragging` でなければクリック扱いで、後続の click がそのままパネルを開く。ドラッグ・取り消しのあとは `consumeClickSuppression` が次の click を 1 回だけ無視する（次の pointerdown で印を戻すので、click が来なかったときも残らない）
+- クリックとの区別: 移動量が `DRAG_THRESHOLD_PX` 以上になった時点で `isDragging`（戻しても true のまま）。離したとき `isDragging` でなければクリック扱いで、後続の click がそのままパネルを開く。ドラッグ・取り消しのあとは `consumeClickSuppression` が次の**ポインター由来の** click を 1 回だけ無視する。印は click のたびと次の pointerdown で戻す。キーボード（Enter / Space）の click（`MouseEvent.detail === 0`）は抑止しない（PR #13 のレビュー指摘。取り消しの後に click が来ず印が残っていても、キーボードでパネルを開けるようにするため）
+- `onCommit` は例外を投げない契約だが、万一 reject されても unhandled rejection にならないよう、`useBarDrag` 側でも `.catch` してコンソールに出す（PR #13 のレビュー指摘）
 - 保存: 離したとき期間が変わっていれば `useGanttPage` の `barDrag.changePeriod`（`updateProject` に開始日・終了日だけを渡す部分更新）を 1 回だけ呼ぶ。保存中は変更後の位置に描き（`savingPeriod`）、終わったら保存済みの値に戻す。失敗は例外にせず `barDrag.error` に載せ、`GanttChart` が左下にお知らせを出す
 - **サイドパネルで編集中の案件の帯はドラッグできない**（ユーザーの希望。`useBarDrag` の `isDisabled` に `isEditing` を渡す。つかみも出さない）。パネルのフォームの日付とドラッグの結果が食い違い、古い日付のまま保存して戻してしまうのを防ぐ意味もある。このため `sidePanelKey` は案件の ID だけのまま（期間で作り直さない）。クリックは受け付ける
 - 帯は `touch-action: pan-y`（横のドラッグは帯の操作、縦のスワイプは画面のスクロール）。そのため、タッチで帯の上から横にスクロールすることはできない
-- 新しいトークン: `$z-index-bar-dragging`（ドラッグ中の帯と期間の表示）、`$z-index-notice`（お知らせ。パネルより上）。つかみの幅（6px）は `ProjectBar.module.scss` の Sass 変数
+- 新しいトークン: `$z-index-bar-dragging`（ドラッグ中の帯と期間の表示）、`$z-index-notice`（お知らせ。パネルより上）。つかみの幅は `ProjectBar.module.scss` の Sass 変数で、マウスは 6px、指で操作する端末（`@media (pointer: coarse)`）は 10px（1 日の帯でも中央が 12px 残る。PR #13 のレビュー指摘。実機では未確認なので、狭い・広いと感じたらフェーズ 9 で調整する）
 - テストは jsdom を入れず、状態遷移を純粋関数に切り出して node 環境で確認した（ポインターイベントの順番を変えた流れを `dragThrough` で再現）。フック自体の配線（キャプチャ・window の登録・click の抑止）はブラウザでの手動確認のみ
 - 開発サーバーが別のセッションで動いていると、このセッションの `preview_start`（`dev-http`）は「Another next dev server is already running」で失敗する。同じフォルダーのサーバーなら、`http://localhost:3000` を開けばこの作業ツリーの変更が反映されている
 
