@@ -3,10 +3,10 @@
 // 位置・幅・色は動的な値なので、インラインスタイルで渡す
 .bar {
   position: absolute;
-  top: 16px;
+  top: 17px;
   z-index: tokens.$z-index-bar;
-  height: 8px;
-  border-radius: tokens.$radius-sm;
-  opacity: 0.5;
+  height: 6px;
+  border-radius: 999px;
+  opacity: 0.45;
   pointer-events: none;
 }

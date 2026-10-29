@@ -4,7 +4,7 @@
   position: sticky;
   top: 0;
   z-index: tokens.$z-index-sticky + 1;
-  border-bottom: 1px solid tokens.$color-border;
+  border-bottom: 1px solid tokens.$color-border-strong;
   background: tokens.$color-surface;
 }
 
@@ -17,7 +17,9 @@
   padding: 0 tokens.$space-2;
   overflow: hidden;
   border-right: 1px solid tokens.$color-border;
+  color: tokens.$color-text;
   font-size: tokens.$font-size-sm;
+  font-weight: 600;
   line-height: 24px;
   white-space: nowrap;
 }
@@ -25,21 +27,34 @@
 .day {
   flex-shrink: 0;
   border-right: 1px solid tokens.$color-border;
+  color: tokens.$color-text-muted;
   font-size: tokens.$font-size-xs;
+  font-variant-numeric: tabular-nums;
   line-height: 28px;
   text-align: center;
 }
 
 // 土日と祝日は文字色を変える（祝日が優先）
 .weekend {
-  color: tokens.$color-primary;
+  color: tokens.$color-text-subtle;
 }
 
 .holiday {
-  color: #e5575b;
+  color: tokens.$color-holiday-text;
 }
 
+// 今日は丸いバッジで目立たせる
 .today {
-  background: tokens.$color-today;
+  position: relative;
+  color: tokens.$color-on-primary;
   font-weight: 700;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 3px 2px;
+    z-index: -1;
+    border-radius: tokens.$radius-sm;
+    background: tokens.$color-primary;
+  }
 }

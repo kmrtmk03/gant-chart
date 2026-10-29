@@ -1,10 +1,12 @@
 @use "tokens";
 
+// 細い線に淡い光をまとわせて、暗い背景の上でも見失わないようにする
 .line {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 2px;
   background: tokens.$color-primary;
+  box-shadow: 0 0 8px tokens.$color-primary;
   pointer-events: none;
 }

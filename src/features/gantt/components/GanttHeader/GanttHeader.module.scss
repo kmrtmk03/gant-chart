@@ -4,20 +4,63 @@
   display: flex;
   align-items: center;
   gap: tokens.$space-4;
-  padding: tokens.$space-2 tokens.$space-4;
+  height: 52px;
+  padding: 0 tokens.$space-4;
   border-bottom: 1px solid tokens.$color-border;
+  background: tokens.$color-surface;
 }
 
+// タイトルの左に、帯をかたどった小さなロゴを置く
 .title {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-2;
   margin: 0;
-  font-size: tokens.$font-size-lg;
+  font-size: tokens.$font-size-md;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  &::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border-radius: tokens.$radius-sm;
+    background:
+      linear-gradient(tokens.$color-on-primary, tokens.$color-on-primary) 4px
+        5px / 10px 2px no-repeat,
+      linear-gradient(tokens.$color-on-primary, tokens.$color-on-primary) 4px
+        11px / 6px 2px no-repeat,
+      linear-gradient(135deg, tokens.$color-primary, tokens.$color-bar-purple);
+  }
 }
 
+// 前へ・今日・次へを 1 つのまとまり（セグメント）に見せる
 .controls {
   display: flex;
-  gap: tokens.$space-1;
+  padding: 2px;
+  border: 1px solid tokens.$color-border;
+  border-radius: tokens.$radius-sm + 2px;
+  background: tokens.$color-bg;
+
+  button {
+    min-height: 28px;
+    padding: 0 tokens.$space-3;
+    border-color: transparent;
+    background: none;
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-xs;
+
+    &:hover:not(:disabled) {
+      border-color: transparent;
+      background: tokens.$color-hover;
+      color: tokens.$color-text;
+    }
+  }
 }
 
 .range {
-  color: tokens.$color-text-muted;
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-md;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }

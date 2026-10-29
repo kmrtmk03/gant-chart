@@ -5,8 +5,8 @@
   position: sticky;
   left: 0;
   z-index: tokens.$z-index-sticky;
-  border-right: 1px solid tokens.$color-border;
-  background: tokens.$color-bg;
+  border-right: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-surface;
 }
 
 .memberRow,
@@ -19,14 +19,21 @@
 }
 
 .memberRow {
-  padding: 0 tokens.$space-2;
-  background: tokens.$color-surface;
+  padding: 0 tokens.$space-3 0 tokens.$space-1;
+  background: tokens.$color-row-member;
   font-weight: 600;
 }
 
 .projectRow {
   padding: 0 tokens.$space-3 0 tokens.$space-6;
+  color: tokens.$color-text-muted;
   font-size: tokens.$font-size-sm;
+  transition: background-color tokens.$transition-fast;
+
+  &:hover {
+    background: tokens.$color-hover;
+    color: tokens.$color-text;
+  }
 }
 
 .addProjectRow {
@@ -37,7 +44,7 @@
 .projectButton {
   display: flex;
   flex: 1;
-  align-items: center;
+  justify-content: flex-start;
   gap: tokens.$space-2;
   min-width: 0;
   height: 100%;
@@ -45,26 +52,43 @@
   border: 0;
   background: none;
   color: inherit;
-  font: inherit;
+  font-weight: inherit;
   text-align: left;
-  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: none;
+  }
 }
 
 .addProjectButton {
+  min-height: 24px;
+  padding: 0 tokens.$space-2;
+  margin-left: -(tokens.$space-2);
+  border: 0;
+  background: none;
+  color: tokens.$color-text-subtle;
+  font-size: tokens.$font-size-xs;
+
+  &:hover:not(:disabled) {
+    background: tokens.$color-primary-soft;
+    color: tokens.$color-primary;
+  }
+}
+
+// 開閉の三角。担当者名の左に小さく置く
+.toggle {
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
   border: 0;
   background: none;
-  color: tokens.$color-primary;
-  font-size: tokens.$font-size-sm;
-  cursor: pointer;
-}
+  color: tokens.$color-text-subtle;
+  font-size: 9px;
 
-.toggle {
-  padding: 0 tokens.$space-1;
-  border: 0;
-  background: none;
-  color: tokens.$color-text-muted;
-  cursor: pointer;
+  &:hover:not(:disabled) {
+    background: tokens.$color-hover;
+    color: tokens.$color-text;
+  }
 }
 
 .name {
@@ -74,18 +98,24 @@
   white-space: nowrap;
 }
 
+// 案件数はピル型のバッジにする
 .count {
+  padding: 1px tokens.$space-2;
+  border-radius: 999px;
+  background: tokens.$color-hover;
   color: tokens.$color-text-muted;
   font-size: tokens.$font-size-xs;
-  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 // 色は動的な値なので、背景色だけインラインスタイルで渡す
 .colorDot {
   flex-shrink: 0;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  box-shadow: 0 0 0 3px tokens.$color-hover;
 }
 
 .footer {

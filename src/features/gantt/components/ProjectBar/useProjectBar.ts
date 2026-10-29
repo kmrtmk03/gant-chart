@@ -45,7 +45,7 @@ export function useProjectBar({
   const style: CSSProperties = {
     left: layout.left,
     width: layout.width,
-    background: `var(${BAR_COLORS[project.color].cssVariable})`,
+    backgroundColor: `var(${BAR_COLORS[project.color].cssVariable})`,
   }
 
   return {

@@ -3,27 +3,45 @@
 .dialog {
   width: min(520px, calc(100vw - #{tokens.$space-6} * 2));
   max-height: calc(100vh - #{tokens.$space-6} * 2);
-  padding: tokens.$space-4;
-  border: 1px solid tokens.$color-border;
-  border-radius: tokens.$radius-md;
+  padding: tokens.$space-6;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-lg;
+  background: tokens.$color-elevated;
   box-shadow: tokens.$shadow-panel;
   color: tokens.$color-text;
 
   &::backdrop {
-    background: rgb(0 0 0 / 30%);
+    background: tokens.$color-backdrop;
+    backdrop-filter: blur(4px);
   }
 }
 
+// 閉じるボタンは枠を消して、見出しの右に控えめに置く
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: tokens.$space-2;
+  margin-bottom: tokens.$space-3;
+
+  button {
+    min-width: 32px;
+    padding: 0;
+    border-color: transparent;
+    background: none;
+    color: tokens.$color-text-muted;
+
+    &:hover:not(:disabled) {
+      border-color: transparent;
+      background: tokens.$color-hover;
+      color: tokens.$color-text;
+    }
+  }
 }
 
 .title {
   margin: 0;
   font-size: tokens.$font-size-lg;
+  font-weight: 600;
 }
 
 .list {
@@ -41,7 +59,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: tokens.$space-2;
-  margin-top: tokens.$space-3;
+  margin-top: tokens.$space-4;
 }
 
 .addInput {
@@ -54,9 +72,15 @@
 }
 
 .addButton {
+  min-height: 36px;
   border-color: tokens.$color-primary;
   background: tokens.$color-primary;
-  color: #fff;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-primary-hover;
+    background: tokens.$color-primary-hover;
+  }
 }
 
 // 追加欄の下に、行の幅いっぱいで出す

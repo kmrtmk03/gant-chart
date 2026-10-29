@@ -3,33 +3,49 @@
 // CSS カスタムプロパティ（:root に出力。実行時に参照したい場合用）の両方を定義する。
 
 // ---- 色 ----
-$color-bg: #ffffff;
-$color-surface: #f6f7f9;
-$color-border: #d9dde3;
-$color-text: #1f2430;
-$color-text-muted: #6b7280;
-$color-primary: #2f6fed;
-$color-weekend: #f1f3f6;
-$color-holiday: #fdecec;
-$color-today: #ffe9a8;
-$color-row-member: rgb(31 36 48 / 4%);
-$color-danger: #d92d20;
-$color-warning: #b54708;
+// ダークテーマ。背景は 3 段階（bg → surface → elevated）で奥行きを出し、
+// 線や薄い塗りは白の透明度で表して、どの背景の上でもなじむようにする
+$color-bg: #0b0d12;
+$color-surface: #11141b;
+$color-elevated: #171b24;
+$color-elevated-hover: #1f2430;
+$color-border: rgb(255 255 255 / 7%);
+$color-border-strong: rgb(255 255 255 / 12%);
+$color-border-hover: rgb(255 255 255 / 20%);
+$color-text: #e6e8ee;
+$color-text-muted: #8b93a7;
+$color-text-subtle: #5d6579;
+$color-primary: #7182ff;
+$color-primary-hover: #8794ff;
+$color-primary-soft: rgb(113 130 255 / 16%);
+$color-on-primary: #ffffff;
+$color-hover: rgb(255 255 255 / 5%);
+$color-weekend: rgb(255 255 255 / 2.5%);
+$color-holiday: rgb(242 102 122 / 7%);
+$color-holiday-text: #f2667a;
+$color-today: rgb(113 130 255 / 18%);
+$color-row-member: rgb(255 255 255 / 2.5%);
+$color-danger: #f2667a;
+$color-danger-soft: rgb(242 102 122 / 12%);
+$color-warning: #f5b454;
+$color-backdrop: rgb(4 6 10 / 60%);
 
 // ---- 帯の色プリセット ----
-// キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）
-$color-bar-blue: #4c8df6;
-$color-bar-green: #3fb27f;
-$color-bar-orange: #f29a3d;
-$color-bar-purple: #9b6cf0;
-$color-bar-red: #e5575b;
-$color-bar-gray: #8a94a6;
+// キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）。
+// 暗い背景の上で白い文字が読める明るさに揃えている
+$color-bar-blue: #4f7dff;
+$color-bar-green: #22a77a;
+$color-bar-orange: #e88a2e;
+$color-bar-purple: #8b5cf6;
+$color-bar-red: #e5536b;
+$color-bar-gray: #5f6b82;
 
 // ---- 余白 ----
 $space-1: 4px;
 $space-2: 8px;
 $space-3: 12px;
 $space-4: 16px;
+$space-5: 20px;
 $space-6: 24px;
 
 // ---- フォントサイズ ----
@@ -39,11 +55,23 @@ $font-size-md: 14px;
 $font-size-lg: 16px;
 
 // ---- 角丸 ----
-$radius-sm: 4px;
-$radius-md: 8px;
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
 
 // ---- 影 ----
-$shadow-panel: 0 4px 16px rgb(0 0 0 / 12%);
+$shadow-panel:
+  0 0 0 1px rgb(255 255 255 / 6%),
+  0 24px 48px rgb(0 0 0 / 50%);
+// 帯の上辺に細いハイライトを入れて、塗りつぶしの平板さを和らげる
+$shadow-bar:
+  inset 0 1px 0 rgb(255 255 255 / 18%),
+  0 1px 2px rgb(0 0 0 / 40%);
+// フォーカスリング（キーボード操作時の枠）
+$focus-ring: 0 0 0 3px rgb(113 130 255 / 35%);
+
+// ---- アニメーション ----
+$transition-fast: 120ms ease;
 
 // ---- z-index ----
 $z-index-bar: 1;
@@ -64,6 +92,7 @@ $font-family-base:
 @mixin export-css-variables {
   --color-bg: #{$color-bg};
   --color-surface: #{$color-surface};
+  --color-elevated: #{$color-elevated};
   --color-border: #{$color-border};
   --color-text: #{$color-text};
   --color-text-muted: #{$color-text-muted};
@@ -83,6 +112,7 @@ $font-family-base:
   --space-2: #{$space-2};
   --space-3: #{$space-3};
   --space-4: #{$space-4};
+  --space-5: #{$space-5};
   --space-6: #{$space-6};
   --font-size-xs: #{$font-size-xs};
   --font-size-sm: #{$font-size-sm};
@@ -90,6 +120,7 @@ $font-family-base:
   --font-size-lg: #{$font-size-lg};
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
   --shadow-panel: #{$shadow-panel};
   --z-index-bar: #{$z-index-bar};
   --z-index-sticky: #{$z-index-sticky};

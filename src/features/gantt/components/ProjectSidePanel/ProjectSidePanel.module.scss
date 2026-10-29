@@ -12,10 +12,10 @@ $panel-width: 360px;
   display: flex;
   flex-direction: column;
   width: min(#{$panel-width}, 100vw);
-  border-left: 1px solid tokens.$color-border;
-  background: tokens.$color-bg;
+  border-left: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-elevated;
   box-shadow: tokens.$shadow-panel;
-  animation: slide-in 0.2s ease-out;
+  animation: slide-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @keyframes slide-in {
@@ -34,37 +34,56 @@ $panel-width: 360px;
   }
 }
 
+// 閉じるボタンは枠を消して、見出しの右に控えめに置く
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: tokens.$space-3 tokens.$space-4;
+  height: 52px;
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
   border-bottom: 1px solid tokens.$color-border;
+
+  button {
+    min-width: 32px;
+    padding: 0;
+    border-color: transparent;
+    background: none;
+    color: tokens.$color-text-muted;
+
+    &:hover:not(:disabled) {
+      border-color: transparent;
+      background: tokens.$color-hover;
+      color: tokens.$color-text;
+    }
+  }
 }
 
 .title {
   margin: 0;
   font-size: tokens.$font-size-lg;
+  font-weight: 600;
 }
 
 .form {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: tokens.$space-4;
-  padding: tokens.$space-4;
+  gap: tokens.$space-5;
+  padding: tokens.$space-6;
   overflow-y: auto;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: tokens.$space-1;
+  gap: tokens.$space-2;
   min-width: 0;
 
   label {
     color: tokens.$color-text-muted;
-    font-size: tokens.$font-size-sm;
+    font-size: tokens.$font-size-xs;
+    font-weight: 500;
+    letter-spacing: 0.04em;
   }
 
   input[aria-invalid="true"],
@@ -97,14 +116,16 @@ $panel-width: 360px;
   legend {
     padding: 0;
     color: tokens.$color-text-muted;
-    font-size: tokens.$font-size-sm;
+    font-size: tokens.$font-size-xs;
+    font-weight: 500;
+    letter-spacing: 0.04em;
   }
 }
 
 .colors {
   display: flex;
-  gap: tokens.$space-2;
-  margin-top: tokens.$space-1;
+  gap: tokens.$space-3;
+  margin-top: tokens.$space-2;
 }
 
 .colorOption {
@@ -120,16 +141,22 @@ $panel-width: 360px;
 
 .colorSwatch {
   display: block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid transparent;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background-clip: padding-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%);
+  transition: transform tokens.$transition-fast;
 }
 
+.colorOption:hover .colorSwatch {
+  transform: scale(1.1);
+}
+
+// 選んだ色は、パネルの背景色の隙間を挟んだ白い輪で示す
 .colorInput:checked + .colorSwatch {
-  outline: 2px solid tokens.$color-text;
-  outline-offset: 1px;
+  box-shadow:
+    0 0 0 2px tokens.$color-elevated,
+    0 0 0 4px tokens.$color-text;
 }
 
 .colorInput:focus-visible + .colorSwatch {
@@ -150,6 +177,8 @@ $panel-width: 360px;
   display: flex;
   gap: tokens.$space-2;
   margin-top: auto;
+  padding-top: tokens.$space-4;
+  border-top: 1px solid tokens.$color-border;
 }
 
 .spacer {
@@ -159,11 +188,21 @@ $panel-width: 360px;
 .saveButton {
   border-color: tokens.$color-primary;
   background: tokens.$color-primary;
-  color: #fff;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-primary-hover;
+    background: tokens.$color-primary-hover;
+  }
 }
 
 .deleteButton {
-  border-color: tokens.$color-danger;
+  border-color: transparent;
   background: none;
   color: tokens.$color-danger;
+
+  &:hover:not(:disabled) {
+    border-color: transparent;
+    background: tokens.$color-danger-soft;
+  }
 }
