@@ -31,3 +31,24 @@ export const BAR_COLORS: Record<TBarColor, IBarColorPreset> = {
 
 /** 案件を新しく作るときの帯の色 */
 export const DEFAULT_BAR_COLOR: TBarColor = "blue"
+
+/** タイムラインの 1 日分の列幅（px） */
+export const DAY_COLUMN_WIDTH = 32
+
+/** 担当者行の高さ（px）。左リストとタイムラインで同じ値を使い、行をそろえる */
+export const MEMBER_ROW_HEIGHT = 40
+
+/** 案件行の高さ（px）。左リストとタイムラインで同じ値を使い、行をそろえる */
+export const PROJECT_ROW_HEIGHT = 36
+
+/** 初期表示の開始日を、今日の何日前にするか */
+export const DEFAULT_RANGE_DAYS_BEFORE = 7
+
+/** 初期表示の日数（約 2 か月分） */
+export const DEFAULT_RANGE_DAYS = 60
+
+/** 「前へ」「次へ」ボタン 1 回で表示期間を動かす日数 */
+export const RANGE_SHIFT_DAYS = 14
+
+/** 帯のドラッグで、これ未満の移動量（px）はクリックとみなす */
+export const DRAG_THRESHOLD_PX = 4
