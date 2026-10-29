@@ -23,7 +23,7 @@ interface ITimelineProps {
 
 /**
  * 右側のタイムライン本体。背景の縦線・今日の線・帯を重ねて描く。
- * 行の並びと高さは `MemberList` と同じ（担当者行 → 開いていれば案件行）にして、左右をそろえる。
+ * 行の並びと高さは `MemberList` と同じ（担当者行 → 開いていれば案件行と「案件を追加」行）にして、左右をそろえる。
  * 日付ヘッダーは `TimelineDateHeader` が別に受け持つ。
  */
 export function Timeline({
@@ -53,20 +53,28 @@ export function Timeline({
               rangeDays={rangeDays}
             />
           </div>
-          {!collapsedMemberIds.has(member.id) &&
-            projects.map((project) => (
+          {!collapsedMemberIds.has(member.id) && (
+            <>
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  className={styles.projectRow}
+                  style={{ height: PROJECT_ROW_HEIGHT }}
+                >
+                  <ProjectBar
+                    project={project}
+                    rangeStart={rangeStart}
+                    rangeDays={rangeDays}
+                  />
+                </div>
+              ))}
+              {/* 左リストの「案件を追加」行と高さをそろえるための空行 */}
               <div
-                key={project.id}
                 className={styles.projectRow}
                 style={{ height: PROJECT_ROW_HEIGHT }}
-              >
-                <ProjectBar
-                  project={project}
-                  rangeStart={rangeStart}
-                  rangeDays={rangeDays}
-                />
-              </div>
-            ))}
+              />
+            </>
+          )}
         </div>
       ))}
     </div>

@@ -44,8 +44,10 @@ export function useGanttPage() {
     await Promise.all([reloadMembers(), reloadProjects()])
   }, [reloadMembers, reloadProjects])
 
-  // TODO: フェーズ 6 で案件の追加（サイドパネルを開く）に置き換える
-  const handleAddProject = useCallback(() => {}, [])
+  // TODO: フェーズ 6 で案件の追加（サイドパネルを開き、memberId の担当者を初期値にする）に置き換える
+  const handleAddProject = useCallback((memberId: string) => {
+    void memberId
+  }, [])
   // TODO: フェーズ 7 で担当者の管理画面を開く処理に置き換える
   const handleManageMembers = useCallback(() => {}, [])
 

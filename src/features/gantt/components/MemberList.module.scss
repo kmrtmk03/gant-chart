@@ -10,7 +10,8 @@
 }
 
 .memberRow,
-.projectRow {
+.projectRow,
+.addProjectRow {
   display: flex;
   align-items: center;
   gap: tokens.$space-2;
@@ -26,6 +27,19 @@
 .projectRow {
   padding: 0 tokens.$space-3 0 tokens.$space-6;
   font-size: tokens.$font-size-sm;
+}
+
+.addProjectRow {
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
+}
+
+.addProjectButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: tokens.$color-primary;
+  font-size: tokens.$font-size-sm;
+  cursor: pointer;
 }
 
 .toggle {
