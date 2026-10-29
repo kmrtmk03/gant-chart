@@ -493,6 +493,26 @@ describe("スキーマのバージョン", () => {
       supportedVersion: 1,
     })
   })
+
+  it("一度読み込んだ後に別のタブがスキーマを更新したら、以降の読み書きを拒否してデータを残す", async () => {
+    // 古いアプリのタブで一度読み込み、バージョン確認を済ませた状態にする
+    const tanaka = await repository.createMember({ name: "田中" })
+    await repository.listMembers()
+
+    // 新しいアプリの別タブが、同じ Storage のデータを新しい構造に移行した
+    const migratedMembers = JSON.stringify({ items: [{ id: tanaka.id }] })
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.members, migratedMembers)
+
+    await expect(repository.listMembers()).rejects.toThrow(
+      GanttUnsupportedSchemaError,
+    )
+    await expect(repository.createMember({ name: "佐藤" })).rejects.toThrow(
+      GanttUnsupportedSchemaError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+    expect(storage.getItem(STORAGE_KEYS.members)).toBe(migratedMembers)
+  })
 })
 
 describe("実行環境", () => {

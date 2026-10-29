@@ -122,8 +122,6 @@ function validateProject(project: IProject): void {
 export class LocalStorageRepository implements IGanttRepository {
   /** コンストラクタで渡された Storage（テスト用）。未指定なら呼ばれた時点の window.localStorage を使う */
   private readonly injectedStorage: Storage | undefined
-  /** スキーマのバージョン確認を済ませたか。毎回 localStorage を読み直さないためのフラグ */
-  private isSchemaChecked = false
 
   /**
    * @param storage 保存先。省略すると window.localStorage を使う。
@@ -390,15 +388,13 @@ export class LocalStorageRepository implements IGanttRepository {
   }
 
   /**
-   * スキーマのバージョン確認を済ませた Storage を返す。読み書きの前に必ずこれを通す。
-   * 確認に成功したら以降は省略する。アプリより新しいバージョンのときは成功扱いにしないので、毎回エラーになる
+   * スキーマのバージョンを確認した Storage を返す。読み書きの前に必ずこれを通す。
+   * 確認結果は覚えずに毎回確かめる。古いタブを開いたまま別のタブで新しいアプリがデータを移行したときに、
+   * 古いタブからの読み書きを止めるため（バージョンを 1 つ読むだけなので負担は小さい）
    */
   private getPreparedStorage(): Storage {
     const storage = this.getStorage()
-    if (!this.isSchemaChecked) {
-      this.migrateSchemaIfNeeded(storage)
-      this.isSchemaChecked = true
-    }
+    this.migrateSchemaIfNeeded(storage)
     return storage
   }
 
