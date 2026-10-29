@@ -1,23 +1,12 @@
-import { useEffect, useId } from "react"
-
-import { BAR_COLORS } from "../gantt.constants"
-import { isBarColor } from "../gantt.guards"
 import type {
-  IBarColorPreset,
   IMember,
   IProject,
-  TBarColor,
   TDateString,
   TProjectInput,
-} from "../gantt.type"
-import { ConfirmDialog } from "./ConfirmDialog"
-import { useProjectForm } from "./hooks/useProjectForm"
+} from "../../gantt.type"
+import { ConfirmDialog } from "../ConfirmDialog"
 import styles from "./ProjectSidePanel.module.scss"
-
-/** 色の選択肢。BAR_COLORS のキーを型ガードで TBarColor に絞って並べる（型アサーションを避けるため） */
-const COLOR_OPTIONS = Object.entries(BAR_COLORS).filter(
-  (entry): entry is [TBarColor, IBarColorPreset] => isBarColor(entry[0]),
-)
+import { useProjectSidePanel } from "./useProjectSidePanel"
 
 interface IProjectSidePanelProps {
   /** 担当者の選択肢（1 人以上） */
@@ -38,6 +27,7 @@ interface IProjectSidePanelProps {
  * 案件を追加・編集する右側のサイドパネル。タイムラインの上に重ねて出し、タイムラインの幅は変えない。
  * 開き直すとき（別の案件・別の担当者）は、呼び出し側で `key` を変えてフォームを作り直すこと。
  * Esc で閉じる（入力途中でも確認しない）。開いた直後は案件名の入力欄にフォーカスする。
+ * フォームの状態や Esc の扱いは `useProjectSidePanel` が受け持つ。
  */
 export function ProjectSidePanel({
   members,
@@ -48,51 +38,34 @@ export function ProjectSidePanel({
   onDelete,
   onClose,
 }: IProjectSidePanelProps) {
-  const form = useProjectForm({
+  const panel = useProjectSidePanel({
     members,
     project,
     defaultMemberId,
     today,
     onSubmit,
     onDelete,
+    onClose,
   })
-  const { values, errors, isConfirmingDelete } = form
-  const isEditing = project !== null
-  const idPrefix = useId()
-
-  // Esc で閉じる。削除の確認ダイアログが開いている間は、ダイアログ側の Esc（確認を閉じる）を優先する。
-  // 保存・削除の実行中は閉じない（結果を見失わないため）
-  useEffect(() => {
-    if (isConfirmingDelete || form.isSubmitting) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [isConfirmingDelete, form.isSubmitting, onClose])
+  const { values, errors, fieldIds } = panel
 
   return (
-    <aside
-      className={styles.panel}
-      aria-label={isEditing ? "案件を編集" : "案件を追加"}
-    >
+    <aside className={styles.panel} aria-label={panel.title}>
       <header className={styles.header}>
-        <h2 className={styles.title}>
-          {isEditing ? "案件を編集" : "案件を追加"}
-        </h2>
+        <h2 className={styles.title}>{panel.title}</h2>
         <button type="button" aria-label="閉じる" onClick={onClose}>
           ✕
         </button>
       </header>
 
-      <form className={styles.form} noValidate onSubmit={form.handleSubmit}>
+      <form className={styles.form} noValidate onSubmit={panel.handleSubmit}>
         <div className={styles.field}>
-          <label htmlFor={`${idPrefix}-member`}>担当者</label>
+          <label htmlFor={fieldIds.member}>担当者</label>
           <select
-            id={`${idPrefix}-member`}
+            id={fieldIds.member}
             value={values.memberId}
             aria-invalid={errors.memberId !== undefined}
-            onChange={(event) => form.setField("memberId", event.target.value)}
+            onChange={panel.handleChangeMember}
           >
             {members.map((member) => (
               <option key={member.id} value={member.id}>
@@ -104,42 +77,40 @@ export function ProjectSidePanel({
         </div>
 
         <div className={styles.field}>
-          <label htmlFor={`${idPrefix}-name`}>案件名</label>
+          <label htmlFor={fieldIds.name}>案件名</label>
           <input
-            id={`${idPrefix}-name`}
+            id={fieldIds.name}
             type="text"
             autoFocus
             value={values.name}
             aria-invalid={errors.name !== undefined}
-            onChange={(event) => form.setField("name", event.target.value)}
+            onChange={panel.handleChangeName}
           />
           {errors.name && <p className={styles.error}>{errors.name}</p>}
         </div>
 
         <div className={styles.dateRow}>
           <div className={styles.field}>
-            <label htmlFor={`${idPrefix}-start`}>開始日</label>
+            <label htmlFor={fieldIds.startDate}>開始日</label>
             <input
-              id={`${idPrefix}-start`}
+              id={fieldIds.startDate}
               type="date"
               value={values.startDate}
               aria-invalid={errors.startDate !== undefined}
-              onChange={(event) =>
-                form.setField("startDate", event.target.value)
-              }
+              onChange={panel.handleChangeStartDate}
             />
             {errors.startDate && (
               <p className={styles.error}>{errors.startDate}</p>
             )}
           </div>
           <div className={styles.field}>
-            <label htmlFor={`${idPrefix}-end`}>終了日</label>
+            <label htmlFor={fieldIds.endDate}>終了日</label>
             <input
-              id={`${idPrefix}-end`}
+              id={fieldIds.endDate}
               type="date"
               value={values.endDate}
               aria-invalid={errors.endDate !== undefined}
-              onChange={(event) => form.setField("endDate", event.target.value)}
+              onChange={panel.handleChangeEndDate}
             />
             {errors.endDate && <p className={styles.error}>{errors.endDate}</p>}
           </div>
@@ -148,63 +119,62 @@ export function ProjectSidePanel({
         <fieldset className={styles.colorField}>
           <legend>帯の色</legend>
           <div className={styles.colors}>
-            {COLOR_OPTIONS.map(([colorKey, preset]) => (
-              <label key={colorKey} className={styles.colorOption}>
+            {panel.colorOptions.map((option) => (
+              <label key={option.key} className={styles.colorOption}>
                 <input
                   type="radio"
-                  name={`${idPrefix}-color`}
+                  name={fieldIds.color}
                   className={styles.colorInput}
-                  value={colorKey}
-                  checked={values.color === colorKey}
-                  onChange={() => form.setField("color", colorKey)}
+                  value={option.key}
+                  checked={option.isChecked}
+                  onChange={() => panel.handleChangeColor(option.key)}
                 />
-                {/* 色は動的な値なので背景色だけインラインスタイルで渡す */}
                 <span
                   className={styles.colorSwatch}
-                  style={{ background: `var(${preset.cssVariable})` }}
-                  title={preset.label}
+                  style={option.swatchStyle}
+                  title={option.label}
                 />
-                <span className={styles.srOnly}>{preset.label}</span>
+                <span className={styles.srOnly}>{option.label}</span>
               </label>
             ))}
           </div>
         </fieldset>
 
         <div className={styles.field}>
-          <label htmlFor={`${idPrefix}-note`}>メモ</label>
+          <label htmlFor={fieldIds.note}>メモ</label>
           <textarea
-            id={`${idPrefix}-note`}
+            id={fieldIds.note}
             rows={4}
             value={values.note}
-            onChange={(event) => form.setField("note", event.target.value)}
+            onChange={panel.handleChangeNote}
           />
         </div>
 
-        {form.submitError && (
+        {panel.submitError && (
           <p className={styles.error} role="alert">
-            保存できませんでした。{form.submitError.message}
+            保存できませんでした。{panel.submitError.message}
           </p>
         )}
 
         <div className={styles.actions}>
-          {isEditing && (
+          {panel.isEditing && (
             <button
               type="button"
               className={styles.deleteButton}
-              disabled={form.isSubmitting}
-              onClick={form.openDeleteConfirm}
+              disabled={panel.isSubmitting}
+              onClick={panel.openDeleteConfirm}
             >
               削除
             </button>
           )}
           <span className={styles.spacer} />
-          <button type="button" disabled={form.isSubmitting} onClick={onClose}>
+          <button type="button" disabled={panel.isSubmitting} onClick={onClose}>
             キャンセル
           </button>
           <button
             type="submit"
             className={styles.saveButton}
-            disabled={form.isSubmitting}
+            disabled={panel.isSubmitting}
           >
             保存
           </button>
@@ -212,13 +182,13 @@ export function ProjectSidePanel({
       </form>
 
       <ConfirmDialog
-        isOpen={isConfirmingDelete}
+        isOpen={panel.isConfirmingDelete}
         title="案件を削除しますか？"
-        message={`「${project?.name ?? ""}」を削除します。この操作は元に戻せません。`}
+        message={panel.deleteConfirmMessage}
         confirmLabel="削除する"
-        isBusy={form.isSubmitting}
-        onConfirm={form.handleConfirmDelete}
-        onCancel={form.closeDeleteConfirm}
+        isBusy={panel.isSubmitting}
+        onConfirm={panel.handleConfirmDelete}
+        onCancel={panel.closeDeleteConfirm}
       />
     </aside>
   )

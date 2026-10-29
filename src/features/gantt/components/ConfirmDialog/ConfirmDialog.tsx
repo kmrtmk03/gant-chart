@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react"
-
 import styles from "./ConfirmDialog.module.scss"
+import { useConfirmDialog } from "./useConfirmDialog"
 
 interface IConfirmDialogProps {
   /** 開いているか。開閉は必ずこの props で行う（Esc で閉じるときも `onCancel` 経由で親が false にする） */
@@ -17,6 +16,7 @@ interface IConfirmDialogProps {
 /**
  * 破壊的な操作（削除など）の確認ダイアログ。`<dialog>` 要素を showModal で開く。
  * 背面は操作できなくなり、フォーカスは最初のボタン（キャンセル）に当たる。
+ * 開閉や Esc の扱いは `useConfirmDialog` が受け持つ。
  * フェーズ 7（担当者の削除）でも使う。
  */
 export function ConfirmDialog({
@@ -28,26 +28,18 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: IConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-
-  // isOpen を正として、<dialog> の開閉を合わせる
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (dialog === null) return
-    if (isOpen && !dialog.open) dialog.showModal()
-    if (!isOpen && dialog.open) dialog.close()
-  }, [isOpen])
+  const { dialogRef, handleCancel } = useConfirmDialog({
+    isOpen,
+    isBusy,
+    onCancel,
+  })
 
   return (
     <dialog
       ref={dialogRef}
       className={styles.dialog}
       aria-labelledby="confirm-dialog-title"
-      // Esc での閉じは、<dialog> に任せず親の state に反映する（state と見た目をずらさない）
-      onCancel={(event) => {
-        event.preventDefault()
-        if (!isBusy) onCancel()
-      }}
+      onCancel={handleCancel}
     >
       <h2 id="confirm-dialog-title" className={styles.title}>
         {title}
