@@ -28,7 +28,7 @@
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
-| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
@@ -50,7 +50,36 @@
 
 ---
 
-## 4. フェーズ 5 の完了状況
+## 4. フェーズ 6 の完了状況
+
+フェーズ 6 は実装完了（ブランチ `feat/gantt-side-panel`。PR は未作成、push もしていない）。
+
+### フェーズ 6 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（181 件。うち `projectForm.utils.test.ts` が 13 件）/ `format:check` / `build` が成功
+- **ブラウザでの動作確認は未実施**: 別の `next dev`（`https://localhost:3000`、Basic 認証あり）がすでに動いており、認証情報の入力は代行できないため。**ユーザーに確認してほしい観点**:
+  - 各担当者の「＋ 案件を追加」→ その担当者が初期選択で開く / 案件名にフォーカスが当たる
+  - 追加した案件が正しい担当者の下・正しい日付に出る / 再読み込みしても残る
+  - 帯をクリックで編集でき、編集中の帯が枠で強調される / 変更が帯に反映される
+  - 削除 →確認ダイアログ → 削除できる。確認ダイアログの Esc は確認だけ閉じ、パネルは閉じない
+  - 案件名が空・101 文字、開始日 > 終了日で、項目の下にエラーが出て保存されない
+  - `Esc` / 「✕」/ キャンセルでパネルが閉じる
+
+### フェーズ 7 以降への申し送り（サイドパネル）
+
+- 構成: `useSidePanel`（`TSidePanelState`: closed / create / edit の 1 つの state）→ `useGanttPage` が `sidePanel` グループで公開 → `GanttChart` が `ProjectSidePanel` を置く。編集中の案件は state に持たず、`projectId` から `projects` を引く（見つからなければパネルは出さない）
+- `useProjects` に `createProject` / `updateProject` / `deleteProject` を追加。repository の保存が成功してから state を更新し、失敗は例外のまま投げる（フォームが `submitError` としてパネル内に出す）。フェーズ 7 の `useMembers` も同じ形にそろえるとよい
+- フォームは `components/hooks/` に置いた（`useProjectForm` / `projectForm.type.ts` / `projectForm.utils.ts`）。入力値の初期値は初回の描画で 1 度だけ決めるので、別の案件・担当者で開き直すときは `GanttChart` が `ProjectSidePanel` の `key` を変えて作り直している
+- 案件名の必須・100 文字チェックは `validateProjectForm`（`PROJECT_NAME_MAX_LENGTH`）。フェーズ 7 の担当者名も同じ観点（前後の空白を除いて空なら不可）で検証すること
+- `ConfirmDialog`（`<dialog>` + `showModal`）はフェーズ 7 の担当者の削除でも使える。開閉は `isOpen` の props が正で、Esc は `onCancel` 経由で親が閉じる
+- パネルの Esc は `document` の keydown で受けており、確認ダイアログの表示中・保存中は無効にしている
+- `ProjectBar` は `button` になり、クリックで `onSelect(projectId)`、編集中は `isEditing` で枠線を出す。`Timeline` に `editingProjectId` / `onSelectProject` を渡している（`onSelectProject` は参照が変わらない関数にして `React.memo` を保つこと）。フェーズ 8 のドラッグは、このクリックとの区別に `DRAG_THRESHOLD_PX` を使う
+- 「担当者が 0 人のときは追加ボタンを押せない」は、案件を追加するボタンが担当者ごとの案件リスト下にあるため、担当者がいなければボタン自体が存在しない（空の画面に「まず担当者を追加してください」を出している）ことで満たしている
+- 新しいトークン `$color-danger`（削除ボタン・エラー文字）を `_tokens.scss` に追加。パネルの幅（360px）は `ProjectSidePanel.module.scss` の Sass 変数
+- 追加時の開始日・終了日の初期値は今日の 1 日だけ。担当者が他のタブで消えたときは、保存時に「担当者を選択してください」になる
+- 開発サーバーがすでに別で動いているとき（`https://localhost:3000`）、2 つ目の `pnpm dev:http` は「Another next dev server is already running」で失敗する
+
+## 5. フェーズ 5 の完了状況
 
 フェーズ 5 は完了（ブランチ `feat/gantt-layout`、PR #6 を `develop` にマージ済み）。フェーズ 6 は未着手。
 
