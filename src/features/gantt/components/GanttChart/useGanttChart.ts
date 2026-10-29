@@ -23,6 +23,7 @@ export function useGanttChart() {
     return {
       status: "error" as const,
       loadErrorMessage: page.loadError.message,
+      retryLoad: page.retryLoad,
     }
   }
 

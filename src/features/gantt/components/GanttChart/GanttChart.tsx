@@ -24,9 +24,12 @@ export function GanttChart() {
 
   if (chart.status === "error") {
     return (
-      <p className={styles.message} role="alert">
-        データを読み込めませんでした。{chart.loadErrorMessage}
-      </p>
+      <div className={styles.message} role="alert">
+        <p>データを読み込めませんでした。{chart.loadErrorMessage}</p>
+        <button type="button" onClick={chart.retryLoad}>
+          再読み込み
+        </button>
+      </div>
     )
   }
 

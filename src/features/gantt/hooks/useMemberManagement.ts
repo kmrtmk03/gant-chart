@@ -10,8 +10,8 @@ interface IUseMemberManagementParams {
   renameMember: (id: string, name: string) => Promise<IMember>
   reorderMembers: (orderedIds: string[]) => Promise<void>
   deleteMember: (id: string) => Promise<void>
-  /** 担当者の削除後に案件の一覧を読み込み直す（repository が配下の案件も消すため） */
-  reloadProjects: () => Promise<void>
+  /** 担当者の削除後に、その担当者の案件を一覧から取り除く（repository が配下の案件も消すため） */
+  removeProjectsOfMember: (memberId: string) => void
   /** サイドパネルを閉じる。管理ダイアログを開くときに呼ぶ */
   closeSidePanel: () => void
 }
@@ -30,7 +30,7 @@ export function useMemberManagement({
   renameMember,
   reorderMembers,
   deleteMember,
-  reloadProjects,
+  removeProjectsOfMember,
   closeSidePanel,
 }: IUseMemberManagementParams) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -77,13 +77,16 @@ export function useMemberManagement({
     [members, reorderMembers],
   )
 
-  /** 担当者を削除し、配下の案件が消えたことを反映するため案件を読み込み直す */
+  /**
+   * 担当者を削除し、配下の案件が消えたことを反映する。
+   * 案件は読み込み直さず手元の一覧から取り除く（削除は済んでいるので、ここで失敗を起こさない）
+   */
   const handleDelete = useCallback(
     async (id: string) => {
       await deleteMember(id)
-      await reloadProjects()
+      removeProjectsOfMember(id)
     },
-    [deleteMember, reloadProjects],
+    [deleteMember, removeProjectsOfMember],
   )
 
   return {

@@ -290,6 +290,8 @@ export function toError(caught: unknown): Error {
  * 担当者名を検証し、問題があればエラーメッセージ、なければ null を返す。
  * repository は名前の中身を見ないため、必須・文字数のチェックは画面側（これ）が唯一の砦になる。
  * 前後の空白は除いて判定するので、呼び出し側も保存する値は `trim()` したものにすること。
+ * MEMO: 文字数は UTF-16 のコード単位（`length`）で数える。絵文字などは 2 文字ぶんになるが、身内利用なので許容している
+ * （案件名の検証 `validateProjectForm` も同じ数え方）。
  */
 export function validateMemberName(name: string): string | null {
   const trimmed = name.trim()

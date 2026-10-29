@@ -39,6 +39,7 @@ export function useGanttPage() {
     createProject,
     updateProject,
     deleteProject,
+    removeProjectsOfMember,
   } = useProjects(repository)
   const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
     useSidePanel()
@@ -48,7 +49,7 @@ export function useGanttPage() {
     renameMember,
     reorderMembers,
     deleteMember,
-    reloadProjects,
+    removeProjectsOfMember,
     closeSidePanel: closePanel,
   })
   const timelineRange = useTimelineRange()
@@ -75,6 +76,14 @@ export function useGanttPage() {
     () => (rangeStart === null ? null : getDayColumns(rangeStart, rangeDays)),
     [rangeStart, rangeDays],
   )
+
+  /**
+   * 読み込みに失敗した画面から、担当者と案件を読み込み直す。成功すると両方のエラーが消えて画面に戻る。
+   * 失敗したときはエラーが残るので、もう一度押せる（再読み込みの失敗は各フックが state に載せる）
+   */
+  const handleRetryLoad = useCallback(async () => {
+    await Promise.all([reloadMembers(), reloadProjects()])
+  }, [reloadMembers, reloadProjects])
 
   const [isSeeding, setIsSeeding] = useState(false)
   const [seedError, setSeedError] = useState<Error | null>(null)
@@ -138,6 +147,7 @@ export function useGanttPage() {
       timelineRange.today === null ||
       rangeStart === null,
     loadError: membersError ?? projectsError,
+    retryLoad: handleRetryLoad,
     // データ
     memberGroups,
     // 表示期間（rangeStart / today / columns は未確定の間 null）

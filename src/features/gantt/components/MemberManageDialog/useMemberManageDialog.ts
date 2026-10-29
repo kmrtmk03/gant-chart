@@ -41,6 +41,9 @@ export function useMemberManageDialog({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [isBusy, setIsBusy] = useState(false)
+  // 実行中かどうかの判定用。state の `isBusy` は再描画されるまで古い値のままなので、
+  // Enter と blur が続けて走るような短い間の二重実行は、こちらで確実に弾く
+  const isBusyRef = useRef(false)
   // 保存系の操作に失敗したときの理由。次の操作を始めるまで表示する
   const [actionError, setActionError] = useState<Error | null>(null)
   const [newName, setNewName] = useState("")
@@ -73,12 +76,13 @@ export function useMemberManageDialog({
   )
 
   /**
-   * 保存系の操作の共通の実行処理。実行中は二重に走らせず、失敗を `actionError` に載せる。
+   * 保存系の操作の共通の実行処理。実行中は二重に走らせず（`isBusyRef` で判定）、失敗を `actionError` に載せる。
    * 成功したら true、失敗（または実行中で見送り）なら false を返す。
    */
   const runAction = useCallback(
     async (action: () => Promise<void>): Promise<boolean> => {
-      if (isBusy) return false
+      if (isBusyRef.current) return false
+      isBusyRef.current = true
       setIsBusy(true)
       setActionError(null)
       try {
@@ -88,10 +92,11 @@ export function useMemberManageDialog({
         setActionError(toError(caught))
         return false
       } finally {
+        isBusyRef.current = false
         setIsBusy(false)
       }
     },
-    [isBusy],
+    [],
   )
 
   /** 行から呼ぶ名前変更 */

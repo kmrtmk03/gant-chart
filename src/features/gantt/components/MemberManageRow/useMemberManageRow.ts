@@ -15,8 +15,9 @@ interface IUseMemberManageRowParams {
 /**
  * `MemberManageRow` 専用のフック。名前の入力中の値（下書き）・検証・保存を受け持つ。
  * 下書きの初期値は初回の描画で決めるため、呼び出し側で担当者の `id` を `key` にすること。
- * 保存は Enter（フォーム送信）と入力欄から離れたとき（blur）の両方で走るが、
- * 保存済みの名前と同じなら何もしないので二重には保存されない。
+ * 保存は Enter（フォーム送信）と入力欄から離れたとき（blur）の両方で走りうる。
+ * 二重に保存しないのは `onRename` 側の役目（`useMemberManageDialog.runAction` が実行中は 2 回目を見送る）。
+ * 見送られた側は false が返るだけで、下書きは 1 回目の成功で更新される。
  */
 export function useMemberManageRow({
   member,
