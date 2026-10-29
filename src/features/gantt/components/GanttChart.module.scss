@@ -1,0 +1,44 @@
+@use "tokens";
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.message {
+  padding: tokens.$space-6;
+  color: tokens.$color-text-muted;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$space-3;
+  color: tokens.$color-text-muted;
+}
+
+// 縦横のスクロールをこの 1 か所で受ける
+.scroller {
+  flex: 1;
+  overflow: auto;
+}
+
+// 列幅は動的な値なので、grid-template-columns はインラインスタイルで渡す
+.grid {
+  display: grid;
+  align-items: start;
+}
+
+.corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: tokens.$z-index-sticky + 2;
+  border-right: 1px solid tokens.$color-border;
+  border-bottom: 1px solid tokens.$color-border;
+  background: tokens.$color-surface;
+}

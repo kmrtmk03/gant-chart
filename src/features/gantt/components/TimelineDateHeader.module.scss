@@ -1,0 +1,45 @@
+@use "tokens";
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: tokens.$z-index-sticky + 1;
+  border-bottom: 1px solid tokens.$color-border;
+  background: tokens.$color-surface;
+}
+
+.row {
+  display: flex;
+}
+
+.month {
+  flex-shrink: 0;
+  padding: 0 tokens.$space-2;
+  overflow: hidden;
+  border-right: 1px solid tokens.$color-border;
+  font-size: tokens.$font-size-sm;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.day {
+  flex-shrink: 0;
+  border-right: 1px solid tokens.$color-border;
+  font-size: tokens.$font-size-xs;
+  line-height: 28px;
+  text-align: center;
+}
+
+// 土日と祝日は文字色を変える（祝日が優先）
+.weekend {
+  color: tokens.$color-primary;
+}
+
+.holiday {
+  color: #e5575b;
+}
+
+.today {
+  background: tokens.$color-today;
+  font-weight: 700;
+}
