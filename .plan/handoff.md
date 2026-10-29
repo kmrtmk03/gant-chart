@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 1 の実装完了。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 2 の実装完了。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -24,7 +24,7 @@
 | --- | --- | --- | --- |
 | 準備 | 全体プラン・AGENTS.md・CLAUDE.md | Opus 5.5 | ✅ 完了 |
 | 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
-| 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの手動確認待ち。下記 4 章） |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ⬜ 未着手 |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ⬜ 未着手 |
@@ -46,18 +46,24 @@
 
 ---
 
-## 4. フェーズ 2 の着手状況
+## 4. フェーズ 3 の着手状況
 
-フェーズ 1 は完了（`pnpm lint` / `typecheck` / `test` / `format:check` / `build` 成功、`npm install` は EBADDEVENGINES で停止、`@use "tokens"` は globals.scss で動作確認済み）。フェーズ 2 は未着手。
+フェーズ 2 は実装完了（ブランチ `feat/pwa-basic-auth`、PR は `develop` 宛て）。フェーズ 3 は未着手。
 
-### フェーズ 2 への申し送り（フェーズ 1 で分かったこと）
+### フェーズ 2 の確認結果
 
-- `pnpm dev`（`--experimental-https`）は mkcert の `-install` が**パスワード入力（sudo）を要する**ため、自動実行では失敗して HTTP にフォールバックする（`certificates/` は空）。フェーズ 2 では、ユーザーに `brew install mkcert` と `mkcert -install` の実行を依頼するか、手順を相談する
-- `packageManager` フィールドは削除し、`devEngines.packageManager`（`version: 11.5.2`）に統一した。両方あると pnpm が警告を出すため（プランからの変更点）
-- `.prettierignore` に `AGENTS.md` / `CLAUDE.md` を追加した（`next dev` が書き戻すブロックを Prettier が整形してしまうため）
-- `vitest.config.ts` は `.mts` にした（CommonJS 扱いの警告を避けるため）
-- `pnpm-workspace.yaml` の `@parcel/watcher` は `true` にした。`engineStrict: true` も追加済み
-- Sass は `sassOptions.loadPaths`（`src/styles`）で `@use "tokens"` を解決する
+- 自動で確認できたこと: `pnpm lint` / `typecheck` / `test`（21 件）/ `format:check` / `build` が成功。`https://localhost:3000` が証明書の検証エラーなしで開ける。Basic 認証は curl で、認証なし・誤り → 401（`WWW-Authenticate` 付き）、正しい資格情報 → 200、環境変数未設定 → 開発 200 / 本番 401 を確認。`manifest.webmanifest` / アイコン / `sw.js` のヘッダーとセキュリティヘッダーも確認
+- ユーザーが Chrome で確認済み: 本番ビルド（`pnpm build` → `pnpm start`、`http://localhost:3000`）でインストールアイコンが表示される。`next start` には `--experimental-https` がないが、`localhost` なら HTTP でも Service Worker の登録とインストールができる
+- **ユーザーの手動確認が残っている**: インストール後のアプリのウィンドウでの起動
+
+### フェーズ 3 への申し送り
+
+- `src/proxy.ts` に Basic 認証を実装。解析・比較の関数（`parseBasicAuthHeader` / `isSafeEqual` / `isAuthorized`）は同じファイルから export し、`src/proxy.test.ts` でテストしている。ID とパスワードは `.env.local` の `BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`（`.env.example` にひな形あり）
+- **manifest とアイコンは Basic 認証の対象外**（`src/proxy.ts` の `matcher`）。ブラウザは manifest とアイコンを資格情報なしで取得するため、認証をかけるとインストールアイコンが出ない（フェーズ 2 の途中で判明。プランの当初の想定は誤りだったため修正済み）。静的ファイルを `public/` に足すときも、認証が必要かどうかを同じ観点で判断する
+- PWA: `src/app/manifest.ts`、`public/sw.js`（fetch を持たない最小構成）、`src/app/ServiceWorkerRegister.tsx`（本番ビルドのときだけ登録）。アイコンは `scripts/generate-icons.mjs` で生成できる（`node scripts/generate-icons.mjs`）。デザインはシンプルな帯の図形で、希望があれば作り直す
+- `typecheck` は `next typegen && tsc --noEmit`（`LayoutProps` の型が生成物のため）
+- mkcert は導入済みで、`certificates/` に証明書がある（`.gitignore` 済み）
+- フェーズ 1 の申し送り（`packageManager` の削除、`.prettierignore`、`vitest.config.mts`、Sass の `loadPaths` など）は引き続き有効
 
 ---
 
@@ -98,10 +104,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 2**（[3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md)）。`develop` から作業用ブランチを切って始める
-- 担当: Sonnet 5.5
+- 次にやること: **フェーズ 3**（[4-phase3-data-layer.md](4-phase3-data-layer.md)）。その前に、フェーズ 2 の手動確認とレビュー・マージを済ませる。`develop` から作業用ブランチを切って始める
+- 担当: Opus 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 2 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 3 を進めてください。
   ```
