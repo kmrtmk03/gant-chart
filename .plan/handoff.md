@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 3 の実装完了。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-29（フェーズ 4 の実装完了。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -25,8 +25,8 @@
 | 準備 | 全体プラン・AGENTS.md・CLAUDE.md | Opus 5.5 | ✅ 完了 |
 | 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
-| 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
-| 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ⬜ 未着手 |
+| 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
+| 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
@@ -43,14 +43,31 @@
   - `develop`: 開発のベースブランチ（2026-10-29 に `main` から作成）。作業用ブランチはここから切り、PR のマージ先もここにする
   - `feat/gantt-chart-mvp`: フェーズ 1 で使った作業ブランチ（マージ済み）
   - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
-  - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（`develop` から作成。未 push・PR 未作成）
+  - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
+  - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（`develop` から作成。未 push・PR 未作成）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4. フェーズ 4 の着手状況
+## 4. フェーズ 5 の着手状況
 
-フェーズ 3 は実装完了（ブランチ `feat/gantt-data-layer`）。フェーズ 4 は未着手。
+フェーズ 4 は実装完了（ブランチ `feat/gantt-utils`）。フェーズ 5 は未着手。
+
+### フェーズ 4 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（157 件。うち `gantt.utils.test.ts` が 40 件）/ `format:check` / `build` が成功
+- プランの完了条件はすべて満たした。画面はまだないので、ブラウザでの手動確認はしていない
+
+### フェーズ 5 以降への申し送り（日付・座標の関数）
+
+- ファイル: `src/features/gantt/gantt.utils.ts`（関数）と `gantt.utils.test.ts`。定数は `gantt.constants.ts` に追加（`DAY_COLUMN_WIDTH` / `MEMBER_ROW_HEIGHT` = 40 / `PROJECT_ROW_HEIGHT` = 36 / `DEFAULT_RANGE_DAYS_BEFORE` / `DEFAULT_RANGE_DAYS` / `RANGE_SHIFT_DAYS` / `DRAG_THRESHOLD_PX`）。行の高さはプランに値がなかったため仮の値で、見た目を見て調整してよい
+- `getBarLayout(project, rangeStart, rangeDays)` は表示期間にまったく入らない案件で **`null`** を返す（帯を描かない）。入るときは `{ left, width, isClippedStart, isClippedEnd }`
+- `getTodayOffset(rangeStart, rangeDays, today?)` は今日の**列の左端**の px を返す。線を列の中央に引きたいときは `DAY_COLUMN_WIDTH / 2` を足す。表示期間の外は `null`
+- `pxToDays` は半分ちょうどを 0 から遠い側に丸める（+16px → 1、-16px → -1）。`Math.round` だと負の側が非対称になるため
+- `resizeProjectDates(project, "start" | "end", days)` は追い越しそうなとき反対側の端で止める（最短 1 日）。ドラッグ側で別途ガードしなくてよい
+- `parseDateString` は読めない文字列で `RangeError` を投げる。repository と型ガードを通った値だけを渡す前提
+- 祝日名はライブラリの表記のまま（例: 2026-05-06 は「こどもの日 振替休日」）。ツールチップなどに出すときは `getHolidayName`
+- `@holiday-jp/holiday_jp` は `export =` 形式のため `import holiday_jp from "..."` で読み込む（`esModuleInterop` で動作確認済み）。データに収録されている年の範囲外は祝日扱いにならない
 
 ### フェーズ 3 の確認結果
 
@@ -130,10 +147,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 4**（[5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md)）。その前に、フェーズ 3（`feat/gantt-data-layer`）のレビューと `develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
+- 次にやること: **フェーズ 5**（[6-phase5-chart-layout.md](6-phase5-chart-layout.md)）。その前に、フェーズ 4（`feat/gantt-utils`）のレビューと `develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 4 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 5 を進めてください。
   ```
