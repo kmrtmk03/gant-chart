@@ -58,7 +58,6 @@ $panel-width: 360px;
 
 .field {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: tokens.$space-1;
   min-width: 0;
@@ -74,9 +73,14 @@ $panel-width: 360px;
   }
 }
 
+// 開始日と終了日を横に半分ずつ並べる
 .dateRow {
   display: flex;
   gap: tokens.$space-3;
+
+  .field {
+    flex: 1;
+  }
 }
 
 .error {
