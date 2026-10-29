@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 7 の実装が完了。PR 待ち。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-30（フェーズ 8 の前にダークテーマ化を実施。更新: Claude Opus 5.5）
 
 ---
 
@@ -29,7 +29,8 @@
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 完了（PR #7 を `develop` にマージ済み。下記 4 章） |
-| 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 実装完了（ブランチ `feat/gantt-member-management`。PR・ユーザーの確認待ち。下記 4 章） |
+| 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 完了（PR #11 を `develop` にマージ済み。下記 4 章） |
+| 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 実装完了（ブランチ `style/dark-modern-theme`。PR・ユーザーの確認待ち） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
 
@@ -47,10 +48,23 @@
   - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
   - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
   - `feat/gantt-side-panel`: フェーズ 6 の作業ブランチ（PR #7 で `develop` にマージ済み）
-  - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（`develop` から作成。PR は未作成）
+  - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（PR #11 で `develop` にマージ済み）
+  - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（`develop` から作成。PR は未作成）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
+
+## 4-0. デザイン調整（ダークテーマ化）
+
+ユーザーの依頼「全体的にチープなので、ダークカラーでモダンに」を受けて、フェーズ 8 の前に実施した。
+
+- 色はすべて `_tokens.scss` に集約。背景は `$color-bg` → `$color-surface` → `$color-elevated` の 3 段階、線や薄い塗りは白の透明度（`$color-border` / `$color-hover` など）。主色は `$color-primary`（インディゴ）
+- `globals.scss` にボタン・入力欄の基本スタイルを置いた。クラスのないボタン（キャンセル・閉じるなど）はこの見た目になり、各コンポーネントは色だけ上書きする。`color-scheme: dark` で日付ピッカーやスクロールバーもダーク表示
+- 帯（`ProjectBar`）は背景色に白のグラデーションを重ねている。そのため `useProjectBar` のインラインスタイルは `background` ではなく **`backgroundColor`** で渡す（`background` だとグラデーションが消える）。フェーズ 8 でドラッグ中の見た目を足すときも同じ点に注意
+- 編集中の帯の強調は `outline` から `box-shadow` の二重リングに変えた
+- 確認: `pnpm lint` / `typecheck` / `test`（191 件）/ `build` が成功。ブラウザ（1280×760）でメイン画面・サイドパネル・担当者の管理ダイアログを目視確認。確認ダイアログ（削除）・空の状態・スマホ幅は未確認
+- 残課題: PWA のアイコン（`public/icons/`）は明るいデザインのまま。必要なら `scripts/generate-icons.mjs` で作り直す
+- プレビュー用に `.claude/launch.json`（Basic 認証の環境変数を空にして `pnpm dev:http` を起動）をローカルに作った。コミットはしていない
 
 ## 4. フェーズ 7 の完了状況
 
@@ -233,7 +247,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 7 の PR とユーザーの確認**。確認が取れて `develop` にマージされたら **フェーズ 8**（[9-phase8-bar-drag.md](9-phase8-bar-drag.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4 章（担当者の管理）と 4-2 章（サイドパネル。`DRAG_THRESHOLD_PX` でのクリックとの区別など）を先に読むこと
+- 次にやること: **デザイン調整（`style/dark-modern-theme`）の PR とユーザーの確認**。`develop` にマージされたら **フェーズ 8**（[9-phase8-bar-drag.md](9-phase8-bar-drag.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-0 章（ダークテーマ。帯の色は `backgroundColor` で渡す）、4 章（担当者の管理）と 4-2 章（サイドパネル。`DRAG_THRESHOLD_PX` でのクリックとの区別など）を先に読むこと
 - 担当: フェーズ 8 は Opus 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
