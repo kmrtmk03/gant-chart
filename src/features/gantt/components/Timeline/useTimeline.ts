@@ -36,6 +36,8 @@ interface ITimelineMemberRowView {
 /**
  * `Timeline` 専用のフック。本体の幅と、担当者ごとの行の表示用の値を求める。
  * 行の並びと高さは `MemberList` と同じにして左右をそろえること（高さは `gantt.constants.ts` の定数）。
+ * 特に担当者が開いているか（`isExpanded`）の判定は `useMemberList` と同じにすること。
+ * どちらかだけ直すと左右の行がずれるので、変更するときは両方のフックを見ること。
  */
 export function useTimeline({
   memberGroups,

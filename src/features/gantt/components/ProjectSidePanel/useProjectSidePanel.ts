@@ -65,7 +65,14 @@ export function useProjectSidePanel({
     onSubmit,
     onDelete,
   })
-  const { values, isConfirmingDelete, isSubmitting, setField } = form
+  const {
+    values,
+    errors,
+    submitError,
+    isSubmitting,
+    isConfirmingDelete,
+    setField,
+  } = form
   const idPrefix = useId()
   const isEditing = project !== null
 
@@ -129,7 +136,10 @@ export function useProjectSidePanel({
     // 表示用の値
     isEditing,
     title: isEditing ? "案件を編集" : "案件を追加",
-    deleteConfirmMessage: `「${project?.name ?? ""}」を削除します。この操作は元に戻せません。`,
+    // 削除は編集のときだけ使うので、追加のときは空にする
+    deleteConfirmMessage: isEditing
+      ? `「${project.name}」を削除します。この操作は元に戻せません。`
+      : "",
     fieldIds: {
       member: `${idPrefix}-member`,
       name: `${idPrefix}-name`,
@@ -140,8 +150,8 @@ export function useProjectSidePanel({
     },
     colorOptions,
     // 入力（値・エラー・各欄の変更ハンドラ）
-    values: form.values,
-    errors: form.errors,
+    values,
+    errors,
     handleChangeMember,
     handleChangeName,
     handleChangeStartDate,
@@ -150,7 +160,7 @@ export function useProjectSidePanel({
     handleChangeColor,
     // 送信
     isSubmitting,
-    submitError: form.submitError,
+    submitError,
     handleSubmit: form.handleSubmit,
     // 削除の確認
     isConfirmingDelete,

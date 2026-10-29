@@ -37,6 +37,8 @@ interface IMemberListRowView {
 /**
  * `MemberList` 専用のフック。担当者ごとの行（開閉の状態・ラベル・案件の色）を求める。
  * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
+ * 担当者が開いているか（`isExpanded`）の判定は `useTimeline` と同じにすること。
+ * どちらかだけ直すと左右の行がずれるので、変更するときは両方のフックを見ること。
  */
 export function useMemberList({
   memberGroups,
