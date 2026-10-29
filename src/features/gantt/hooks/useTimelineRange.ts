@@ -6,7 +6,7 @@ import {
   RANGE_EXTEND_DAYS,
 } from "../gantt.constants"
 import type { TDateString } from "../gantt.type"
-import { addDays, getToday } from "../gantt.utils"
+import { addDays, diffInDays, getToday } from "../gantt.utils"
 
 /** 何も購読しない subscribe。範囲の起点は外から変化を通知されないため */
 const subscribeNothing = () => () => {}
@@ -92,7 +92,18 @@ export function useTimelineRange() {
     rangeAnchor === null
       ? null
       : addDays(rangeAnchor, -(DEFAULT_RANGE_DAYS_BEFORE + extraDaysBefore))
-  const rangeDays = DEFAULT_RANGE_DAYS + extraDaysBefore + extraDaysAfter
+  // 開いたままで今日が初期の範囲を超えた場合に備え、今日の先に RANGE_EXTEND_DAYS 日ぶんの余白が残るよう
+  // 未来側の日数を足す。今日の線・強調が描画され、「今日」ボタンが右端に丸められずに届くようにするため。
+  // 足す日数は `extraDaysAfter` に依存させない（依存させると、端での拡張が打ち消されて広がらなくなる）
+  const baseRangeDays = DEFAULT_RANGE_DAYS + extraDaysBefore
+  const daysForToday =
+    rangeStart === null || today === null
+      ? 0
+      : Math.max(
+          0,
+          diffInDays(rangeStart, today) + 1 + RANGE_EXTEND_DAYS - baseRangeDays,
+        )
+  const rangeDays = baseRangeDays + extraDaysAfter + daysForToday
 
   /** 範囲を過去側に広げる。呼び出し側は、広げた分だけスクロール位置を右にずらして見ている位置を保つこと */
   const extendBackward = useCallback(
