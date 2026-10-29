@@ -1,0 +1,81 @@
+import {
+  BAR_COLORS,
+  MEMBER_ROW_HEIGHT,
+  PROJECT_ROW_HEIGHT,
+} from "../gantt.constants"
+import type { IMemberGroup } from "../gantt.utils"
+import styles from "./MemberList.module.scss"
+
+interface IMemberListProps {
+  memberGroups: IMemberGroup[]
+  /** 折りたたみ中の担当者 ID */
+  collapsedMemberIds: ReadonlySet<string>
+  onToggleMember: (memberId: string) => void
+  onAddProject: () => void
+  onManageMembers: () => void
+}
+
+/**
+ * 左のリスト。担当者（親）→ 案件（子）の 2 階層で並べる。
+ * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
+ * 最下部に「案件を追加」「担当者を管理」ボタンを置く。
+ */
+export function MemberList({
+  memberGroups,
+  collapsedMemberIds,
+  onToggleMember,
+  onAddProject,
+  onManageMembers,
+}: IMemberListProps) {
+  return (
+    <div className={styles.list}>
+      {memberGroups.map(({ member, projects }) => {
+        const isCollapsed = collapsedMemberIds.has(member.id)
+        return (
+          <div key={member.id}>
+            <div
+              className={styles.memberRow}
+              style={{ height: MEMBER_ROW_HEIGHT }}
+            >
+              <button
+                type="button"
+                className={styles.toggle}
+                aria-expanded={!isCollapsed}
+                aria-label={`${member.name}を${isCollapsed ? "開く" : "折りたたむ"}`}
+                onClick={() => onToggleMember(member.id)}
+              >
+                {isCollapsed ? "▶" : "▼"}
+              </button>
+              <span className={styles.name}>{member.name}</span>
+              <span className={styles.count}>{projects.length}件</span>
+            </div>
+            {!isCollapsed &&
+              projects.map((project) => (
+                <div
+                  key={project.id}
+                  className={styles.projectRow}
+                  style={{ height: PROJECT_ROW_HEIGHT }}
+                >
+                  <span
+                    className={styles.colorDot}
+                    style={{
+                      background: `var(${BAR_COLORS[project.color].cssVariable})`,
+                    }}
+                  />
+                  <span className={styles.name}>{project.name}</span>
+                </div>
+              ))}
+          </div>
+        )
+      })}
+      <div className={styles.footer}>
+        <button type="button" onClick={onAddProject}>
+          案件を追加
+        </button>
+        <button type="button" onClick={onManageMembers}>
+          担当者を管理
+        </button>
+      </div>
+    </div>
+  )
+}
