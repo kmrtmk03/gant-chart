@@ -35,3 +35,25 @@ export class GanttValidationError extends Error {
     this.name = "GanttValidationError"
   }
 }
+
+/**
+ * 保存データのスキーマが、アプリの対応バージョンより新しいときに repository が投げるエラー。
+ * 新しいアプリで保存したデータを古いアプリ（ロールバック後など）で読み書きすると、
+ * 型ガードに合わずに空として扱われ、次の書き込みで上書きしてしまう。それを防ぐため、読み書きの両方を止める。
+ * 画面側では「アプリを最新にしてください」と案内する想定。
+ */
+export class GanttUnsupportedSchemaError extends Error {
+  /** 保存データのバージョン */
+  readonly storedVersion: number
+  /** アプリが対応しているバージョン */
+  readonly supportedVersion: number
+
+  constructor(storedVersion: number, supportedVersion: number) {
+    super(
+      `保存データのバージョン（${storedVersion}）がアプリの対応バージョン（${supportedVersion}）より新しいため、読み書きできません`,
+    )
+    this.name = "GanttUnsupportedSchemaError"
+    this.storedVersion = storedVersion
+    this.supportedVersion = supportedVersion
+  }
+}

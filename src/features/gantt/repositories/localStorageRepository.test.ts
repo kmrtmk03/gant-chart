@@ -4,6 +4,7 @@ import { STORAGE_KEYS } from "../gantt.constants"
 import type { TProjectInput } from "../gantt.type"
 import {
   GanttNotFoundError,
+  GanttUnsupportedSchemaError,
   GanttValidationError,
 } from "./ganttRepository.errors"
 import { LocalStorageRepository } from "./localStorageRepository"
@@ -15,6 +16,11 @@ import { LocalStorageRepository } from "./localStorageRepository"
 class MemoryStorage implements Storage {
   [key: string]: unknown
   private readonly items = new Map<string, string>()
+  /**
+   * true を返したキーの setItem を失敗させる（容量超過などの書き込み失敗の再現用）。
+   * 本物の localStorage と同じく、失敗したときは値を書き換えない
+   */
+  shouldFailWrite: (key: string) => boolean = () => false
 
   get length(): number {
     return this.items.size
@@ -37,6 +43,9 @@ class MemoryStorage implements Storage {
   }
 
   setItem(key: string, value: string): void {
+    if (this.shouldFailWrite(key)) {
+      throw new Error(`${key} への書き込みに失敗しました（テスト用）`)
+    }
     this.items.set(key, value)
   }
 }
@@ -159,6 +168,51 @@ describe("担当者", () => {
   it("存在しない担当者を削除すると GanttNotFoundError", async () => {
     await expect(repository.deleteMember("missing")).rejects.toThrow(
       GanttNotFoundError,
+    )
+  })
+
+  it("担当者の書き込みに失敗したら、先に消した案件も元に戻す", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+    storage.shouldFailWrite = (key) => key === STORAGE_KEYS.members
+
+    await expect(repository.deleteMember(tanaka.id)).rejects.toThrow(
+      /書き込みに失敗/,
+    )
+
+    // 削除前のまま残っているので、再試行すれば削除できる
+    await expect(repository.listMembers()).resolves.toEqual([tanaka])
+    await expect(repository.listProjects()).resolves.toEqual([project])
+    storage.shouldFailWrite = () => false
+    await repository.deleteMember(tanaka.id)
+    await expect(repository.listProjects()).resolves.toEqual([])
+  })
+
+  it("案件が未保存だった場合は、未保存の状態に戻す", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    storage.shouldFailWrite = (key) => key === STORAGE_KEYS.members
+
+    await expect(repository.deleteMember(tanaka.id)).rejects.toThrow(
+      /書き込みに失敗/,
+    )
+
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBeNull()
+  })
+
+  it("元に戻す書き込みも失敗したら、両方のエラーをまとめて投げる", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    await repository.createProject(buildProjectInput(tanaka.id))
+    // 案件は 1 回目（削除）だけ成功させ、2 回目（復元）を失敗させる
+    let projectWriteCount = 0
+    storage.shouldFailWrite = (key) => {
+      if (key === STORAGE_KEYS.members) return true
+      if (key !== STORAGE_KEYS.projects) return false
+      projectWriteCount++
+      return projectWriteCount >= 2
+    }
+
+    await expect(repository.deleteMember(tanaka.id)).rejects.toThrow(
+      AggregateError,
     )
   })
 })
@@ -410,14 +464,34 @@ describe("スキーマのバージョン", () => {
     expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
   })
 
-  it("アプリより新しいバージョンは書き換えず、警告を出す", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+  it("アプリより新しいバージョンなら読み書きを拒否し、保存データをそのまま残す", async () => {
+    // 新しいアプリで保存された、今の型ガードに合わない構造のデータ
+    const newerMembers = JSON.stringify({ items: [{ id: "m1" }] })
     storage.setItem(STORAGE_KEYS.schemaVersion, "99")
+    storage.setItem(STORAGE_KEYS.members, newerMembers)
 
-    await repository.listMembers()
+    await expect(repository.listMembers()).rejects.toThrow(
+      GanttUnsupportedSchemaError,
+    )
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttUnsupportedSchemaError,
+    )
+    await expect(repository.createMember({ name: "田中" })).rejects.toThrow(
+      GanttUnsupportedSchemaError,
+    )
 
     expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("99")
-    expect(warn).toHaveBeenCalledOnce()
+    expect(storage.getItem(STORAGE_KEYS.members)).toBe(newerMembers)
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBeNull()
+  })
+
+  it("拒否したエラーに保存データと対応のバージョンが入っている", async () => {
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+
+    await expect(repository.listMembers()).rejects.toMatchObject({
+      storedVersion: 2,
+      supportedVersion: 1,
+    })
   })
 })
 

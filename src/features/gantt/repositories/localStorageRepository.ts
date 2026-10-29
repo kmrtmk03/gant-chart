@@ -16,9 +16,22 @@ import type {
 } from "../gantt.type"
 import {
   GanttNotFoundError,
+  GanttUnsupportedSchemaError,
   GanttValidationError,
 } from "./ganttRepository.errors"
 import type { IGanttRepository } from "./ganttRepository.type"
+
+/** Storage に書き込む 1 件分（キーと、書き込む文字列） */
+interface IStorageEntry {
+  key: string
+  value: string
+}
+
+/** 操作前の Storage の値 1 件分。null は「そのキーは未保存だった」ことを表す */
+interface IPreviousStorageEntry {
+  key: string
+  value: string | null
+}
 
 /**
  * スキーマの移行処理。キーは「移行元のバージョン」で、その 1 つ上のバージョンへ書き換える。
@@ -27,6 +40,30 @@ import type { IGanttRepository } from "./ganttRepository.type"
  */
 const SCHEMA_MIGRATIONS: Partial<Record<number, (storage: Storage) => void>> =
   {}
+
+/**
+ * 新しいデータの ID を作る。
+ * MEMO: crypto.randomUUID() は安全なコンテキスト（HTTPS か localhost）でしか使えない。
+ * `pnpm dev:http` に LAN の IP で接続する（スマホ実機での確認など）と undefined になり TypeError になる。
+ * 本番（HTTPS）と localhost では問題ないので、今は対応しない。実機で確認するときは `pnpm dev`（HTTPS）を使う
+ */
+function generateId(): string {
+  return crypto.randomUUID()
+}
+
+/** 控えておいた操作前の値に戻す。未保存だったキーは削除して、未保存の状態に戻す */
+function restoreEntries(
+  storage: Storage,
+  previousEntries: IPreviousStorageEntry[],
+): void {
+  for (const entry of previousEntries) {
+    if (entry.value === null) {
+      storage.removeItem(entry.key)
+    } else {
+      storage.setItem(entry.key, entry.value)
+    }
+  }
+}
 
 /** 現在日時を ISO 8601 の文字列で返す（createdAt / updatedAt 用） */
 function getCurrentDateTime(): string {
@@ -106,7 +143,7 @@ export class LocalStorageRepository implements IGanttRepository {
     const members = this.readMembers()
     const timestamp = getCurrentDateTime()
     const member: IMember = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: input.name,
       sortOrder: getNextSortOrder(members),
       createdAt: timestamp,
@@ -172,10 +209,20 @@ export class LocalStorageRepository implements IGanttRepository {
     }
     const projects = this.readProjects()
 
-    // 案件を先に消す。2 回目の書き込みが失敗しても「案件のない担当者」が残るだけで、
-    // 「担当者のいない案件」は生まれない（Firestore 版では batch 書き込みで 1 回にまとめる想定）
-    this.writeProjects(projects.filter((project) => project.memberId !== id))
-    this.writeMembers(members.filter((member) => member.id !== id))
+    // 担当者と案件の 2 つのキーを書き換える。途中で失敗したら両方を操作前に戻す
+    // （Firestore 版では batch 書き込みで 1 回にまとめる想定）
+    this.writeAllOrRestore([
+      {
+        key: STORAGE_KEYS.projects,
+        value: JSON.stringify(
+          projects.filter((project) => project.memberId !== id),
+        ),
+      },
+      {
+        key: STORAGE_KEYS.members,
+        value: JSON.stringify(members.filter((member) => member.id !== id)),
+      },
+    ])
   }
 
   // ---- 案件 ----
@@ -191,7 +238,7 @@ export class LocalStorageRepository implements IGanttRepository {
     const timestamp = getCurrentDateTime()
     // input に余計なキーが混ざっていても保存しないよう、フィールドを 1 つずつ詰め直す
     const project: IProject = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       memberId: input.memberId,
       name: input.name,
       startDate: input.startDate,
@@ -277,6 +324,39 @@ export class LocalStorageRepository implements IGanttRepository {
   }
 
   /**
+   * 複数のキーを順に書き込む。途中で失敗したら、書き込み済みのキーを操作前の値に戻してからエラーを投げ直す。
+   * localStorage には複数のキーをまとめて書くトランザクションがないため、
+   * 「一部だけ書き換わって、再試行しても元に戻せない」状態を作らないようにする。
+   */
+  private writeAllOrRestore(entries: IStorageEntry[]): void {
+    const storage = this.getPreparedStorage()
+    // 戻すときのために、操作前の値を先に控えておく（未保存だったキーは null）
+    const previousEntries = entries.map((entry) => ({
+      key: entry.key,
+      value: storage.getItem(entry.key),
+    }))
+
+    let writtenCount = 0
+    try {
+      for (const entry of entries) {
+        storage.setItem(entry.key, entry.value)
+        writtenCount++
+      }
+    } catch (error) {
+      // setItem は失敗したキーを書き換えないので、戻すのは書き込みに成功したキーだけでよい
+      try {
+        restoreEntries(storage, previousEntries.slice(0, writtenCount))
+      } catch (restoreError) {
+        throw new AggregateError(
+          [error, restoreError],
+          "[gantt] 書き込みに失敗し、操作前の値への復元にも失敗しました",
+        )
+      }
+      throw error
+    }
+  }
+
+  /**
    * 指定したキーの配列を読み、型ガードで検証して返す。
    * 未保存なら空配列。JSON として読めない・形が違うときも空配列にして、警告に元の値を残す
    * （次に書き込むと上書きされるため、手で復旧したいときはコンソールの値を使う）。
@@ -309,7 +389,10 @@ export class LocalStorageRepository implements IGanttRepository {
     return parsed
   }
 
-  /** スキーマのバージョン確認（初回のみ）を済ませた Storage を返す。読み書きの前に必ずこれを通す */
+  /**
+   * スキーマのバージョン確認を済ませた Storage を返す。読み書きの前に必ずこれを通す。
+   * 確認に成功したら以降は省略する。アプリより新しいバージョンのときは成功扱いにしないので、毎回エラーになる
+   */
   private getPreparedStorage(): Storage {
     const storage = this.getStorage()
     if (!this.isSchemaChecked) {
@@ -333,17 +416,16 @@ export class LocalStorageRepository implements IGanttRepository {
   /**
    * 保存データのバージョンが古ければ移行し、現在のバージョンを書き込む。
    * - 未保存（初回）や読めない値: バージョン 1 より前の構造は存在しないので、現在のバージョンとみなす
-   * - 新しいバージョン: 新しいアプリで保存されたデータ。書き換えると壊すおそれがあるので、警告だけ出して触らない
+   * - 新しいバージョン: 新しいアプリで保存されたデータ（古いアプリへのロールバック後など）。
+   *   読めば型ガードに合わずに空として扱われ、次の書き込みで上書きしてしまうため、
+   *   GanttUnsupportedSchemaError を投げて読み書きの両方を止め、元のデータを保つ
    */
   private migrateSchemaIfNeeded(storage: Storage): void {
     const version = readSchemaVersion(storage)
     if (version === CURRENT_SCHEMA_VERSION) return
 
     if (version !== null && version > CURRENT_SCHEMA_VERSION) {
-      console.warn(
-        `[gantt] 保存データのバージョン（${version}）がアプリの対応バージョン（${CURRENT_SCHEMA_VERSION}）より新しいため、移行せずに読み込みます`,
-      )
-      return
+      throw new GanttUnsupportedSchemaError(version, CURRENT_SCHEMA_VERSION)
     }
 
     if (version !== null) {

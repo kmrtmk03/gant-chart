@@ -15,6 +15,7 @@ import type {
  *   すべてのメソッドが Promise を返す
  * - 存在しない id を指定したときは GanttNotFoundError を投げる
  * - 入力が不正なとき（開始日が終了日より後など）は GanttValidationError を投げる
+ * - 保存データがアプリより新しい構造のときは、すべてのメソッドが GanttUnsupportedSchemaError を投げる
  */
 export interface IGanttRepository {
   /** 担当者の一覧を sortOrder の昇順で返す */
