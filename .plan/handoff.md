@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 1 の開始前。作成: Claude Opus 5.5）
+- 最終更新: 2026-10-29（フェーズ 1 の実装完了。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -23,7 +23,7 @@
 | フェーズ | プラン | 担当 | 状態 |
 | --- | --- | --- | --- |
 | 準備 | 全体プラン・AGENTS.md・CLAUDE.md | Opus 5.5 | ✅ 完了 |
-| 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | 🟡 一部着手（雛形と依存の導入のみ。下記 4 章） |
+| 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ⬜ 未着手 |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ⬜ 未着手 |
@@ -45,23 +45,18 @@
 
 ---
 
-## 4. フェーズ 1 の着手状況（ここから再開する）
+## 4. フェーズ 2 の着手状況
 
-### 済んでいること（コミット `624c1b7`）
+フェーズ 1 は完了（`pnpm lint` / `typecheck` / `test` / `format:check` / `build` 成功、`npm install` は EBADDEVENGINES で停止、`@use "tokens"` は globals.scss で動作確認済み）。フェーズ 2 は未着手。
 
-- `create-next-app@16.4.3` で一時フォルダに雛形を作り、次のファイルだけをコピーした
-  - `package.json`（name を `gant-chart` に変更済み）/ `pnpm-lock.yaml` / `pnpm-workspace.yaml` / `tsconfig.json` / `eslint.config.mjs` / `next.config.ts` / `.gitignore` / `src/app/favicon.ico`
-- 導入済みの依存
-  - dependencies: `next@16.4.3` / `react@19.3.0` / `react-dom@19.3.0` / `date-fns@4.4.0` / `@holiday-jp/holiday_jp@2.5.2`
-  - devDependencies: `sass` / `prettier` / `eslint-config-prettier` / `vitest@5.0.5` / `@types/node@24`（vitest 5 が Node の型 22 以上を要求するため 20 から上げた）/ ESLint・TypeScript 関連
-- 一度入れた `@serwist/next` / `serwist` は削除済み（PWA の方針変更のため。全体プラン 3 章）
+### フェーズ 2 への申し送り（フェーズ 1 で分かったこと）
 
-### まだやっていないこと
-
-- **`src/app/layout.tsx` と `src/app/page.tsx` がない**ので、まだ `pnpm dev` で起動できない。プランの「1. Next.js の雛形」に沿って新しく作る
-  - 雛形の `layout.tsx` は `LayoutProps<"/">` という Next.js 16 の型を使っていた（`export default function RootLayout({ children }: LayoutProps<"/">)`）。同じ書き方に合わせる
-- `pnpm-workspace.yaml` の `allowBuilds` に、pnpm が `'@parcel/watcher': set this to true or false` という**仮の行**を書き込んだまま。`sass` が使うファイル監視の部品なので、値を決める
-- プランの 2〜8 の作業はすべて未着手（tsconfig の調整、Sass の土台、Prettier、Vitest、スクリプト、pnpm 以外の禁止、`.gitignore` の追記）
+- `pnpm dev`（`--experimental-https`）は mkcert の `-install` が**パスワード入力（sudo）を要する**ため、自動実行では失敗して HTTP にフォールバックする（`certificates/` は空）。フェーズ 2 では、ユーザーに `brew install mkcert` と `mkcert -install` の実行を依頼するか、手順を相談する
+- `packageManager` フィールドは削除し、`devEngines.packageManager`（`version: 11.5.2`）に統一した。両方あると pnpm が警告を出すため（プランからの変更点）
+- `.prettierignore` に `AGENTS.md` / `CLAUDE.md` を追加した（`next dev` が書き戻すブロックを Prettier が整形してしまうため）
+- `vitest.config.ts` は `.mts` にした（CommonJS 扱いの警告を避けるため）
+- `pnpm-workspace.yaml` の `@parcel/watcher` は `true` にした。`engineStrict: true` も追加済み
+- Sass は `sassOptions.loadPaths`（`src/styles`）で `@use "tokens"` を解決する
 
 ---
 
@@ -102,15 +97,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 1 の残り**（上の 4 章「まだやっていないこと」）
+- 次にやること: **フェーズ 2**（[3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md)）。その前に、フェーズ 1 の確認とブランチ・PR の分け方（3 章）をユーザーに確認する
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 1 の続きを進めてください。
+  .plan/handoff.md を読んで、フェーズ 2 を進めてください。
   ```
-
-- フェーズ 1 を終えるときにやること
-  1. プランの完了条件をすべて確認し、結果を報告する
-  2. このファイルの「進捗」「4 章」「7 章」を更新する（4 章はフェーズ 2 の着手状況に書き換える）
-  3. ブランチと PR の分け方（3 章）をユーザーに確認する
