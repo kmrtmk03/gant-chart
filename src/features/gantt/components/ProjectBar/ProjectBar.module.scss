@@ -1,5 +1,11 @@
 @use "tokens";
 
+// 伸縮用のつかみの幅。1 日だけの帯（32px）でも、移動用の中央部分が 20px 残る
+$handle-width: 6px;
+// タッチなど指で操作する端末でのつかみの幅。指では 6px を狙いにくいので広げる。
+// 1 日だけの帯でも、移動用の中央部分が 12px 残る（つかみと中央の両方を最低限つかめる幅にとどめる）
+$handle-width-coarse: 10px;
+
 // 位置・幅・色は動的な値なので、インラインスタイルで渡す。
 // 背景色の上に上から下へ薄い白のグラデーションを重ね、立体感を出す
 .bar {
@@ -26,7 +32,11 @@
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
+  // 中央はつかんで移動できることを示す。クリックでパネルも開く
+  cursor: grab;
+  // タッチでは横方向のドラッグを帯の移動に使い、縦方向のスワイプは画面のスクロールに残す
+  touch-action: pan-y;
+  user-select: none;
   transition:
     filter tokens.$transition-fast,
     box-shadow tokens.$transition-fast;
@@ -36,8 +46,9 @@
   }
 }
 
-// 編集中の帯を枠で強調する
+// 編集中の帯を枠で強調する。編集中はドラッグできないので、つかめる見た目（grab）にしない
 .editing {
+  cursor: pointer;
   box-shadow:
     tokens.$shadow-bar,
     0 0 0 2px tokens.$color-bg,
@@ -52,4 +63,59 @@
 .clippedEnd {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+// 左右の端の伸縮用のつかみ。帯の中に重ね、触れたときだけ薄く浮かび上がらせる
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: $handle-width;
+  cursor: ew-resize;
+  transition: background-color tokens.$transition-fast;
+
+  @media (pointer: coarse) {
+    width: $handle-width-coarse;
+  }
+
+  &:hover {
+    background-color: tokens.$color-border-hover;
+  }
+}
+
+.handleStart {
+  left: 0;
+}
+
+.handleEnd {
+  right: 0;
+}
+
+// ドラッグ中は他の帯より上に出し、つかんでいることが分かるようにする
+.dragging {
+  z-index: tokens.$z-index-bar-dragging;
+  filter: brightness(1.12);
+  cursor: grabbing;
+}
+
+// 保存が終わるまでは、もう一度つかめないことを示す
+.saving {
+  cursor: progress;
+}
+
+// ドラッグ中に帯の上に出す、変更後の期間（例: 10/3 〜 10/12）。位置（left）はインラインスタイルで渡す
+.periodLabel {
+  position: absolute;
+  top: -10px;
+  z-index: tokens.$z-index-bar-dragging;
+  padding: 0 tokens.$space-1;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-bar;
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-xs;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
 }

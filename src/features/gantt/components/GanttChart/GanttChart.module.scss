@@ -48,3 +48,25 @@
   border-bottom: 1px solid tokens.$color-border-strong;
   background: tokens.$color-surface;
 }
+
+// 帯のドラッグの保存に失敗したときのお知らせ。画面の左下に浮かせる
+// （右側はサイドパネルが開くと隠れるため。パネルより上の z-index にもしておく）
+$notice-max-width: 480px;
+
+.notice {
+  position: fixed;
+  bottom: tokens.$space-6;
+  left: tokens.$space-6;
+  z-index: tokens.$z-index-notice;
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-3;
+  max-width: min($notice-max-width, calc(100% - #{tokens.$space-6 * 2}));
+  padding: tokens.$space-3 tokens.$space-4;
+  border: 1px solid tokens.$color-danger;
+  border-radius: tokens.$radius-md;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-danger;
+  font-size: tokens.$font-size-md;
+}

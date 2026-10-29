@@ -2,7 +2,12 @@ import { useCallback, useMemo, useState } from "react"
 
 import { seedSampleData } from "../devSeed"
 import type { TProjectInput } from "../gantt.type"
-import { getDayColumns, groupProjectsByMember, toError } from "../gantt.utils"
+import {
+  getDayColumns,
+  groupProjectsByMember,
+  toError,
+  type TProjectPeriod,
+} from "../gantt.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
 import { useCollapsedMembers } from "./useCollapsedMembers"
 import { useMemberManagement } from "./useMemberManagement"
@@ -107,6 +112,30 @@ export function useGanttPage() {
     }
   }, [isSeeding, reloadMembers, reloadProjects])
 
+  // 帯のドラッグによる期間の保存に失敗したときのエラー。画面の下に出し、閉じるか次の保存で消す
+  const [periodChangeError, setPeriodChangeError] = useState<Error | null>(null)
+
+  /**
+   * 帯のドラッグで変えた期間を保存する。失敗は例外にせず `periodChangeError` に載せる
+   * （帯は保存が終わると元の位置に戻るので、失敗したことを画面で知らせる）。
+   * `Timeline` の React.memo を保つため、参照は `updateProject` が変わらない限り同じ。
+   */
+  const handleChangeProjectPeriod = useCallback(
+    async (projectId: string, period: TProjectPeriod) => {
+      setPeriodChangeError(null)
+      try {
+        await updateProject(projectId, period)
+      } catch (caught) {
+        setPeriodChangeError(toError(caught))
+      }
+    },
+    [updateProject],
+  )
+
+  const handleDismissPeriodChangeError = useCallback(() => {
+    setPeriodChangeError(null)
+  }, [])
+
   // 編集中の案件は state に持たず、projectId から一覧を引いて求める（データと表示をずらさない）。
   // 他のタブで削除されるなどして見つからないときは null になり、パネルは出さない
   const editingProject =
@@ -168,6 +197,12 @@ export function useGanttPage() {
       save: handleSaveProject,
       remove: handleDeleteProject,
       close: closePanel,
+    },
+    // 帯のドラッグ（期間の保存と、失敗したときのエラー）
+    barDrag: {
+      changePeriod: handleChangeProjectPeriod,
+      error: periodChangeError,
+      dismissError: handleDismissPeriodChangeError,
     },
     // 担当者の管理ダイアログ（開閉と、追加・名前変更・並び替え・削除の操作）
     memberManagement,

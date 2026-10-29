@@ -1,7 +1,11 @@
 import { memo } from "react"
 
 import type { TDateString } from "../../gantt.type"
-import type { IDayColumn, IMemberGroup } from "../../gantt.utils"
+import type {
+  IDayColumn,
+  IMemberGroup,
+  TProjectPeriod,
+} from "../../gantt.utils"
 import { MemberSummaryBar } from "../MemberSummaryBar"
 import { ProjectBar } from "../ProjectBar"
 import { TimelineGrid } from "../TimelineGrid"
@@ -21,6 +25,14 @@ interface ITimelineProps {
   editingProjectId: string | null
   /** 帯をクリックしたとき。React.memo を効かせるため、参照が変わらない関数を渡すこと */
   onSelectProject: (projectId: string) => void
+  /**
+   * 帯のドラッグで期間を変えたとき。失敗の表示は呼び出し側が行い、例外は投げないこと。
+   * React.memo を効かせるため、参照が変わらない関数を渡すこと
+   */
+  onChangeProjectPeriod: (
+    projectId: string,
+    period: TProjectPeriod,
+  ) => Promise<void>
 }
 
 /**
@@ -37,6 +49,7 @@ export const Timeline = memo(function Timeline({
   today,
   editingProjectId,
   onSelectProject,
+  onChangeProjectPeriod,
 }: ITimelineProps) {
   const { bodyWidth, memberRowHeight, projectRowHeight, memberRows } =
     useTimeline({
@@ -73,6 +86,7 @@ export const Timeline = memo(function Timeline({
                     rangeDays={rangeDays}
                     isEditing={isEditing}
                     onSelect={onSelectProject}
+                    onChangePeriod={onChangeProjectPeriod}
                   />
                 </div>
               ))}

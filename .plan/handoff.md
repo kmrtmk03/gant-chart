@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 8 の前にダークテーマ化を実施。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 8 の実装を完了。更新: Claude Opus 5.5）
 
 ---
 
@@ -30,8 +30,8 @@
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 完了（PR #7 を `develop` にマージ済み。下記 4 章） |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 完了（PR #11 を `develop` にマージ済み。下記 4 章） |
-| 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 実装完了（ブランチ `style/dark-modern-theme`。PR・ユーザーの確認待ち） |
-| 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
+| 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
+| 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 実装完了（ブランチ `feat/gantt-bar-drag`。PR 未作成・push 前。ユーザーの確認待ち。下記 4-00 章） |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
 
 ---
@@ -49,10 +49,47 @@
   - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
   - `feat/gantt-side-panel`: フェーズ 6 の作業ブランチ（PR #7 で `develop` にマージ済み）
   - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（PR #11 で `develop` にマージ済み）
-  - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（`develop` から作成。PR は未作成）
+  - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
+  - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（`develop` から作成。PR は未作成・push 前）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
+
+## 4-00. フェーズ 8 の完了状況
+
+フェーズ 8 は実装完了（ブランチ `feat/gantt-bar-drag`。PR は未作成・push 前）。フェーズ 9 は未着手。
+
+### フェーズ 8 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（213 件。うち `barDrag.utils.test.ts` が 22 件）/ `format:check` / `build` が成功
+- ブラウザ（別セッションが起動していた `http://localhost:3000` の開発サーバー。1024×768、マウス）で確認済み:
+  - 帯の中央をドラッグすると 1 日単位で移動し、離すと保存される（10/26〜11/8 → 10/29〜11/11）。パネルは開かない
+  - 左端を終了日より右まで引っぱると、開始日が終了日で止まり 1 日の帯になる。1 日の帯の右端をドラッグして伸ばせる
+  - 表示期間の左にはみ出した帯は、左端のつかみが出ない（右端だけ）
+  - 小さく動かさずにクリックするとパネルが開く。キーボード（フォーカスして Enter）でも開く
+  - ドラッグ中は帯の上に「11/13 〜 11/17」の形で変更後の期間が出る。Esc で元の位置に戻り、保存されず、開いていたサイドパネルも閉じない。その後の click でもパネルは切り替わらない（Esc の確認は合成イベントで行った。実際のキー操作はドラッグ中に押せないため）
+  - **サイドパネルで編集中の帯はドラッグできない**（ユーザーの希望で追加）。ドラッグしても動かず保存もされず、パネルも開いたまま。カーソルは grab ではなく pointer、つかみも出ない。他の帯はパネルを開いたままドラッグでき、パネルを閉じれば同じ帯もドラッグできる
+  - 保存に失敗させる（`Storage.prototype.setItem` を一時的に例外にする）と、帯が元の位置に戻り、左下に「期間を保存できませんでした。…」が出る。「閉じる」で消える
+  - 再読み込みしても変更が残る
+  - PR #13 のレビュー指摘の修正後: Esc で取り消して帯の外で離した（click が来ない）あと、フォーカスして Enter を押すと 1 回目でパネルが開く。通常のドラッグのあとはパネルが開かない。タッチの端末を模した表示（375×812、`pointer: coarse`）でつかみが 10px になる
+  - 確認中に見つけた不具合を修正済み: エラーのお知らせを画面下の中央に出していたため、サイドパネルを開いていると右半分が隠れた（左下に移し、`$z-index-notice` でパネルより上に出す）
+- **未確認**: タッチ操作（スマホ・タブレット実機）、`pointercancel` が来る場面、ドラッグ中に帯が表示期間の外まで出て描かれなくなったときの離す操作（window で受けているので動く想定）、スマホ幅の見た目
+- 動作確認のため、ブラウザペインの localStorage のサンプルデータの日付を変えた（「Web サイト改修 v2」が 11/12〜11/16、「バナー制作（1 日だけ）」が 11/14）
+
+### フェーズ 9 以降への申し送り（帯のドラッグ）
+
+- 構成: `components/ProjectBar/` に `useBarDrag.ts`（ポインター操作と状態）と `barDrag.utils.ts`（状態遷移の純粋関数。`startBarDrag` / `updateBarDrag` / `getDraggedPeriod` / `getBarDragResult` / `formatBarPeriodLabel`）を置いた。`useProjectBar` が `useBarDrag` を呼び、つかみ・期間の表示の値を組み立てる
+- ドラッグの状態は**帯 1 本ごと**のフックに持つ（ドラッグ中に `Timeline` 全体を再描画しないため）。担当者行のまとめ帯（`MemberSummaryBar`）はドラッグ中は動かず、保存後に変わる
+- プランの `IDragState` は `IBarDragState` として実装。`projectId` は持たず（帯ごとのフックなので自明）、代わりに `pointerId` を持つ（2 本目の指の動きを無視するため）
+- イベント: `pointerdown` は帯（中央 = 移動）と左右のつかみ（`span`。`stopPropagation` で移動と区別）の React の props。`setPointerCapture` したうえで、`pointermove` / `pointerup` / `pointercancel` / `keydown`（Esc）は**ドラッグ中だけ window に登録**し、同じ `useEffect` で解除する（帯が表示期間の外へ出て描かれなくなっても離す操作を受けるため）。Esc は window のキャプチャ段階で受けて `stopPropagation` し、サイドパネルの Esc（`document` の keydown）まで届かないようにしている
+- クリックとの区別: 移動量が `DRAG_THRESHOLD_PX` 以上になった時点で `isDragging`（戻しても true のまま）。離したとき `isDragging` でなければクリック扱いで、後続の click がそのままパネルを開く。ドラッグ・取り消しのあとは `consumeClickSuppression` が次の**ポインター由来の** click を 1 回だけ無視する。印は click のたびと次の pointerdown で戻す。キーボード（Enter / Space）の click（`MouseEvent.detail === 0`）は抑止しない（PR #13 のレビュー指摘。取り消しの後に click が来ず印が残っていても、キーボードでパネルを開けるようにするため）
+- `onCommit` は例外を投げない契約だが、万一 reject されても unhandled rejection にならないよう、`useBarDrag` 側でも `.catch` してコンソールに出す（PR #13 のレビュー指摘）
+- 保存: 離したとき期間が変わっていれば `useGanttPage` の `barDrag.changePeriod`（`updateProject` に開始日・終了日だけを渡す部分更新）を 1 回だけ呼ぶ。保存中は変更後の位置に描き（`savingPeriod`）、終わったら保存済みの値に戻す。失敗は例外にせず `barDrag.error` に載せ、`GanttChart` が左下にお知らせを出す
+- **サイドパネルで編集中の案件の帯はドラッグできない**（ユーザーの希望。`useBarDrag` の `isDisabled` に `isEditing` を渡す。つかみも出さない）。パネルのフォームの日付とドラッグの結果が食い違い、古い日付のまま保存して戻してしまうのを防ぐ意味もある。このため `sidePanelKey` は案件の ID だけのまま（期間で作り直さない）。クリックは受け付ける
+- 帯は `touch-action: pan-y`（横のドラッグは帯の操作、縦のスワイプは画面のスクロール）。そのため、タッチで帯の上から横にスクロールすることはできない
+- 新しいトークン: `$z-index-bar-dragging`（ドラッグ中の帯と期間の表示）、`$z-index-notice`（お知らせ。パネルより上）。つかみの幅は `ProjectBar.module.scss` の Sass 変数で、マウスは 6px、指で操作する端末（`@media (pointer: coarse)`）は 10px（1 日の帯でも中央が 12px 残る。PR #13 のレビュー指摘。実機では未確認なので、狭い・広いと感じたらフェーズ 9 で調整する）
+- テストは jsdom を入れず、状態遷移を純粋関数に切り出して node 環境で確認した（ポインターイベントの順番を変えた流れを `dragThrough` で再現）。フック自体の配線（キャプチャ・window の登録・click の抑止）はブラウザでの手動確認のみ
+- 開発サーバーが別のセッションで動いていると、このセッションの `preview_start`（`dev-http`）は「Another next dev server is already running」で失敗する。同じフォルダーのサーバーなら、`http://localhost:3000` を開けばこの作業ツリーの変更が反映されている
 
 ## 4-0. デザイン調整（ダークテーマ化）
 
@@ -247,10 +284,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **デザイン調整（`style/dark-modern-theme`）の PR とユーザーの確認**。`develop` にマージされたら **フェーズ 8**（[9-phase8-bar-drag.md](9-phase8-bar-drag.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-0 章（ダークテーマ。帯の色は `backgroundColor` で渡す）、4 章（担当者の管理）と 4-2 章（サイドパネル。`DRAG_THRESHOLD_PX` でのクリックとの区別など）を先に読むこと
-- 担当: フェーズ 8 は Opus 5.5
+- 次にやること: **フェーズ 8（`feat/gantt-bar-drag`）の push・PR とユーザーの確認**。`develop` にマージされたら **フェーズ 9**（[10-phase9-polish-review.md](10-phase9-polish-review.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-00 章（帯のドラッグ。未確認のタッチ操作など）と、各章の「未確認」「残課題」を先に読むこと
+- 担当: フェーズ 9 は Sonnet 5.5 / Codex
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 8 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 9 を進めてください。
   ```
