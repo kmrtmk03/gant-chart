@@ -28,7 +28,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: IConfirmDialogProps) {
-  const { dialogRef, handleCancel } = useConfirmDialog({
+  const { dialogRef, titleId, handleCancel } = useConfirmDialog({
     isOpen,
     isBusy,
     onCancel,
@@ -38,10 +38,10 @@ export function ConfirmDialog({
     <dialog
       ref={dialogRef}
       className={styles.dialog}
-      aria-labelledby="confirm-dialog-title"
+      aria-labelledby={titleId}
       onCancel={handleCancel}
     >
-      <h2 id="confirm-dialog-title" className={styles.title}>
+      <h2 id={titleId} className={styles.title}>
         {title}
       </h2>
       <p className={styles.message}>{message}</p>

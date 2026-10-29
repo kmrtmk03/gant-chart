@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useId, useRef } from "react"
 import type { SyntheticEvent } from "react"
 
 interface IUseConfirmDialogParams {
@@ -12,6 +12,8 @@ interface IUseConfirmDialogParams {
 /**
  * `ConfirmDialog` 専用のフック。`<dialog>` 要素の開閉と Esc の扱いを受け持つ。
  * 返す `dialogRef` は必ず `<dialog>` の `ref` に渡すこと（渡さないと開閉が反映されない）。
+ * `titleId` は `<dialog>` の `aria-labelledby` と見出しの `id` の両方に渡すこと。
+ * `<dialog>` は閉じていても DOM に残るため、複数の確認ダイアログが同時にマウントされても ID が重複しないよう `useId` で作る。
  */
 export function useConfirmDialog({
   isOpen,
@@ -19,6 +21,7 @@ export function useConfirmDialog({
   onCancel,
 }: IUseConfirmDialogParams) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
 
   // isOpen を正として、<dialog> の開閉を合わせる
   useEffect(() => {
@@ -40,6 +43,7 @@ export function useConfirmDialog({
   return {
     // <dialog> に渡すもの
     dialogRef,
+    titleId,
     handleCancel,
   }
 }

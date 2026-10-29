@@ -23,7 +23,7 @@
   - 編集中の案件そのものは state に持たず、`projectId` から `projects` を引いて求める（データと表示がずれないため）
   - 各担当者の案件リスト下の「案件を追加」から開いたときは、その担当者（`addProject(memberId)` の引数）を初期選択にする
 - `useProjects` に `createProject` / `updateProject` / `deleteProject` を足す。保存が成功してから state を更新する
-- `useProjectForm`（`components/hooks/` 配下、パネル専用）: 入力値、バリデーション結果、送信処理
+- `useProjectForm`（`components/ProjectSidePanel/` 配下、パネル専用）: 入力値、バリデーション結果、送信処理
 
 ### 2. コンポーネント
 
