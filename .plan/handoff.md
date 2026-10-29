@@ -66,11 +66,13 @@
 
 ### フェーズ 8 以降への申し送り（担当者の管理）
 
-- 構成: `useMembers`（`createMember` / `renameMember` / `reorderMembers` / `deleteMember`。`useProjects` と同じく、保存成功後に state を更新し、失敗は例外のまま投げる）→ `useMemberManagement`（ダイアログの開閉と、ダイアログから呼ぶ操作。削除後に `reloadProjects` を呼ぶ）→ `useGanttPage` が `memberManagement` グループで公開 → `GanttChart` が `MemberManageDialog` を置く。左リスト・空の画面の「担当者を管理」は `manageMembers`（= ダイアログを開く）を呼ぶ
-- コンポーネントは `components/MemberManageDialog/`（`<dialog>` + `showModal`、`useMemberManageDialog`）と `components/MemberManageRow/`（1 行。名前の下書き・検証は `useMemberManageRow`）。**ダイアログは開いている間だけマウントする**（`isOpen` の props はない。外すと閉じ、入力途中の値も破棄される）。保存系の操作は 1 つずつ実行し、実行中は `isBusy` で全ボタンを止める。失敗は `actionError` としてダイアログ内に出す
+- 構成: `useMembers`（`createMember` / `renameMember` / `reorderMembers` / `deleteMember`。`useProjects` と同じく、保存成功後に state を更新し、失敗は例外のまま投げる）→ `useMemberManagement`（ダイアログの開閉と、ダイアログから呼ぶ操作。削除後は `removeProjectsOfMember` で手元の案件の一覧から取り除く。再読み込みは挟まないので、削除後に失敗する経路がない）→ `useGanttPage` が `memberManagement` グループで公開 → `GanttChart` が `MemberManageDialog` を置く。左リスト・空の画面の「担当者を管理」は `manageMembers`（= ダイアログを開く）を呼ぶ
+- コンポーネントは `components/MemberManageDialog/`（`<dialog>` + `showModal`、`useMemberManageDialog`）と `components/MemberManageRow/`（1 行。名前の下書き・検証は `useMemberManageRow`）。**ダイアログは開いている間だけマウントする**（`isOpen` の props はない。外すと閉じ、入力途中の値も破棄される）。保存系の操作は 1 つずつ実行し（二重実行は `isBusyRef` で弾く）、実行中は `isBusy` で全ボタンを止める。失敗は `actionError` としてダイアログ内に出す
 - 担当者名の検証は `gantt.utils.ts` の `validateMemberName`（必須・50 文字。`MEMBER_NAME_MAX_LENGTH`）、重複の警告は `hasSameNameMember`（登録は止めない）、並び替えは `moveId`（`TMoveDirection`）。ダイアログと行の 2 コンポーネントで使うため feature 共通の utils に置いた
 - 管理ダイアログを開くときは**サイドパネルを閉じる**（入力途中の内容は破棄される）。パネルの Esc が `document` の keydown で、ダイアログの Esc と二重に効くのを避け、削除した担当者の案件を編集中のままにしないため
 - 並び替えは上へ・下へボタンのみ（プラン通りドラッグはなし）。`reorderMembers` は全 id を渡す必要があり、別タブで担当者が増減していると repository がエラーを返す（ダイアログ内に表示される）
+- 読み込み失敗の画面（`loadError`）に「再読み込み」ボタンを追加（`retryLoad` が担当者・案件の両方を読み込み直す。初回の読み込み失敗からも復帰できる）
+- **未確認（PR #11 のレビュー指摘）**: 名前を編集したまま「✕」「↑」「↓」「削除」を押したとき、blur で保存が始まり `isBusy` で全ボタンが `disabled` になって、1 回目のクリックが効かない可能性。ブラウザで実測すること（効かなければ、ボタンを `disabled` にせず `runAction` のガードだけに任せる）
 - 新しいトークン `$color-warning`（重複の警告の文字色）を `_tokens.scss` に追加
 - lint の注意: `react-hooks/refs` の誤検知は `MemberManageDialog` でも出たため、`useMemberManageDialog` の戻り値を分割代入して使っている（`ConfirmDialog` と同じ対処）
 
