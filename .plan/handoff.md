@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 5 の実装完了。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 5 が完了し `develop` にマージ済み。更新: Claude Sonnet 5.5）
 
 ---
 
@@ -27,7 +27,7 @@
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
-| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
+| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ✅ 完了（PR #6 を `develop` にマージ済み。下記 4 章） |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ⬜ 未着手 |
@@ -45,14 +45,14 @@
   - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
   - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
   - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（PR #5 で `develop` にマージ済み）
-  - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（`develop` から作成。PR は未作成）
+  - `feat/gantt-layout`: フェーズ 5 の作業ブランチ（PR #6 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
 ## 4. フェーズ 5 の完了状況
 
-フェーズ 5 は実装完了（ブランチ `feat/gantt-layout`）。フェーズ 6 は未着手。
+フェーズ 5 は完了（ブランチ `feat/gantt-layout`、PR #6 を `develop` にマージ済み）。フェーズ 6 は未着手。
 
 ### フェーズ 5 の確認結果
 
@@ -176,7 +176,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。その前に、フェーズ 5（`feat/gantt-layout`）の確認・PR・`develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
+- 次にやること: **フェーズ 6**（[7-phase6-project-side-panel.md](7-phase6-project-side-panel.md)）。フェーズ 5 は `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
