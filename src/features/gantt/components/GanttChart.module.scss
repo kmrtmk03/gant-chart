@@ -28,11 +28,15 @@
 }
 
 // 列幅は動的な値なので、grid-template-columns はインラインスタイルで渡す
-// 幅を中身に合わせる。スクロール領域の幅のままだと、sticky の左リストが領域の幅までしか追従しない
+// 幅を中身に合わせる。スクロール領域の幅のままだと、sticky の左リストが領域の幅までしか追従しない。
+// 担当者や案件が少なくても、リストの区切り線やタイムラインの背景が画面の下端まで続くように、
+// 高さは最低でもスクロール領域いっぱいにし、余った高さは 2 行目（リストと本体）に配る。
+// 列幅は動的な値なので、grid-template-columns はインラインスタイルで渡す
 .grid {
   display: grid;
+  grid-template-rows: auto 1fr;
   width: max-content;
-  align-items: start;
+  min-height: 100%;
 }
 
 .corner {
