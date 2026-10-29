@@ -1,26 +1,30 @@
 @use "tokens";
 
 .dialog {
-  width: min(360px, calc(100vw - #{tokens.$space-6} * 2));
-  padding: tokens.$space-4;
-  border: 1px solid tokens.$color-border;
-  border-radius: tokens.$radius-md;
+  width: min(380px, calc(100vw - #{tokens.$space-6} * 2));
+  padding: tokens.$space-6;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-lg;
+  background: tokens.$color-elevated;
   box-shadow: tokens.$shadow-panel;
   color: tokens.$color-text;
 
   &::backdrop {
-    background: rgb(0 0 0 / 30%);
+    background: tokens.$color-backdrop;
+    backdrop-filter: blur(4px);
   }
 }
 
 .title {
   margin: 0 0 tokens.$space-2;
   font-size: tokens.$font-size-lg;
+  font-weight: 600;
 }
 
 .message {
-  margin: 0 0 tokens.$space-4;
+  margin: 0 0 tokens.$space-6;
   color: tokens.$color-text-muted;
+  line-height: 1.6;
 }
 
 .actions {
@@ -32,5 +36,11 @@
 .confirm {
   border-color: tokens.$color-danger;
   background: tokens.$color-danger;
-  color: #fff;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-danger;
+    background: tokens.$color-danger;
+    filter: brightness(1.1);
+  }
 }

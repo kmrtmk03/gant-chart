@@ -3,6 +3,9 @@
 
 :root {
   @include tokens.export-css-variables;
+
+  // フォームの部品（日付ピッカーなど）やスクロールバーをブラウザ標準のダーク表示にする
+  color-scheme: dark;
 }
 
 *,
@@ -17,4 +20,83 @@ body {
   color: tokens.$color-text;
   font-family: tokens.$font-family-base;
   font-size: tokens.$font-size-md;
+  -webkit-font-smoothing: antialiased;
+}
+
+// ---- ボタンの基本形 ----
+// 各コンポーネントは色（主ボタン・削除ボタンなど）だけを上書きする。
+// クラスを持たないボタン（閉じる・キャンセルなど）はこの見た目になる
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$space-1;
+  min-height: 32px;
+  padding: 0 tokens.$space-3;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-elevated;
+  color: tokens.$color-text;
+  font: inherit;
+  font-size: tokens.$font-size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color tokens.$transition-fast,
+    border-color tokens.$transition-fast,
+    color tokens.$transition-fast;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-border-hover;
+    background: tokens.$color-elevated-hover;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ---- 入力欄の基本形 ----
+input:not([type="radio"], [type="checkbox"]),
+select,
+textarea {
+  min-height: 36px;
+  padding: tokens.$space-2 tokens.$space-3;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-bg;
+  color: tokens.$color-text;
+  font: inherit;
+  transition:
+    border-color tokens.$transition-fast,
+    box-shadow tokens.$transition-fast;
+
+  &::placeholder {
+    color: tokens.$color-text-subtle;
+  }
+
+  &:focus {
+    border-color: tokens.$color-primary;
+    outline: none;
+    box-shadow: tokens.$focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+textarea {
+  resize: vertical;
+}
+
+// キーボード操作のときだけフォーカスリングを出す
+button:focus-visible {
+  outline: none;
+  box-shadow: tokens.$focus-ring;
+}
+
+::selection {
+  background: tokens.$color-primary-soft;
 }

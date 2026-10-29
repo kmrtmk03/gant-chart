@@ -25,6 +25,7 @@
 .scroller {
   flex: 1;
   overflow: auto;
+  background: tokens.$color-bg;
 }
 
 // 幅を中身に合わせる。スクロール領域の幅のままだと、sticky の左リストが領域の幅までしか追従しない。
@@ -43,7 +44,7 @@
   top: 0;
   left: 0;
   z-index: tokens.$z-index-sticky + 2;
-  border-right: 1px solid tokens.$color-border;
-  border-bottom: 1px solid tokens.$color-border;
+  border-right: 1px solid tokens.$color-border-strong;
+  border-bottom: 1px solid tokens.$color-border-strong;
   background: tokens.$color-surface;
 }

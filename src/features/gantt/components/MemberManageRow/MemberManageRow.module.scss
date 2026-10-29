@@ -28,13 +28,19 @@
   min-width: 3em;
   color: tokens.$color-text-muted;
   font-size: tokens.$font-size-sm;
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .deleteButton {
-  border-color: tokens.$color-danger;
+  border-color: transparent;
   background: none;
   color: tokens.$color-danger;
+
+  &:hover:not(:disabled) {
+    border-color: transparent;
+    background: tokens.$color-danger-soft;
+  }
 }
 
 // 入力欄の下に、行の幅いっぱいで出す

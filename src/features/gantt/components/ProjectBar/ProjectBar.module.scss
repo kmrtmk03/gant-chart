@@ -1,29 +1,47 @@
 @use "tokens";
 
-// 位置・幅・色は動的な値なので、インラインスタイルで渡す
+// 位置・幅・色は動的な値なので、インラインスタイルで渡す。
+// 背景色の上に上から下へ薄い白のグラデーションを重ね、立体感を出す
 .bar {
   position: absolute;
   top: 6px;
   bottom: 6px;
   z-index: tokens.$z-index-bar;
+  display: block;
+  min-height: 0;
   padding: 0 tokens.$space-2;
   overflow: hidden;
   border: 0;
   border-radius: tokens.$radius-sm;
-  color: #fff;
+  background-image: linear-gradient(
+    rgb(255 255 255 / 12%),
+    rgb(255 255 255 / 0%)
+  );
+  box-shadow: tokens.$shadow-bar;
+  color: tokens.$color-on-primary;
   font: inherit;
   font-size: tokens.$font-size-sm;
+  font-weight: 500;
   line-height: 24px;
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    filter tokens.$transition-fast,
+    box-shadow tokens.$transition-fast;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
 }
 
 // 編集中の帯を枠で強調する
 .editing {
-  outline: 2px solid tokens.$color-text;
-  outline-offset: 1px;
+  box-shadow:
+    tokens.$shadow-bar,
+    0 0 0 2px tokens.$color-bg,
+    0 0 0 4px tokens.$color-text;
 }
 
 .clippedStart {
