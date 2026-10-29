@@ -5,6 +5,7 @@
   "scripts": {
     "preinstall": "pnpm dlx only-allow pnpm",
     "dev": "next dev --experimental-https",
+    "dev:http": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
