@@ -76,7 +76,7 @@ Claude 固有の設定は `CLAUDE.md` に書き、共通の内容はこのファ
 | `pnpm dev:http` | 開発サーバーを HTTP で起動する（`http://localhost:3000`。mkcert 不要） |
 | `pnpm build` | 本番ビルド |
 | `pnpm lint` | ESLint |
-| `pnpm typecheck` | 型チェック（`tsc --noEmit`） |
+| `pnpm typecheck` | 型チェック（`next typegen` で型を生成してから `tsc --noEmit`） |
 | `pnpm test` | Vitest による単体テスト |
 | `pnpm test:watch` | Vitest をウォッチモードで実行 |
 | `pnpm format` | Prettier で整形 |
