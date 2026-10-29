@@ -6,7 +6,6 @@ import {
   DAY_COLUMN_WIDTH,
   MEMBER_LIST_WIDTH,
 } from "../gantt.constants"
-import { getDayColumns } from "../gantt.utils"
 import { useGanttPage } from "../hooks/useGanttPage"
 import styles from "./GanttChart.module.scss"
 import { GanttHeader } from "./GanttHeader"
@@ -47,13 +46,13 @@ export function GanttChart() {
   if (
     memberGroups === null ||
     range.rangeStart === null ||
-    range.today === null
+    range.today === null ||
+    range.columns === null
   ) {
     return <p className={styles.message}>読み込み中…</p>
   }
 
-  const { rangeStart, rangeDays, today } = range
-  const columns = getDayColumns(rangeStart, rangeDays)
+  const { rangeStart, rangeDays, today, columns } = range
   const headerHeight = DATE_HEADER_MONTH_ROW_HEIGHT + DATE_HEADER_DAY_ROW_HEIGHT
 
   return (
@@ -72,9 +71,18 @@ export function GanttChart() {
             担当者を管理
           </button>
           {page.canSeedSampleData && (
-            <button type="button" onClick={page.seedSampleData}>
+            <button
+              type="button"
+              disabled={page.isSeeding}
+              onClick={page.seedSampleData}
+            >
               サンプルデータを入れる（開発用）
             </button>
+          )}
+          {page.seedError && (
+            <p role="alert">
+              サンプルデータを入れられませんでした。{page.seedError.message}
+            </p>
           )}
         </div>
       ) : (

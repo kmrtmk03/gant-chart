@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 import {
   DAY_COLUMN_WIDTH,
   MEMBER_ROW_HEIGHT,
@@ -26,7 +28,7 @@ interface ITimelineProps {
  * 行の並びと高さは `MemberList` と同じ（担当者行 → 開いていれば案件行と「案件を追加」行）にして、左右をそろえる。
  * 日付ヘッダーは `TimelineDateHeader` が別に受け持つ。
  */
-export function Timeline({
+export const Timeline = memo(function Timeline({
   memberGroups,
   collapsedMemberIds,
   columns,
@@ -79,4 +81,4 @@ export function Timeline({
       ))}
     </div>
   )
-}
+})

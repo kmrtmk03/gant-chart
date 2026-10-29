@@ -12,6 +12,9 @@ import {
 import type { TDateString } from "../gantt.type"
 import { addDays, diffInDays } from "../gantt.utils"
 
+/** 範囲を一度に広げたとき、全体が右にずれる幅（px）。広げた直後のスクロール位置の補正に使う */
+const EXTEND_PX = RANGE_EXTEND_DAYS * DAY_COLUMN_WIDTH
+
 interface IUseTimelineScrollParams {
   /** タイムラインに用意した範囲の最初の日。未確定の間は null */
   rangeStart: TDateString | null
@@ -52,7 +55,11 @@ export function useTimelineScroll({
       (DEFAULT_RANGE_DAYS_BEFORE - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH
   }, [])
 
-  /** スクロールのたびに、見えている日付の更新と、端に近づいたときの範囲の拡張を行う */
+  /**
+   * スクロールのたびに、見えている日付の更新と、端に近づいたときの範囲の拡張を行う。
+   * 拡張は 2 回続けて走らないよう、どちらの側も `flushSync` で描画を済ませてから次のイベントを受ける
+   * （描画前に scroll イベントが続けて届くと、端に近いまま何度も拡張してしまうため）。
+   */
   const handleScroll = useCallback(
     (event: UIEvent<HTMLDivElement>) => {
       const element = event.currentTarget
@@ -64,40 +71,56 @@ export function useTimelineScroll({
       )
 
       if (element.scrollLeft < RANGE_EDGE_THRESHOLD_PX) {
-        // 範囲が左に広がると全体が右にずれる。描画を同期で終わらせてから、広げた分だけ右にずらして
-        // 見ている位置を保つ（イベントハンドラの中なので flushSync を使える）
+        // 範囲が左に広がると全体が右にずれるので、広げた分だけ右にずらして見ている位置を保つ
+        // （イベントハンドラの中なので flushSync を使える）
         flushSync(onExtendBackward)
-        element.scrollLeft += RANGE_EXTEND_DAYS * DAY_COLUMN_WIDTH
+        element.scrollBy({ left: EXTEND_PX, behavior: "instant" })
       }
       const distanceToRightEdge =
         element.scrollWidth - element.scrollLeft - element.clientWidth
       if (distanceToRightEdge < RANGE_EDGE_THRESHOLD_PX) {
-        onExtendForward()
+        flushSync(onExtendForward)
       }
     },
     [rangeStart, onExtendBackward, onExtendForward],
   )
 
+  /**
+   * 指定した位置（scrollLeft）まで、なめらかにスクロールする。
+   * `scrollLeft` を書き換えるとスクロール中のアニメーションが打ち切られるため、目的地が左端に近いときは
+   * アニメーションを始める前に範囲を広げ、目的地を広げた分だけずらしてから開始する。
+   * これでアニメーションの途中で範囲の拡張（と位置の補正）が起きない。
+   */
+  const scrollToPosition = useCallback(
+    (targetLeft: number) => {
+      if (scrollerElement === null) return
+      let target = targetLeft
+      while (target < RANGE_EDGE_THRESHOLD_PX) {
+        flushSync(onExtendBackward)
+        scrollerElement.scrollBy({ left: EXTEND_PX, behavior: "instant" })
+        target += EXTEND_PX
+      }
+      scrollerElement.scrollTo({ left: target, behavior: "smooth" })
+    },
+    [scrollerElement, onExtendBackward],
+  )
+
   /** 今日が見える位置までスクロールする */
   const scrollToToday = useCallback(() => {
-    const element = scrollerElement
-    if (element === null || rangeStart === null || today === null) return
+    if (scrollerElement === null || rangeStart === null || today === null) {
+      return
+    }
     const todayIndex = diffInDays(rangeStart, today)
-    element.scrollTo({
-      left: (todayIndex - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH,
-      behavior: "smooth",
-    })
-  }, [scrollerElement, rangeStart, today])
+    scrollToPosition((todayIndex - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH)
+  }, [scrollerElement, rangeStart, today, scrollToPosition])
 
   /** 日数ぶん左右にスクロールする（マイナスで過去側） */
   const scrollByDays = useCallback(
     (days: number) => {
-      scrollerElement?.scrollBy({
-        left: days * DAY_COLUMN_WIDTH,
-        behavior: "smooth",
-      })
+      if (scrollerElement === null) return
+      scrollToPosition(scrollerElement.scrollLeft + days * DAY_COLUMN_WIDTH)
     },
-    [scrollerElement],
+    [scrollerElement, scrollToPosition],
   )
 
   const scrollBackward = useCallback(

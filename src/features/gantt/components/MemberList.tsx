@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 import {
   BAR_COLORS,
   MEMBER_ROW_HEIGHT,
@@ -21,7 +23,7 @@ interface IMemberListProps {
  * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
  * 各担当者の案件の下（開いているときだけ）に「案件を追加」、最下部に「担当者を管理」ボタンを置く。
  */
-export function MemberList({
+export const MemberList = memo(function MemberList({
   memberGroups,
   collapsedMemberIds,
   onToggleMember,
@@ -91,4 +93,4 @@ export function MemberList({
       </div>
     </div>
   )
-}
+})

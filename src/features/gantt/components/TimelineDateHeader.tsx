@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 import {
   DATE_HEADER_DAY_ROW_HEIGHT,
   DATE_HEADER_MONTH_ROW_HEIGHT,
@@ -16,7 +18,7 @@ interface ITimelineDateHeaderProps {
  * タイムライン上部の日付ヘッダー（月の行と日の行の 2 段）。縦スクロールしても上に固定する。
  * 土日祝は文字色を変え、祝日名は `title` で出す。
  */
-export function TimelineDateHeader({
+export const TimelineDateHeader = memo(function TimelineDateHeader({
   columns,
   today,
 }: ITimelineDateHeaderProps) {
@@ -59,4 +61,4 @@ export function TimelineDateHeader({
       </div>
     </div>
   )
-}
+})
