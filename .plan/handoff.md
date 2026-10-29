@@ -39,9 +39,10 @@
 
 - GitHub: https://github.com/kmrtmk03/gant-chart（`origin`。owner は `kmrtmk03`、repo は `gant-chart`）
 - ブランチ
-  - `main`: 最初のコミット（要件の下書きと全体プラン）だけ
-  - `feat/gantt-chart-mvp`: 現在の作業ブランチ。`origin` を追跡している
-- フェーズごとのブランチの扱い: フェーズ 1 は `feat/gantt-chart-mvp` のまま続ける（ユーザーに伝えてある）。フェーズ 2 以降で別ブランチを切るか、PR をどの単位で出すかは、まだ決めていない。フェーズ 1 の完了時にユーザーへ確認する
+  - `main`: フェーズ 1 の PR（#1）をマージ済み。直接作業しない
+  - `develop`: 開発のベースブランチ（2026-10-29 に `main` から作成）。作業用ブランチはここから切り、PR のマージ先もここにする
+  - `feat/gantt-chart-mvp`: フェーズ 1 で使った作業ブランチ（マージ済み）
+- フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
@@ -97,7 +98,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 2**（[3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md)）。その前に、フェーズ 1 の確認とブランチ・PR の分け方（3 章）をユーザーに確認する
+- 次にやること: **フェーズ 2**（[3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md)）。`develop` から作業用ブランチを切って始める
 - 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
