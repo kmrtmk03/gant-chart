@@ -75,8 +75,12 @@ $transition-fast: 120ms ease;
 
 // ---- z-index ----
 $z-index-bar: 1;
+// ドラッグ中の帯と、その上に出す期間の表示。他の帯より上、sticky のヘッダーより下に描く
+$z-index-bar-dragging: 2;
 $z-index-sticky: 10;
 $z-index-panel: 100;
+// 画面に浮かせるお知らせ（保存の失敗など）。サイドパネルより上に出す
+$z-index-notice: 110;
 
 // ---- フォント ----
 $font-family-base:
@@ -123,6 +127,8 @@ $font-family-base:
   --radius-lg: #{$radius-lg};
   --shadow-panel: #{$shadow-panel};
   --z-index-bar: #{$z-index-bar};
+  --z-index-bar-dragging: #{$z-index-bar-dragging};
   --z-index-sticky: #{$z-index-sticky};
   --z-index-panel: #{$z-index-panel};
+  --z-index-notice: #{$z-index-notice};
 }

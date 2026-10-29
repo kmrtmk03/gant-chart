@@ -17,7 +17,8 @@ import { useGanttPage } from "../../hooks/useGanttPage"
  */
 export function useGanttChart() {
   const page = useGanttPage()
-  const { memberGroups, range, sidePanel, scroll, memberManagement } = page
+  const { memberGroups, range, sidePanel, scroll, memberManagement, barDrag } =
+    page
 
   if (page.loadError) {
     return {
@@ -43,11 +44,13 @@ export function useGanttChart() {
   const isSidePanelVisible =
     sidePanelState.mode === "create" ||
     (sidePanelState.mode === "edit" && editingProject !== null)
-  // key は、別の案件・別の担当者で開き直したときにフォームを作り直すためのもの
+  // key は、別の案件・別の担当者で開き直したときにフォームを作り直すためのもの。
+  // 編集中の案件の帯をドラッグして期間が変わったときも作り直し、フォームの日付を新しい期間にそろえる
+  // （古い日付のまま保存して、ドラッグの結果を戻してしまわないため。入力途中の内容は破棄される）
   const sidePanelKey =
     sidePanelState.mode === "create"
       ? `create:${sidePanelState.defaultMemberId ?? ""}`
-      : `edit:${editingProject?.id ?? ""}`
+      : `edit:${editingProject?.id ?? ""}:${editingProject?.startDate ?? ""}:${editingProject?.endDate ?? ""}`
 
   // 左上の角の高さは、日付ヘッダー（月の行 + 日の行）に合わせる
   const cornerStyle: CSSProperties = {
@@ -94,6 +97,12 @@ export function useGanttChart() {
     toggleMember: page.toggleMember,
     addProject: page.addProject,
     manageMembers: page.manageMembers,
+    // 帯のドラッグ（期間の保存と、失敗したときのエラー表示）
+    barDrag: {
+      changePeriod: barDrag.changePeriod,
+      errorMessage: barDrag.error?.message ?? null,
+      dismissError: barDrag.dismissError,
+    },
     // 担当者の管理ダイアログ
     memberDialog: {
       isOpen: memberManagement.isDialogOpen,

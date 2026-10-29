@@ -40,7 +40,7 @@ export function GanttChart() {
   // scrollArea（ref を持つ）を先に分割代入する。lint の react-hooks/refs が、
   // ref を渡す関数を持つ戻り値の全体を「ref を含む」と誤検知するのを避けるため
   const { attachScroller, handleScroll } = chart.scrollArea
-  const { emptyState, sidePanel, memberDialog } = chart
+  const { emptyState, sidePanel, memberDialog, barDrag } = chart
 
   return (
     <div className={styles.root}>
@@ -99,8 +99,18 @@ export function GanttChart() {
               today={chart.today}
               editingProjectId={sidePanel.editingProjectId}
               onSelectProject={sidePanel.selectProject}
+              onChangeProjectPeriod={barDrag.changePeriod}
             />
           </div>
+        </div>
+      )}
+
+      {barDrag.errorMessage && (
+        <div className={styles.notice} role="alert">
+          <p>期間を保存できませんでした。{barDrag.errorMessage}</p>
+          <button type="button" onClick={barDrag.dismissError}>
+            閉じる
+          </button>
         </div>
       )}
 
