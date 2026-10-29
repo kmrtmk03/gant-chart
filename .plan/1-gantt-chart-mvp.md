@@ -29,7 +29,7 @@
 - 期間は **開始日〜終了日（終了日を含む）** の日付で持つ。時刻は持たない
 - 表示期間の初期値は「今日の 1 週間前から 2 か月分」とし、前後への移動ボタンと「今日へ戻る」ボタンを置く
 - 祝日の判定には日本の祝日ライブラリを使う（候補: `@holiday-jp/holiday_jp`。実装時に保守状況を確認する）
-- ライブラリのバージョンは実装時点の最新安定版を使う。Next.js 16 以降では `middleware.ts` の名前が `proxy.ts` に変わっているため、実装時に公式ドキュメントで確認する
+- ライブラリのバージョンは実装時点の最新安定版を使う（2026-10-29 時点で Next.js 16.4.3 / pnpm 11.5.2 / Node 24）。Next.js 16 では `middleware.ts` が `proxy.ts` に変わっていることを、同梱ドキュメントで確認済み
 - 対象ブラウザは最新の Chrome / Safari / Edge（PC 中心。スマホは閲覧できれば可）
 
 ---
@@ -122,9 +122,9 @@ UI（コンポーネント）
 | フレームワーク | Next.js（App Router） | ガントチャートは Client Component で描画。ページ本体は Server Component |
 | 言語 | TypeScript（strict） | `any` 禁止。`noUncheckedIndexedAccess` も有効にする |
 | スタイル | Sass（`sass` パッケージ）+ CSS Modules | 色・余白などのトークンは `src/styles/_tokens.scss` に集める |
-| PWA | Serwist（`@serwist/next`） | `app/manifest.ts` で manifest を生成。アイコンを用意する |
+| PWA | `app/manifest.ts` + 最小限の `public/sw.js` | Next.js 公式ガイドの方法。オフラインキャッシュはスコープ外のため Serwist は使わない |
 | ローカル HTTPS | `next dev --experimental-https` | 初回に mkcert で証明書が自動生成される。`pnpm dev` に組み込む |
-| Basic 認証 | Next.js の middleware（Next.js 16 以降は `proxy.ts`） | ID とパスワードは環境変数（`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`）から読む。未設定のときは開発環境のみ認証を省略する |
+| Basic 認証 | `src/proxy.ts`（Next.js 16 で middleware から改名） | ID とパスワードは環境変数（`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`）から読む。未設定のときは、開発環境では認証を省略し、本番環境ではすべて拒否する |
 | 日付処理 | date-fns | 日付の加算・差分・曜日判定に使う |
 | 祝日 | `@holiday-jp/holiday_jp`（候補） | 実装時に確認する |
 | ドラッグ | Pointer Events で自作 | 1 日単位の吸着だけなのでライブラリは使わない |
@@ -133,11 +133,12 @@ UI（コンポーネント）
 
 ### pnpm 以外を使えないようにする仕組み
 
-1. `package.json` の `scripts.preinstall` に `npx only-allow pnpm` を設定する（npm / yarn で install するとエラーで止まる）
-2. `package.json` に `packageManager: "pnpm@<バージョン>"` を明記し、Corepack で pnpm のバージョンを固定する
-3. `package.json` の `engines` に pnpm を指定し、`.npmrc` で `engine-strict=true` にする
-4. `package-lock.json` / `yarn.lock` を `.gitignore` に追加する
-5. CLAUDE.md / AGENTS.md に「npm・yarn コマンドは使わない」と明記する
+1. `package.json` の `devEngines.packageManager` に pnpm を指定し、`onFail: "error"` にする（npm 10.9 以降は install 時にこれを検査して止まる）
+2. `package.json` の `scripts.preinstall` に `pnpm dlx only-allow pnpm` を設定する（npm / yarn で install するとエラーで止まる）
+3. `package.json` に `packageManager: "pnpm@<バージョン>"` を明記し、Corepack で pnpm のバージョンを固定する
+4. `package.json` の `engines` に pnpm を指定し、`pnpm-workspace.yaml` で `engineStrict: true` にする
+5. `package-lock.json` / `yarn.lock` を `.gitignore` に追加する
+6. CLAUDE.md / AGENTS.md に「npm・yarn コマンドは使わない」と明記する
 
 ### 将来の Firebase 移行に向けて（今回は実装しない）
 
@@ -154,19 +155,19 @@ UI（コンポーネント）
 gant-chart/
 ├── AGENTS.md                  # Codex 向け（共通規約の本体）
 ├── CLAUDE.md                  # Claude 向け（AGENTS.md を読み込み、Claude 固有の設定を追記）
-├── .npmrc
+├── pnpm-workspace.yaml       # pnpm の設定（engineStrict など）
 ├── .env.example               # BASIC_AUTH_USER / BASIC_AUTH_PASSWORD
 ├── next.config.ts
 ├── package.json
 ├── public/
+│   ├── sw.js                  # 最小限の Service Worker
 │   └── icons/                 # PWA アイコン
 └── src/
-    ├── middleware.ts          # Basic 認証（Next.js 16 以降は proxy.ts）
+    ├── proxy.ts               # Basic 認証
     ├── app/
     │   ├── layout.tsx
     │   ├── page.tsx           # ガントチャート画面
     │   ├── manifest.ts
-    │   └── sw.ts              # Serwist の Service Worker
     ├── styles/
     │   ├── _tokens.scss
     │   └── globals.scss
@@ -208,24 +209,30 @@ gant-chart/
 
 ## 5. 実装ステップ
 
-各ステップの終わりに `pnpm lint` / `pnpm typecheck` / `pnpm test` を通し、意味のある単位でコミットする。「担当」は使う AI エージェントの目安。
+実装は次のフェーズに分けて進める。各フェーズの作業内容・完了条件・コミットの単位は、それぞれのプランファイルに書いてある。
 
-| # | 内容 | 担当 | 完了条件 |
+### 準備（完了済み）
+
+- `main` に最初のコミットを作成し、作業用ブランチ `feat/gantt-chart-mvp` を切った
+- グローバル CLAUDE.md をもとに `AGENTS.md` / `CLAUDE.md` を作成した（詳細は 6 章）
+
+### フェーズ一覧
+
+| フェーズ | プラン | 内容 | 担当 |
 | --- | --- | --- | --- |
-| 1 | **リポジトリの土台作り**: 最初のコミット、作業用ブランチの作成、`.gitignore` | Sonnet 5.5 | main に最初のコミットがあり、以降の作業はブランチ上で進めている |
-| 2 | **AI エージェント用の規約ファイル**: グローバル CLAUDE.md をもとに `AGENTS.md` / `CLAUDE.md` を作る（詳細は 6 章） | Opus 5.5 | 両方のファイルがあり、Codex と Claude が同じ規約を参照できる |
-| 3 | **Next.js プロジェクトの初期化**: create-next-app（TypeScript / App Router / src ディレクトリ）、Sass、ESLint・Prettier・Vitest、pnpm 以外を禁止する設定 | Sonnet 5.5 | `pnpm dev` が起動し、`npm install` がエラーで止まる |
-| 4 | **ローカル HTTPS・PWA・Basic 認証** | Sonnet 5.5 | `https://localhost:3000` で開け、Basic 認証が出て、アプリとしてインストールできる |
-| 5 | **データ層**: 型、型ガード、定数、`IGanttRepository`、`LocalStorageRepository`、単体テスト | Opus 5.5 | テストが通る。repository を差し替えられる設計になっている |
-| 6 | **日付・座標の計算処理**: 日付 ↔ 列位置の変換、帯の位置・幅、ドラッグ量 → 日数の変換、土日祝の判定、単体テスト | Sonnet 5.5 | 月またぎ・年またぎ・1 日だけの案件のテストが通る |
-| 7 | **画面の骨組み**: レイアウト、左リスト（2 階層・折りたたみ）、タイムラインのグリッド、日付ヘッダー、今日の線、土日祝の色分け、縦スクロールの同期 | Sonnet 5.5 | 仮データで表示が崩れない |
-| 8 | **サイドパネル**: 案件の追加・編集・削除、バリデーション | Sonnet 5.5 | 追加・編集・削除した内容が再読み込み後も残る |
-| 9 | **担当者の管理**: 追加・名前変更・並び替え・削除（配下の案件もまとめて削除） | Sonnet 5.5 | 担当者を削除すると、その案件も消える |
-| 10 | **帯のドラッグ移動・伸縮** | Opus 5.5 | 1 日単位で吸着し、クリックと区別でき、開始日 ≦ 終了日が保たれる |
-| 11 | **仕上げ**: 空の状態の表示、表示期間の移動、見た目の調整、`pnpm build` で確認 | Sonnet 5.5 | ビルドが通り、主要な操作を手動で確認済み |
-| 12 | **コードレビュー** | Codex | 指摘への対応が済んでいる |
+| 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Next.js の雛形、Sass の土台、ESLint・Prettier・Vitest、pnpm 以外の禁止 | Sonnet 5.5 |
+| 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | ローカル HTTPS、PWA、Basic 認証 | Sonnet 5.5 |
+| 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | 型・型ガード・Repository（localStorage 版） | Opus 5.5 |
+| 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | 日付と帯の位置の計算処理 | Sonnet 5.5 |
+| 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | 左リストとタイムラインの表示、折りたたみ、今日の線、土日祝 | Sonnet 5.5 |
+| 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | サイドパネルでの案件の追加・編集・削除 | Sonnet 5.5 |
+| 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | 担当者の追加・名前変更・並び替え・削除 | Sonnet 5.5 |
+| 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | 帯のドラッグ移動・伸縮 | Opus 5.5 |
+| 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | 仕上げ、全体の検証、Codex によるコードレビュー | Sonnet 5.5 / Codex |
 
-- Claude の使用量が 90% を超えた場合は、残りのステップを Codex に切り替える（AGENTS.md があるので同じ規約で進められる）
+- 依存関係: 1 → 2、1 → 3 → 4 → 5 → 6 → 7・8 → 9（2 と 3 は入れ替え可能、7 と 8 も入れ替え可能）
+- 各フェーズの終わりに `pnpm lint` / `pnpm typecheck` / `pnpm test` を通し、ユーザーの確認を受けてから次のフェーズへ進む
+- Claude の使用量が 90% を超えた場合は、残りのフェーズを Codex に切り替える（AGENTS.md があるので同じ規約で進められる）
 
 ---
 
@@ -266,4 +273,4 @@ Codex は `AGENTS.md`、Claude Code は `CLAUDE.md` を読むため、**規約�
 - ユーザー認証（Basic 認証以外）
 - 1 つの案件を複数の担当者で持つこと
 - 案件どうしの依存関係（矢印）、進捗率の表示
-- オフライン時のデータ同期（PWA はインストールして起動できるところまで）
+- オフライン時のデータ同期・キャッシュ（PWA はインストールして起動できるところまで。対応するときは Serwist の導入を検討する）

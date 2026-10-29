@@ -1,0 +1,20 @@
+// グローバルスタイル。リセットとベーススタイルだけを置く（機能固有の調整は書かない）。
+@use "tokens";
+
+:root {
+  @include tokens.export-css-variables;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: tokens.$color-bg;
+  color: tokens.$color-text;
+  font-family: tokens.$font-family-base;
+  font-size: tokens.$font-size-md;
+}
