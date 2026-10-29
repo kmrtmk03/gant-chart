@@ -110,8 +110,12 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 静的ファイルと favicon は認証の対象外にする
-  // MEMO: manifest.webmanifest / sw.js / アイコンは除外しない。
-  //       ブラウザは同じオリジンで資格情報を使い回すため、除外しなくてもインストールできる想定。
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // 静的ファイルと favicon に加えて、PWA のインストール判定に使われるファイルも認証の対象外にする
+  // MEMO: ブラウザは manifest とアイコンを資格情報なしで取得する
+  //       （<link rel="manifest"> に crossorigin="use-credentials" がないため）。
+  //       これらに Basic 認証をかけると 401 になり、インストール可能と判定されない。
+  //       sw.js は登録時に資格情報が送られるため、認証をかけたままにしている。
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icons/|apple-icon.png).*)",
+  ],
 }
