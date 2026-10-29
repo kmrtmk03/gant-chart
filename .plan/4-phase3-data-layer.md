@@ -77,9 +77,9 @@ interface IGanttRepository {
 
 ## 完了条件
 
-- [ ] Repository の全メソッドのテストが通る
-- [ ] 画面のコードがまだなくても、型と repository だけで追加・編集・削除ができる
-- [ ] `pnpm lint` / `pnpm typecheck` / `pnpm test` が成功する
+- [x] Repository の全メソッドのテストが通る
+- [x] 画面のコードがまだなくても、型と repository だけで追加・編集・削除ができる
+- [x] `pnpm lint` / `pnpm typecheck` / `pnpm test` が成功する
 
 ## コミットの単位（目安）
 

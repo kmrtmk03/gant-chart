@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-29（フェーズ 2 の実装完了。更新: Claude Sonnet 5.5）
+- 最終更新: 2026-10-29（フェーズ 3 の実装完了。更新: Claude Opus 5.5）
 
 ---
 
@@ -24,8 +24,8 @@
 | --- | --- | --- | --- |
 | 準備 | 全体プラン・AGENTS.md・CLAUDE.md | Opus 5.5 | ✅ 完了 |
 | 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
-| 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの手動確認待ち。下記 4 章） |
-| 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ⬜ 未着手 |
+| 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
+| 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 5 | [6-phase5-chart-layout.md](6-phase5-chart-layout.md) | Sonnet 5.5 | ⬜ 未着手 |
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ⬜ 未着手 |
@@ -42,13 +42,37 @@
   - `main`: フェーズ 1 の PR（#1）をマージ済み。直接作業しない
   - `develop`: 開発のベースブランチ（2026-10-29 に `main` から作成）。作業用ブランチはここから切り、PR のマージ先もここにする
   - `feat/gantt-chart-mvp`: フェーズ 1 で使った作業ブランチ（マージ済み）
+  - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
+  - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（`develop` から作成。未 push・PR 未作成）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4. フェーズ 3 の着手状況
+## 4. フェーズ 4 の着手状況
 
-フェーズ 2 は実装完了（ブランチ `feat/pwa-basic-auth`、PR は `develop` 宛て）。フェーズ 3 は未着手。
+フェーズ 3 は実装完了（ブランチ `feat/gantt-data-layer`）。フェーズ 4 は未着手。
+
+### フェーズ 3 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（113 件。うち型ガード 49 件・repository 36 件）/ `format:check` / `build` が成功
+- プランの完了条件はすべて満たした（repository の全メソッドのテスト、型と repository だけでの追加・編集・削除、lint / typecheck / test）
+- 画面はまだないので、ブラウザでの手動確認はしていない（フェーズ 5 以降で確認する）
+
+### フェーズ 4 以降への申し送り（データ層）
+
+- ファイル: `src/features/gantt/` の `gantt.type.ts` / `gantt.constants.ts` / `gantt.guards.ts`、`repositories/` の `ganttRepository.type.ts`（インターフェース）/ `ganttRepository.errors.ts`（エラー）/ `localStorageRepository.ts` / `createGanttRepository.ts`
+- フックからは `createGanttRepository()` で取得する。`LocalStorageRepository` は `window.localStorage` を**メソッドが呼ばれた時点で**取りにいくので、生成だけならサーバー側でもエラーにならない。メソッドをサーバー側で呼ぶとエラーになるため、読み込みは `useEffect` などクライアント側で行う
+- エラー: 存在しない id → `GanttNotFoundError`（`entity` と `id` を持つ）、開始日 > 終了日・実在しない日付・存在しない担当者以外の不正な入力 → `GanttValidationError`。案件の `memberId` が存在しない担当者のときは `GanttNotFoundError`
+- プランからの小さな変更点
+  - `IProject.startDate` / `endDate` は `TDateString`、`color` は `TBarColor` にした（全体プランでは `string`）
+  - 更新用の型は `TMemberUpdate = Partial<TMemberInput>` / `TProjectUpdate = Partial<TProjectInput>` とし、対象の `id` はメソッドの第 1 引数で渡す（プランの「`id` との組み合わせ」はインターフェースの引数で表した）
+  - `isProject` は「開始日 ≦ 終了日」も検証する（帯の幅が負になるのを読み込み時点で防ぐため）
+  - 帯の色の実際の値は `_tokens.scss` に `--color-bar-*` として追加した（`BAR_COLORS[key].cssVariable` で参照できる）
+- repository では案件名・担当者名が空文字でも保存できる（必須チェックは画面側の責務。プランどおり）
+- `listProjects` は保存順（作成順）で返す。並び替えが必要なら画面側で行う
+- 壊れたデータを読んだときは配列ごと捨てて空から始め、元の値をコンソールの警告に出す。次に書き込むと元のデータは上書きされる（身内利用なので許容。必要ならフェーズ 9 でバックアップを検討）
+- localStorage の容量超過（`QuotaExceededError`）は握りつぶさずそのまま投げる。画面側でエラー表示するかはフェーズ 6 以降で決める
+- テストはメモリ上の `Storage` のモックを渡す方式にした（jsdom は入れていない。`vitest.config.mts` のコメントも更新済み）
 
 ### フェーズ 2 の確認結果
 
@@ -56,7 +80,7 @@
 - ユーザーが Chrome で確認済み: 本番ビルド（`pnpm build` → `pnpm start`、`http://localhost:3000`）でインストールアイコンが表示される。`next start` には `--experimental-https` がないが、`localhost` なら HTTP でも Service Worker の登録とインストールができる
 - **ユーザーの手動確認が残っている**: インストール後のアプリのウィンドウでの起動
 
-### フェーズ 3 への申し送り
+### フェーズ 2 からの申し送り（引き続き有効）
 
 - `src/proxy.ts` に Basic 認証を実装。解析・比較の関数（`parseBasicAuthHeader` / `isSafeEqual` / `isAuthorized`）は同じファイルから export し、`src/proxy.test.ts` でテストしている。ID とパスワードは `.env.local` の `BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`（`.env.example` にひな形あり）
 - **manifest とアイコンは Basic 認証の対象外**（`src/proxy.ts` の `matcher`）。ブラウザは manifest とアイコンを資格情報なしで取得するため、認証をかけるとインストールアイコンが出ない（フェーズ 2 の途中で判明。プランの当初の想定は誤りだったため修正済み）。静的ファイルを `public/` に足すときも、認証が必要かどうかを同じ観点で判断する
@@ -104,10 +128,10 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 3**（[4-phase3-data-layer.md](4-phase3-data-layer.md)）。その前に、フェーズ 2 の手動確認とレビュー・マージを済ませる。`develop` から作業用ブランチを切って始める
-- 担当: Opus 5.5
+- 次にやること: **フェーズ 4**（[5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md)）。その前に、フェーズ 3（`feat/gantt-data-layer`）のレビューと `develop` へのマージを済ませる。`develop` から作業用ブランチを切って始める
+- 担当: Sonnet 5.5
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 3 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 4 を進めてください。
   ```
