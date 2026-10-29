@@ -26,6 +26,14 @@ import { TimelineDateHeader } from "./TimelineDateHeader"
 export function GanttChart() {
   const page = useGanttPage()
   const { memberGroups, range } = page
+  const {
+    attachScroller,
+    handleScroll,
+    visibleDate,
+    scrollBackward,
+    scrollForward,
+    scrollToToday,
+  } = page.scroll
 
   if (page.loadError) {
     return (
@@ -51,11 +59,10 @@ export function GanttChart() {
   return (
     <div className={styles.root}>
       <GanttHeader
-        rangeStart={rangeStart}
-        rangeDays={rangeDays}
-        onShiftBackward={range.shiftBackward}
-        onShiftForward={range.shiftForward}
-        onResetToToday={range.resetToToday}
+        visibleDate={visibleDate ?? today}
+        onScrollBackward={scrollBackward}
+        onScrollForward={scrollForward}
+        onScrollToToday={scrollToToday}
       />
 
       {memberGroups.length === 0 ? (
@@ -71,7 +78,11 @@ export function GanttChart() {
           )}
         </div>
       ) : (
-        <div className={styles.scroller}>
+        <div
+          ref={attachScroller}
+          className={styles.scroller}
+          onScroll={handleScroll}
+        >
           <div
             className={styles.grid}
             style={{

@@ -28,8 +28,10 @@
 }
 
 // 列幅は動的な値なので、grid-template-columns はインラインスタイルで渡す
+// 幅を中身に合わせる。スクロール領域の幅のままだと、sticky の左リストが領域の幅までしか追従しない
 .grid {
   display: grid;
+  width: max-content;
   align-items: start;
 }
 

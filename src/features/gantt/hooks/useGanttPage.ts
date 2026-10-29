@@ -7,6 +7,7 @@ import { useCollapsedMembers } from "./useCollapsedMembers"
 import { useMembers } from "./useMembers"
 import { useProjects } from "./useProjects"
 import { useTimelineRange } from "./useTimelineRange"
+import { useTimelineScroll } from "./useTimelineScroll"
 
 /** repository はコンポーネントの外で 1 回だけ作る（生成だけならサーバー側でもエラーにならない） */
 const repository = createGanttRepository()
@@ -22,6 +23,12 @@ export function useGanttPage() {
   const { members, membersError, reloadMembers } = useMembers(repository)
   const { projects, projectsError, reloadProjects } = useProjects(repository)
   const timelineRange = useTimelineRange()
+  const timelineScroll = useTimelineScroll({
+    rangeStart: timelineRange.rangeStart,
+    today: timelineRange.today,
+    onExtendBackward: timelineRange.extendBackward,
+    onExtendForward: timelineRange.extendForward,
+  })
   const { collapsedMemberIds, toggleMember } = useCollapsedMembers()
 
   // 担当者ごとの案件のまとまりは state にせず、毎回 members / projects から計算する
@@ -56,10 +63,9 @@ export function useGanttPage() {
       today: timelineRange.today,
       rangeStart: timelineRange.rangeStart,
       rangeDays: timelineRange.rangeDays,
-      shiftBackward: timelineRange.shiftBackward,
-      shiftForward: timelineRange.shiftForward,
-      resetToToday: timelineRange.resetToToday,
     },
+    // スクロール（attachScroller / handleScroll はスクロール領域に渡す。visibleDate は画面の左端の日付）
+    scroll: timelineScroll,
     // 折りたたみ
     collapsedMemberIds,
     toggleMember,

@@ -50,14 +50,23 @@ export const DATE_HEADER_MONTH_ROW_HEIGHT = 24
 /** 日付ヘッダーの「日の行」の高さ（px） */
 export const DATE_HEADER_DAY_ROW_HEIGHT = 28
 
-/** 初期表示の開始日を、今日の何日前にするか */
-export const DEFAULT_RANGE_DAYS_BEFORE = 7
+/** 初期状態で、今日より前に用意しておく日数（左にスクロールできる余白になる） */
+export const DEFAULT_RANGE_DAYS_BEFORE = 60
 
-/** 初期表示の日数（約 2 か月分） */
-export const DEFAULT_RANGE_DAYS = 60
+/** 初期状態で用意しておく合計の日数（今日より前の分を含む） */
+export const DEFAULT_RANGE_DAYS = 180
 
-/** 「前へ」「次へ」ボタン 1 回で表示期間を動かす日数 */
+/** 端に近づいたとき、表示期間を一度に延ばす日数 */
+export const RANGE_EXTEND_DAYS = 90
+
+/** スクロール位置が端からこの距離（px）より近づいたら、表示期間を延ばす */
+export const RANGE_EDGE_THRESHOLD_PX = 640
+
+/** 「前へ」「次へ」ボタン 1 回でスクロールする日数 */
 export const RANGE_SHIFT_DAYS = 14
+
+/** 初期表示と「今日」ボタンで、今日の列より左に見せておく日数 */
+export const TODAY_SCROLL_MARGIN_DAYS = 7
 
 /** 帯のドラッグで、これ未満の移動量（px）はクリックとみなす */
 export const DRAG_THRESHOLD_PX = 4
