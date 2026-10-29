@@ -13,6 +13,15 @@ $color-weekend: #f1f3f6;
 $color-holiday: #fdecec;
 $color-today: #ffe9a8;
 
+// ---- 帯の色プリセット ----
+// キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）
+$color-bar-blue: #4c8df6;
+$color-bar-green: #3fb27f;
+$color-bar-orange: #f29a3d;
+$color-bar-purple: #9b6cf0;
+$color-bar-red: #e5575b;
+$color-bar-gray: #8a94a6;
+
 // ---- 余白 ----
 $space-1: 4px;
 $space-2: 8px;
@@ -59,6 +68,12 @@ $font-family-base:
   --color-weekend: #{$color-weekend};
   --color-holiday: #{$color-holiday};
   --color-today: #{$color-today};
+  --color-bar-blue: #{$color-bar-blue};
+  --color-bar-green: #{$color-bar-green};
+  --color-bar-orange: #{$color-bar-orange};
+  --color-bar-purple: #{$color-bar-purple};
+  --color-bar-red: #{$color-bar-red};
+  --color-bar-gray: #{$color-bar-gray};
   --space-1: #{$space-1};
   --space-2: #{$space-2};
   --space-3: #{$space-3};

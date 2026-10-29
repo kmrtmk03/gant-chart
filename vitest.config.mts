@@ -7,7 +7,7 @@ export default defineConfig({
     alias: { "@": path.resolve(import.meta.dirname, "src") },
   },
   test: {
-    // TODO: localStorage を使うテストはフェーズ 3 で jsdom 導入かモックかを決める
+    // localStorage を使うテストは、jsdom を入れずにメモリ上の Storage のモックを repository に渡して行う
     environment: "node",
   },
 })
