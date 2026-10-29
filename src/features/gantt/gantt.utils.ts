@@ -49,11 +49,13 @@ export function toDateString(date: Date): TDateString {
 
 /**
  * "YYYY-MM-DD" の文字列を、その日のローカル 0 時の Date に変換する。
- * 呼び出し側で型ガード（isDateString）を通した値だけを渡すこと。変換できない文字列は RangeError を投げる。
+ * 呼び出し側で型ガード（isDateString）を通した値だけを渡すこと。
+ * date-fns の parse は "2026-1-5" のような 1 桁の月日も受け付けるため、
+ * 変換結果を文字列に戻して元と一致するかを確かめ、厳密な形式以外は RangeError を投げる。
  */
 export function parseDateString(value: TDateString): Date {
   const date = parse(value, DATE_FORMAT, new Date())
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime()) || toDateString(date) !== value) {
     throw new RangeError(`日付として読めない値です: ${value}`)
   }
   return date
@@ -155,7 +157,7 @@ export function getTodayOffset(
 }
 
 /**
- * ドラッグの移動量（px）を日数に変換する。列幅の半分を超えたら 1 日動いたとみなす。
+ * ドラッグの移動量（px）を日数に変換する。列幅の半分以上動いたら 1 日動いたとみなす。
  * ちょうど半分のときは、左右どちらでも絶対値が大きい側（0 から遠い側）にそろえる。
  */
 export function pxToDays(deltaPx: number): number {

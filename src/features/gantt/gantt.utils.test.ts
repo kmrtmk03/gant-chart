@@ -35,6 +35,12 @@ describe("toDateString / parseDateString", () => {
     expect(() => parseDateString("2026-02-30")).toThrow(RangeError)
     expect(() => parseDateString("abc")).toThrow(RangeError)
   })
+
+  it("桁数が足りない形式（1 桁の月日・2 桁の年）は RangeError", () => {
+    expect(() => parseDateString("2026-1-5")).toThrow(RangeError)
+    expect(() => parseDateString("2026-01-5")).toThrow(RangeError)
+    expect(() => parseDateString("26-01-05")).toThrow(RangeError)
+  })
 })
 
 describe("addDays / diffInDays", () => {

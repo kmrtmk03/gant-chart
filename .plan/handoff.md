@@ -44,7 +44,7 @@
   - `feat/gantt-chart-mvp`: フェーズ 1 で使った作業ブランチ（マージ済み）
   - `feat/pwa-basic-auth`: フェーズ 2 で使った作業ブランチ（PR #3 で `develop` にマージ済み）
   - `feat/gantt-data-layer`: フェーズ 3 の作業ブランチ（PR #4 で `develop` にマージ済み）
-  - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（`develop` から作成。未 push・PR 未作成）
+  - `feat/gantt-utils`: フェーズ 4 の作業ブランチ（`develop` から作成。PR #5 を作成済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
@@ -55,7 +55,7 @@
 
 ### フェーズ 4 の確認結果
 
-- `pnpm lint` / `typecheck` / `test`（157 件。うち `gantt.utils.test.ts` が 40 件）/ `format:check` / `build` が成功
+- `pnpm lint` / `typecheck` / `test`（158 件。うち `gantt.utils.test.ts` が 41 件）/ `format:check` / `build` が成功
 - プランの完了条件はすべて満たした。画面はまだないので、ブラウザでの手動確認はしていない
 
 ### フェーズ 5 以降への申し送り（日付・座標の関数）
@@ -65,7 +65,8 @@
 - `getTodayOffset(rangeStart, rangeDays, today?)` は今日の**列の左端**の px を返す。線を列の中央に引きたいときは `DAY_COLUMN_WIDTH / 2` を足す。表示期間の外は `null`
 - `pxToDays` は半分ちょうどを 0 から遠い側に丸める（+16px → 1、-16px → -1）。`Math.round` だと負の側が非対称になるため
 - `resizeProjectDates(project, "start" | "end", days)` は追い越しそうなとき反対側の端で止める（最短 1 日）。ドラッグ側で別途ガードしなくてよい
-- `parseDateString` は読めない文字列で `RangeError` を投げる。repository と型ガードを通った値だけを渡す前提
+- `parseDateString` は読めない文字列と、桁数が足りない形式（"2026-1-5" など）で `RangeError` を投げる。repository と型ガードを通った値だけを渡す前提
+- `isRangeOverlapping` はフェーズ 4 の時点でどこからも呼ばれていない。`getBarLayout` の範囲外判定（`null`）と条件が重なるので、フェーズ 5 で使い方が決まったら片方に揃える（PR #5 のレビュー指摘）
 - 祝日名はライブラリの表記のまま（例: 2026-05-06 は「こどもの日 振替休日」）。ツールチップなどに出すときは `getHolidayName`
 - `@holiday-jp/holiday_jp` は `export =` 形式のため `import holiday_jp from "..."` で読み込む（`esModuleInterop` で動作確認済み）。データに収録されている年の範囲外は祝日扱いにならない
 
