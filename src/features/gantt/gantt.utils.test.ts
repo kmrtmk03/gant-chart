@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest"
 
 import { DAY_COLUMN_WIDTH } from "./gantt.constants"
+import type { IMember, IProject } from "./gantt.type"
 import {
   addDays,
   diffInDays,
+  formatYearMonth,
   getBarLayout,
   getDateRange,
+  getDayColumns,
   getHolidayName,
+  getMonthSegments,
   getTodayOffset,
+  groupProjectsByMember,
   isHoliday,
   isRangeOverlapping,
   isWeekend,
@@ -378,5 +383,128 @@ describe("resizeProjectDates", () => {
     const oneDay = { startDate: "2026-10-10", endDate: "2026-10-10" }
     expect(resizeProjectDates(oneDay, "start", 1)).toEqual(oneDay)
     expect(resizeProjectDates(oneDay, "end", -1)).toEqual(oneDay)
+  })
+})
+
+describe("formatYearMonth", () => {
+  it("月の先頭のゼロを除いて表示する", () => {
+    expect(formatYearMonth("2026-05-06")).toBe("2026年5月")
+    expect(formatYearMonth("2026-12-31")).toBe("2026年12月")
+  })
+})
+
+describe("getDayColumns", () => {
+  it("土日・祝日の情報を日ごとに付ける", () => {
+    // 2026-05-02（土）〜 05-06（水・振替休日）
+    const columns = getDayColumns("2026-05-02", 5)
+    expect(columns.map((column) => column.date)).toEqual([
+      "2026-05-02",
+      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+    ])
+    expect(columns.map((column) => column.isWeekend)).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ])
+    expect(columns[1]?.holidayName).not.toBeNull()
+    expect(columns[4]?.holidayName).not.toBeNull()
+  })
+
+  it("日数が 0 なら空配列", () => {
+    expect(getDayColumns("2026-05-02", 0)).toEqual([])
+  })
+})
+
+describe("getMonthSegments", () => {
+  it("月またぎを月ごとの日数にまとめる", () => {
+    const segments = getMonthSegments(getDayColumns("2026-10-30", 5))
+    expect(segments).toEqual([
+      { key: "2026-10", label: "2026年10月", days: 2 },
+      { key: "2026-11", label: "2026年11月", days: 3 },
+    ])
+  })
+
+  it("年またぎでも年を区別する", () => {
+    const segments = getMonthSegments(getDayColumns("2026-12-31", 2))
+    expect(segments.map((segment) => segment.label)).toEqual([
+      "2026年12月",
+      "2027年1月",
+    ])
+  })
+
+  it("列が空なら空配列", () => {
+    expect(getMonthSegments([])).toEqual([])
+  })
+})
+
+describe("groupProjectsByMember", () => {
+  const createMember = (id: string): IMember => ({
+    id,
+    name: id,
+    sortOrder: 0,
+    createdAt: "",
+    updatedAt: "",
+  })
+  const createProject = (
+    id: string,
+    memberId: string,
+    startDate: string,
+    endDate: string,
+  ): IProject => ({
+    id,
+    memberId,
+    name: id,
+    startDate,
+    endDate,
+    color: "blue",
+    note: "",
+    createdAt: "",
+    updatedAt: "",
+  })
+
+  it("担当者の並びを保ち、案件を開始日順（同じなら終了日順）に並べる", () => {
+    const groups = groupProjectsByMember(
+      [createMember("a"), createMember("b")],
+      [
+        createProject("p1", "a", "2026-10-10", "2026-10-12"),
+        createProject("p2", "b", "2026-10-01", "2026-10-02"),
+        createProject("p3", "a", "2026-10-05", "2026-10-20"),
+        createProject("p4", "a", "2026-10-05", "2026-10-06"),
+      ],
+    )
+    expect(groups.map((group) => group.member.id)).toEqual(["a", "b"])
+    expect(groups[0]?.projects.map((project) => project.id)).toEqual([
+      "p4",
+      "p3",
+      "p1",
+    ])
+    expect(groups[1]?.projects.map((project) => project.id)).toEqual(["p2"])
+  })
+
+  it("案件のない担当者は空配列、担当者のいない案件は無視する", () => {
+    const groups = groupProjectsByMember(
+      [createMember("a")],
+      [createProject("p1", "ghost", "2026-10-01", "2026-10-02")],
+    )
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.projects).toEqual([])
+  })
+
+  it("渡した配列を並び替えて壊さない", () => {
+    const projects = [
+      createProject("p1", "a", "2026-10-10", "2026-10-12"),
+      createProject("p2", "a", "2026-10-01", "2026-10-02"),
+    ]
+    groupProjectsByMember([createMember("a")], projects)
+    expect(projects.map((project) => project.id)).toEqual(["p1", "p2"])
+  })
+
+  it("担当者が 0 人なら空配列", () => {
+    expect(groupProjectsByMember([], [])).toEqual([])
   })
 })
