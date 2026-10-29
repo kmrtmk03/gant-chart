@@ -54,7 +54,7 @@
 
 ### フェーズ 3 の確認結果
 
-- `pnpm lint` / `typecheck` / `test`（113 件。うち型ガード 49 件・repository 36 件）/ `format:check` / `build` が成功
+- `pnpm lint` / `typecheck` / `test`（117 件。うち型ガード 49 件・repository 40 件）/ `format:check` / `build` が成功
 - プランの完了条件はすべて満たした（repository の全メソッドのテスト、型と repository だけでの追加・編集・削除、lint / typecheck / test）
 - 画面はまだないので、ブラウザでの手動確認はしていない（フェーズ 5 以降で確認する）
 
@@ -62,16 +62,18 @@
 
 - ファイル: `src/features/gantt/` の `gantt.type.ts` / `gantt.constants.ts` / `gantt.guards.ts`、`repositories/` の `ganttRepository.type.ts`（インターフェース）/ `ganttRepository.errors.ts`（エラー）/ `localStorageRepository.ts` / `createGanttRepository.ts`
 - フックからは `createGanttRepository()` で取得する。`LocalStorageRepository` は `window.localStorage` を**メソッドが呼ばれた時点で**取りにいくので、生成だけならサーバー側でもエラーにならない。メソッドをサーバー側で呼ぶとエラーになるため、読み込みは `useEffect` などクライアント側で行う
-- エラー: 存在しない id → `GanttNotFoundError`（`entity` と `id` を持つ）、開始日 > 終了日・実在しない日付・存在しない担当者以外の不正な入力 → `GanttValidationError`。案件の `memberId` が存在しない担当者のときは `GanttNotFoundError`
+- エラー: 存在しない id → `GanttNotFoundError`（`entity` と `id` を持つ）。案件の `memberId` が存在しない担当者のときも `GanttNotFoundError`。開始日 > 終了日・実在しない日付などの不正な入力 → `GanttValidationError`。保存データのスキーマがアプリより新しいとき → すべてのメソッドが `GanttUnsupportedSchemaError`（読み書きの両方を止めて元のデータを保つ。画面側では「アプリを最新にしてください」と案内する想定）
+- 担当者の削除（担当者と案件の 2 キーの書き換え）は、途中で書き込みに失敗したら書き込み済みのキーを操作前の値に戻してからエラーを投げる（`writeAllOrRestore`）。復元にも失敗したときは `AggregateError`
 - プランからの小さな変更点
   - `IProject.startDate` / `endDate` は `TDateString`、`color` は `TBarColor` にした（全体プランでは `string`）
   - 更新用の型は `TMemberUpdate = Partial<TMemberInput>` / `TProjectUpdate = Partial<TProjectInput>` とし、対象の `id` はメソッドの第 1 引数で渡す（プランの「`id` との組み合わせ」はインターフェースの引数で表した）
   - `isProject` は「開始日 ≦ 終了日」も検証する（帯の幅が負になるのを読み込み時点で防ぐため）
   - 帯の色の実際の値は `_tokens.scss` に `--color-bar-*` として追加した（`BAR_COLORS[key].cssVariable` で参照できる）
-- repository では案件名・担当者名が空文字でも保存できる（必須チェックは画面側の責務。プランどおり）
+- **名前の必須チェックは画面側の責務**。`isMember` / `isProject` と repository は名前が文字列かどうかしか見ないので、空文字や空白だけの案件名・担当者名も保存できる。フェーズ 6（サイドパネル）・フェーズ 7（担当者管理）で、前後の空白を除いて空なら保存できないようにする
 - `listProjects` は保存順（作成順）で返す。並び替えが必要なら画面側で行う
 - 壊れたデータを読んだときは配列ごと捨てて空から始め、元の値をコンソールの警告に出す。次に書き込むと元のデータは上書きされる（身内利用なので許容。必要ならフェーズ 9 でバックアップを検討）
 - localStorage の容量超過（`QuotaExceededError`）は握りつぶさずそのまま投げる。画面側でエラー表示するかはフェーズ 6 以降で決める
+- **画面確認の注意**: ID の生成に使う `crypto.randomUUID()` は HTTPS か `localhost` でしか使えない。`pnpm dev:http` に LAN の IP で接続する（スマホ実機での確認など）と、担当者・案件の追加で `TypeError` になる。実機で確認するときは `pnpm dev`（HTTPS）を使う（`localStorageRepository.ts` の `generateId` にも `MEMO:` あり）
 - テストはメモリ上の `Storage` のモックを渡す方式にした（jsdom は入れていない。`vitest.config.mts` のコメントも更新済み）
 
 ### フェーズ 2 の確認結果
