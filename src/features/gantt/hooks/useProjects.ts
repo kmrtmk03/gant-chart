@@ -44,7 +44,7 @@ export function useProjects(repository: IGanttRepository) {
     }
   }, [repository])
 
-  /** 案件を追加する。保存に成功したら一覧の末尾に足す（表示順は画面側で開始日順に並べる） */
+  /** 案件を追加する。保存に成功したら一覧の末尾に足す（表示順は画面側で sortOrder の順に並べる） */
   const createProject = useCallback(
     async (input: TProjectInput) => {
       const created = await repository.createProject(input)

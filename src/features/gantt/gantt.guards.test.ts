@@ -28,6 +28,7 @@ const VALID_PROJECT: IProject = {
   endDate: "2026-10-31",
   color: "blue",
   note: "",
+  sortOrder: 0,
   createdAt: "2026-10-29T00:00:00.000Z",
   updatedAt: "2026-10-29T00:00:00.000Z",
 }
@@ -141,6 +142,14 @@ describe("isProject", () => {
     expect(isProject({ ...VALID_PROJECT, note: undefined })).toBe(false)
     expect(isProject({ ...VALID_PROJECT, color: "pink" })).toBe(false)
     expect(isProject({ ...VALID_PROJECT, memberId: "" })).toBe(false)
+  })
+
+  it("sortOrder は 0 以上の整数だけを受け付ける", () => {
+    expect(isProject({ ...VALID_PROJECT, sortOrder: 3 })).toBe(true)
+    expect(isProject({ ...VALID_PROJECT, sortOrder: -1 })).toBe(false)
+    expect(isProject({ ...VALID_PROJECT, sortOrder: 0.5 })).toBe(false)
+    expect(isProject({ ...VALID_PROJECT, sortOrder: "0" })).toBe(false)
+    expect(isProject({ ...VALID_PROJECT, sortOrder: Number.NaN })).toBe(false)
   })
 
   it("実在しない日付を弾く", () => {

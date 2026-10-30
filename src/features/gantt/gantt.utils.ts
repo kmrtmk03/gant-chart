@@ -110,7 +110,7 @@ export interface IMonthSegment {
 /** 担当者と、その配下の案件のまとまり。左リストとタイムラインが同じ並びで描くために使う */
 export interface IMemberGroup {
   member: IMember
-  /** 開始日の昇順（同じなら終了日の昇順）に並んだ案件 */
+  /** 表示順（sortOrder の昇順。同じなら開始日順 → id 順）に並んだ案件 */
   projects: IProject[]
 }
 
@@ -144,7 +144,8 @@ export function getMonthSegments(columns: IDayColumn[]): IMonthSegment[] {
 }
 
 /**
- * 担当者ごとに案件をまとめる。担当者の並びは渡した順のまま、案件は開始日順に並べる。
+ * 担当者ごとに案件をまとめる。担当者の並びは渡した順のまま、案件は表示順（sortOrder の昇順）に並べる。
+ * sortOrder が同じ案件（別のタブで同時に追加したときなど）は、開始日順 → id 順にして並びを 1 つに決める。
  * 担当者が見つからない案件（memberId が不正）は、どの担当者にも属さないので含めない。
  */
 export function groupProjectsByMember(
@@ -157,8 +158,9 @@ export function groupProjectsByMember(
       .filter((project) => project.memberId === member.id)
       .sort(
         (a, b) =>
+          a.sortOrder - b.sortOrder ||
           a.startDate.localeCompare(b.startDate) ||
-          a.endDate.localeCompare(b.endDate),
+          a.id.localeCompare(b.id),
       ),
   }))
 }

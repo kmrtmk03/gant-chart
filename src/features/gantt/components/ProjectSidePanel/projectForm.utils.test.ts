@@ -39,6 +39,7 @@ const PROJECT: IProject = {
   endDate: "2026-11-10",
   color: "green",
   note: "メモ",
+  sortOrder: 0,
   createdAt: TIMESTAMP,
   updatedAt: TIMESTAMP,
 }

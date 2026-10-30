@@ -43,6 +43,11 @@ export interface IProject {
   color: TBarColor
   /** メモ（任意。未入力は空文字） */
   note: string
+  /**
+   * 担当者の中での表示順（小さいほど上）。値は担当者ごとに 0 から振る
+   * （Firestore に移したときも、担当者で絞り込んで sortOrder で並べるだけで済むようにするため）
+   */
+  sortOrder: number
   createdAt: string
   updatedAt: string
 }
@@ -64,8 +69,14 @@ export type TMemberInput = Pick<IMember, "name">
 /** 担当者を更新するときの入力。指定したフィールドだけを書き換える */
 export type TMemberUpdate = Partial<TMemberInput>
 
-/** 案件を作成するときの入力。id・日時は repository が付ける */
-export type TProjectInput = Omit<IProject, "id" | "createdAt" | "updatedAt">
+/**
+ * 案件を作成するときの入力。id・sortOrder・日時は repository が付ける。
+ * 並び順を変えるのは `IGanttRepository.reorderProjects` だけにするため、更新の入力（TProjectUpdate）にも含めない
+ */
+export type TProjectInput = Omit<
+  IProject,
+  "id" | "sortOrder" | "createdAt" | "updatedAt"
+>
 
 /** 案件を更新するときの入力。指定したフィールドだけを書き換える（対象の id は別の引数で渡す） */
 export type TProjectUpdate = Partial<TProjectInput>

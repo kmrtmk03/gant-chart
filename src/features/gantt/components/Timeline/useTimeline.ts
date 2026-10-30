@@ -25,7 +25,7 @@ interface ITimelineProjectView {
 /** 担当者ごとの行のまとまりの表示用の値 */
 interface ITimelineMemberRowView {
   memberId: string
-  /** 担当者行のまとめ帯に使う、この担当者の案件（開始日順）。折りたたみ中でも使う */
+  /** 担当者行のまとめ帯に使う、この担当者の案件（表示順）。折りたたみ中でも使う */
   projects: IProject[]
   /** 担当者行の配下（案件の行と「案件を追加」行の空行）を出すか。折りたたみ中は false */
   isExpanded: boolean

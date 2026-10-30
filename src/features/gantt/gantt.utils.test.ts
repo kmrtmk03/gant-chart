@@ -458,6 +458,7 @@ describe("groupProjectsByMember", () => {
     memberId: string,
     startDate: string,
     endDate: string,
+    sortOrder = 0,
   ): IProject => ({
     id,
     memberId,
@@ -466,27 +467,44 @@ describe("groupProjectsByMember", () => {
     endDate,
     color: "blue",
     note: "",
+    sortOrder,
     createdAt: "",
     updatedAt: "",
   })
 
-  it("担当者の並びを保ち、案件を開始日順（同じなら終了日順）に並べる", () => {
+  it("担当者の並びを保ち、案件を sortOrder の昇順に並べる（開始日には関係しない）", () => {
     const groups = groupProjectsByMember(
       [createMember("a"), createMember("b")],
       [
-        createProject("p1", "a", "2026-10-10", "2026-10-12"),
-        createProject("p2", "b", "2026-10-01", "2026-10-02"),
-        createProject("p3", "a", "2026-10-05", "2026-10-20"),
-        createProject("p4", "a", "2026-10-05", "2026-10-06"),
+        createProject("p1", "a", "2026-10-10", "2026-10-12", 0),
+        createProject("p2", "b", "2026-10-01", "2026-10-02", 0),
+        createProject("p3", "a", "2026-10-05", "2026-10-20", 2),
+        createProject("p4", "a", "2026-10-01", "2026-10-06", 1),
       ],
     )
     expect(groups.map((group) => group.member.id)).toEqual(["a", "b"])
     expect(groups[0]?.projects.map((project) => project.id)).toEqual([
+      "p1",
       "p4",
       "p3",
-      "p1",
     ])
     expect(groups[1]?.projects.map((project) => project.id)).toEqual(["p2"])
+  })
+
+  it("sortOrder が同じなら開始日順、それも同じなら id 順に並べる", () => {
+    const groups = groupProjectsByMember(
+      [createMember("a")],
+      [
+        createProject("p2", "a", "2026-10-05", "2026-10-06", 1),
+        createProject("p3", "a", "2026-10-01", "2026-10-02", 1),
+        createProject("p1", "a", "2026-10-05", "2026-10-20", 1),
+      ],
+    )
+    expect(groups[0]?.projects.map((project) => project.id)).toEqual([
+      "p3",
+      "p1",
+      "p2",
+    ])
   })
 
   it("案件のない担当者は空配列、担当者のいない案件は無視する", () => {
@@ -500,8 +518,8 @@ describe("groupProjectsByMember", () => {
 
   it("渡した配列を並び替えて壊さない", () => {
     const projects = [
-      createProject("p1", "a", "2026-10-10", "2026-10-12"),
-      createProject("p2", "a", "2026-10-01", "2026-10-02"),
+      createProject("p1", "a", "2026-10-10", "2026-10-12", 1),
+      createProject("p2", "a", "2026-10-01", "2026-10-02", 0),
     ]
     groupProjectsByMember([createMember("a")], projects)
     expect(projects.map((project) => project.id)).toEqual(["p1", "p2"])
