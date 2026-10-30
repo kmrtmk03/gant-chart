@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 9（案件・担当者のドラッグによる並び替え）を実装した。PR は未作成。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 9（案件・担当者のドラッグによる並び替え）を完了し、PR #15 を `develop` にマージした。更新: Claude Opus 5.5）
 
 ---
 
@@ -32,7 +32,7 @@
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 完了（PR #11 を `develop` にマージ済み。下記 4 章） |
 | 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
-| 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | 🟡 実装済み・ユーザー確認待ち（ブランチ `claude/wonderful-newton-0x0jvh`。PR 未作成。下記 4-000 章） |
+| 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5 | ⬜ 未着手（2026-10-30 に追加） |
 | 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9） |
 
@@ -53,14 +53,14 @@
   - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（PR #11 で `develop` にマージ済み）
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
   - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
-  - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成）
+  - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成。PR #15 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
 ## 4-000. フェーズ 9 の完了状況
 
-フェーズ 9 は実装済みで、ユーザーの確認待ち（ブランチ `claude/wonderful-newton-0x0jvh`。PR は未作成）。プランの完了条件はすべて満たした。
+フェーズ 9 は完了（ブランチ `claude/wonderful-newton-0x0jvh`、PR #15 を `develop` にマージ済み）。プランの完了条件はすべて満たし、ユーザーの確認も済んでいる。フェーズ 10 は未着手。
 
 ### フェーズ 9 の確認結果
 
@@ -324,7 +324,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: フェーズ 9 のユーザー確認と PR（`claude/wonderful-newton-0x0jvh` → `develop`）。OK が出たら **フェーズ 10**（[11-phase10-project-complete.md](11-phase10-project-complete.md)。案件の完了）。4-000 章（並び替え。スキーマの移行の置き場所と、`useDragReorder` が渡された id だけを扱うこと）を先に読むこと
+- 次にやること: **フェーズ 10**（[11-phase10-project-complete.md](11-phase10-project-complete.md)。案件の完了）。フェーズ 9 までは `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-000 章（並び替え。スキーマの移行の置き場所と、`useDragReorder` が渡された id だけを扱うこと）を先に読むこと
 - 担当: フェーズ 9 は Opus 5.5、フェーズ 10 は Sonnet 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
   - フェーズ 9: `IProject.sortOrder`（担当者ごとに 0 から）を足し、スキーマを 1 → 2 に移行（既存データは今と同じ開始日順で番号を振る）。左リストの案件名の左のつかみをドラッグして、同じ担当者の中だけで並べ替える。担当者の管理ダイアログも ↑ / ↓ ボタンをやめ、同じつかみのドラッグで並べ替える（ドラッグの処理は共通のフック `useDragReorder` にまとめる）
