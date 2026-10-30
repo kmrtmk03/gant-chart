@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { DAY_COLUMN_WIDTH, DRAG_THRESHOLD_PX } from "../../gantt.constants"
 import type { TProjectPeriod } from "../../gantt.utils"
 import {
+  formatBarAriaLabel,
   formatBarPeriodLabel,
   getBarDragResult,
   getDraggedPeriod,
@@ -192,5 +193,29 @@ describe("formatBarPeriodLabel", () => {
     expect(
       formatBarPeriodLabel({ startDate: "2026-12-30", endDate: "2027-01-02" }),
     ).toBe("12/30 〜 1/2")
+  })
+})
+
+describe("formatBarAriaLabel", () => {
+  it("案件名に 月日〜月日 を添える（先頭の 0 は付けない）", () => {
+    expect(formatBarAriaLabel("案件A", PERIOD, false)).toBe(
+      "案件A 10月3日〜10月12日",
+    )
+  })
+
+  it("完了済みなら末尾に「完了済み」を付ける", () => {
+    expect(formatBarAriaLabel("案件A", PERIOD, true)).toBe(
+      "案件A 10月3日〜10月12日 完了済み",
+    )
+  })
+
+  it("1 日だけの案件は同じ日を 2 回並べる", () => {
+    expect(
+      formatBarAriaLabel(
+        "バナー",
+        { startDate: "2026-11-14", endDate: "2026-11-14" },
+        false,
+      ),
+    ).toBe("バナー 11月14日〜11月14日")
   })
 })

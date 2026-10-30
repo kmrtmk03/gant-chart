@@ -50,9 +50,6 @@ export const MEMBER_ROW_HEIGHT = 40
 /** 案件行の高さ（px）。左リストとタイムラインで同じ値を使い、行をそろえる */
 export const PROJECT_ROW_HEIGHT = 36
 
-/** 左の担当者・案件リストの幅（px） */
-export const MEMBER_LIST_WIDTH = 240
-
 /** 日付ヘッダーの「月の行」の高さ（px） */
 export const DATE_HEADER_MONTH_ROW_HEIGHT = 24
 

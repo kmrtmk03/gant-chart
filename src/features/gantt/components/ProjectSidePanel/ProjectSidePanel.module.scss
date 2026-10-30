@@ -19,6 +19,13 @@ $panel-width: 360px;
   animation: slide-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+// 狭い画面（スマホ）では画面の幅いっぱいに出す。固定幅のままだと、幅が 360px を少し超える端末で左に隙間が残る
+@media (max-width: tokens.$breakpoint-narrow) {
+  .panel {
+    width: 100%;
+  }
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);

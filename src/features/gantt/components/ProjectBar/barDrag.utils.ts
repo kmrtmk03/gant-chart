@@ -107,3 +107,19 @@ export function formatBarPeriodLabel(period: TProjectPeriod): string {
     format(parseDateString(value), "M/d")
   return `${formatMonthDay(period.startDate)} 〜 ${formatMonthDay(period.endDate)}`
 }
+
+/**
+ * 帯の `aria-label`（例: "案件A 10月3日〜10月12日"）。スクリーンリーダー向けに、
+ * 帯の見た目では伝わらない期間と完了済みかどうかを案件名に添える。
+ * @param isCompleted 完了済みなら末尾に「完了済み」を付ける
+ */
+export function formatBarAriaLabel(
+  name: string,
+  period: TProjectPeriod,
+  isCompleted: boolean,
+): string {
+  const formatMonthDay = (value: TProjectPeriod["startDate"]) =>
+    format(parseDateString(value), "M月d日")
+  const label = `${name} ${formatMonthDay(period.startDate)}〜${formatMonthDay(period.endDate)}`
+  return isCompleted ? `${label} 完了済み` : label
+}

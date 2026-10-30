@@ -39,13 +39,16 @@ $color-backdrop: rgb(4 6 10 / 60%);
 
 // ---- 帯の色プリセット ----
 // キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）。
-// 暗い背景の上で白い文字が読める明るさに揃えている
-$color-bar-blue: #4f7dff;
-$color-bar-green: #22a77a;
-$color-bar-orange: #e88a2e;
-$color-bar-purple: #8b5cf6;
-$color-bar-red: #e5536b;
-$color-bar-gray: #5f6b82;
+// 帯の上の白い文字（16px）が読めるよう、白とのコントラスト比 4.5 以上（WCAG AA）を確保している。
+// 帯には白を重ねて明るくするので（ProjectBar.module.scss の $bar-gradient と $bar-highlight）、その分を見込んだ値にしている。
+// 文字の上寄り（白 10%）で、通常時 5.1 以上、ホバー・ドラッグ中（白 10% + 6% 重ね）でも 4.6 以上。
+// 色を変えるとき、重ねる白の濃さを変えるときは、この比を計算し直すこと
+$color-bar-blue: #3256c3;
+$color-bar-green: #0f6b52;
+$color-bar-orange: #964a09;
+$color-bar-purple: #6d40d3;
+$color-bar-red: #b3314b;
+$color-bar-gray: #525c6e;
 
 // ---- 余白 ----
 $space-1: 4px;
@@ -80,6 +83,10 @@ $focus-ring: 0 0 0 3px rgb(113 130 255 / 35%);
 // ---- 大きさ ----
 // 画面上部のバー（GanttHeader）の高さ。サイドパネルはこの下から出す（バーの右端の切り替えボタンを隠さないため）
 $header-height: 52px;
+// 左の担当者・案件リストの幅。狭い画面（$breakpoint-narrow 以下）では縮めて、タイムラインの見える幅を確保する。
+// 実際の切り替えは globals.scss の :root で行い、GanttChart はグリッドの列幅に CSS 変数 --member-list-width として参照する
+$member-list-width: 240px;
+$member-list-width-narrow: 160px;
 
 // ---- ブレークポイント ----
 // スマホなど狭い画面。これ以下の幅では、ヘッダーの文言を短くするなどして横にはみ出さないようにする
@@ -135,6 +142,7 @@ $font-family-base:
   --color-bar-purple: #{$color-bar-purple};
   --color-bar-red: #{$color-bar-red};
   --color-bar-gray: #{$color-bar-gray};
+  --member-list-width: #{$member-list-width};
   --space-1: #{$space-1};
   --space-2: #{$space-2};
   --space-3: #{$space-3};

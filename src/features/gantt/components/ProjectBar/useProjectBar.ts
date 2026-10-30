@@ -4,7 +4,7 @@ import type { CSSProperties, MouseEvent } from "react"
 import { BAR_COLORS } from "../../gantt.constants"
 import type { IProject, TDateString } from "../../gantt.type"
 import { getBarLayout, type TProjectPeriod } from "../../gantt.utils"
-import { formatBarPeriodLabel } from "./barDrag.utils"
+import { formatBarAriaLabel, formatBarPeriodLabel } from "./barDrag.utils"
 import styles from "./ProjectBar.module.scss"
 import { useBarDrag } from "./useBarDrag"
 
@@ -107,6 +107,13 @@ export function useProjectBar({
       style,
       title: `${project.name}（${startDate} 〜 ${endDate}）${project.completedAt === null ? "" : "【完了済み】"}`,
       label: project.name,
+      // 帯の見た目では伝わらない期間・完了済みを、スクリーンリーダー向けに案件名へ添える。
+      // ドラッグ中も保存済みの期間を読ませる（変更後の期間は確定するまで仮のため）
+      ariaLabel: formatBarAriaLabel(
+        project.name,
+        period,
+        project.completedAt !== null,
+      ),
       periodLabel,
       // 伸縮のつかみ。編集中・はみ出している側（または描けない）ときは null
       resizeStartHandle:

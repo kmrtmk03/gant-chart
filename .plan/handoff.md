@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 11 の PR #20 が `develop` にマージされた。更新: Claude Sonnet 5.5）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 12 の仕上げ・README・本番ビルドの Basic 認証の確認までを `feat/gantt-polish` で実施。Codex レビューと残りの手動確認は未了。更新: Claude Sonnet 5.5）（その前: フェーズ 11 の PR #20 が `develop` にマージされた）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -35,7 +35,7 @@
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
 | 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ✅ 完了（PR #20 を `develop` にマージ済み。下記 4-00000 章） |
-| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9 → 11 → 12） |
+| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | 🔶 進行中（仕上げ・README は PR #22 で `develop` 宛てに出してレビュー対応中。Codex レビュー・残りの手動確認が未了。下記 4-000000 章） |
 
 ---
 
@@ -55,10 +55,34 @@
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
   - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
   - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成。PR #15 で `develop` にマージ済み）
+  - `feat/gantt-polish`: フェーズ 12 の作業ブランチ（`develop` の fba4684 から作成。push 済み。PR #22 は `develop` 宛て・マージ前）
   - `claude/nice-brown-di5gxi`: フェーズ 10 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-project-complete` ではない。`develop` の 0c752eb から作成。PR #17 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
+
+## 4-000000. フェーズ 12 の進捗
+
+ブランチ `feat/gantt-polish`、PR #22（`develop` 宛て、マージ前）。PR 作成後にセルフレビュー（コメント 2 件）と、別のレビューのコメント（README のスマホ実機の手順、1 件）が付き、その対応を同じブランチに追加した。
+
+### 済んだこと
+
+- 帯の色のコントラスト: 白文字（16px）との比が 4.5 未満だった 5 色（青 3.68・緑 3.05・オレンジ 2.59・赤 3.63・紫 4.23）を、色相を保ったまま暗くした（`_tokens.scss` の `$color-bar-*`）。最初の対応は「帯の中央（白 6%）」で 4.5 以上としたが、文字の上寄り（白 10%）では青 4.32・オレンジ 4.45 と届いていなかったため、PR のレビュー対応で、**文字の上寄り（白 10%）で通常時 5.1 以上、ホバー・ドラッグ中（10% + 6% 重ね）でも 4.6 以上**になる値に直した（青 `#3256c3`・緑 `#0f6b52`・オレンジ `#964a09`・紫 `#6d40d3`・赤 `#b3314b`・灰 `#525c6e`）。**計算で確認しただけで、6 色すべての帯の目視はしていない**（サンプルデータには青・オレンジ・灰色しかない）。色のトークンは担当者の色の選択肢（サイドパネルの丸）にも使われているので、見た目が変わっている
+- 帯のホバー・ドラッグ中: `filter: brightness(1.12)`（明るくなりすぎて文字のコントラストが 3.8〜4.3 に下がった）をやめ、白 6% のオーバーレイ（`ProjectBar.module.scss` の `$bar-highlight`）にした。グラデーションは transition できないので、ホバーの白は一瞬で切り替わる。**色や白の濃さを変えるときは、`_tokens.scss` のコメントのとおりコントラストを計算し直すこと**。なお `ConfirmDialog` のボタンの `brightness(1.1)` は帯ではないので、そのまま
+- 帯の `aria-label`: `formatBarAriaLabel(name, period, isCompleted)`（`barDrag.utils.ts`、テスト 3 件）。例「案件A 10月3日〜10月12日」、完了済みは末尾に「完了済み」。ドラッグ中も保存済みの期間を読ませる
+- 帯のキーボードフォーカス: `globals.scss` の `button:focus-visible` が `box-shadow` を差し替えるため、帯の影と編集中の枠が消えていた。`ProjectBar.module.scss` に `.bar:focus-visible` / `.editing:focus-visible` を足し、枠は `outline` で描く。Tab で帯に届き、Enter でパネルが開くことをブラウザで確認済み
+- 狭い画面（480px 以下）: 左リストの幅を CSS 変数 `--member-list-width`（`_tokens.scss` の `$member-list-width` 240px / `$member-list-width-narrow` 160px。切り替えは `globals.scss`）にし、サイドパネルを全幅にした。`MEMBER_LIST_WIDTH`（`gantt.constants.ts`）は削除（使用箇所は `useGanttChart` だけで、CSS 変数に置き換えた）。375×812 で横にはみ出さず（`scrollWidth` = 375）、パネルが 0〜375px になることを確認済み
+- 読み込み中の表示に `role="status"`。保存失敗の表示（左下のお知らせ・パネル内エラー）は既存のまま、見直しの結果、変更なし
+- `README.md` を新規作成（概要・必要なもの・セットアップ・`.env.local`・起動・本番ビルド・コマンド一覧）。PR のレビュー対応で次を直した: mkcert は入れなくてよい（`pnpm dev` の初回に Next.js が自動でダウンロードする。`node_modules/next/dist/lib/mkcert.js` で確認）と訂正。`pnpm dev` の証明書の対象は `localhost` / `127.0.0.1` / `::1` と、`-H` で指定したホストだけなので、スマホ実機で開く手順（`pnpm dev -H <LAN アドレス>` と、スマホに `rootCA.pem` を信頼させる手順）を追加した。**`-H` と `-p` が `pnpm` 経由で `next dev` に渡ることは確認した（HTTP 版）。HTTPS での証明書の再生成と、スマホ実機での動作は未確認**
+- 検証: `pnpm lint` / `typecheck` / `test`（283 件）/ `format:check` / `build` が成功。本番ビルド（`pnpm start`、port 3100）で Basic 認証を curl で確認: 環境変数未設定 → `/` と `sw.js` は 401（manifest・アイコンは 200）/ 設定あり → 認証なし・誤りは 401、正しい資格情報は 200（`sw.js` も）
+
+### 未了（次のセッションで）
+
+- **Codex のレビュー**（プラン 3 章）。Claude にはできないので、ユーザーが Codex に依頼する。指摘は重要度順に並べてもらい、対応する・見送るをユーザーと決めてから修正する
+- 全体プラン 7 章の手動チェックのうち、**このセッションでは通しで確認していない項目**: 再読み込み後のデータ保持、帯のドラッグの吸着、担当者の削除、案件・担当者の並び替え、完了の表示切り替え、左リストとタイムラインの縦スクロール（いずれも各フェーズで確認済みだが、仕上げの時点での通しの確認はしていない）。**PWA のインストールとアプリのウィンドウでの起動**（ブラウザの操作が必要）、`npm install` が止まること
+- 「README の手順どおりに、別の環境で起動できる」: 別の環境では試していない。mkcert の自動取得（`pnpm dev` の初回）は、Next.js のコード（`node_modules/next/dist/lib/mkcert.js`）で確認しただけで、mkcert を入れていない環境での初回起動は試していない（この開発機には mkcert が入っている）。README は「mkcert は入れなくてよい（Next.js が自動でダウンロードする）」と書いてあり、未確認の点はここに残している
+- 6 色すべての帯の色の目視、タッチ操作、320px 以下の見た目（フェーズ 11 の「未確認」も同じ）
+- PR #22 のレビュー対応の続き・マージ（push・マージはユーザーの依頼があってから）。スマホ実機での HTTPS（README の手順）の確認
 
 ## 4-00000. フェーズ 11 の実装状況
 
@@ -197,7 +221,7 @@
 - 編集中の帯の強調は `outline` から `box-shadow` の二重リングに変えた
 - 確認: `pnpm lint` / `typecheck` / `test`（191 件）/ `build` が成功。ブラウザ（1280×760）でメイン画面・サイドパネル・担当者の管理ダイアログを目視確認。確認ダイアログ（削除）・空の状態・スマホ幅は未確認
 - 残課題: PWA のアイコン（`public/icons/`）は明るいデザインのまま。必要なら `scripts/generate-icons.mjs` で作り直す
-- プレビュー用に `.claude/launch.json`（Basic 認証の環境変数を空にして `pnpm dev:http` を起動）をローカルに作った。コミットはしていない
+- プレビュー用に `.claude/launch.json`（Basic 認証の環境変数を空にして `pnpm dev:http` を起動）を作った。フェーズ 12 で `feat/gantt-polish` にコミットした（ユーザーの了承済み）
 
 ## 4. フェーズ 7 の完了状況
 
@@ -380,8 +404,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。着手前にユーザーの確認を取る。4-00000 章の「未確認」（320px 以下・タッチ操作・保存中の抑止の実機確認など）も仕上げで見ること
-- その次: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること
+- 次にやること: **フェーズ 12 の残り**（4-000000 章の「未了」。Codex のレビュー・手動チェックの通し・PR）。仕上げ・README はコミット済み。4-00000 章の「未確認」（320px 以下・タッチ操作・保存中の抑止の実機確認など）も見ること
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
@@ -391,5 +414,5 @@
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 11 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 12 の残りを進めてください。
   ```
