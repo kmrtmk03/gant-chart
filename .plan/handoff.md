@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 8 の PR #13 のマージを反映。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（仕上げの前に、案件の並び替え（フェーズ 9）・完了（フェーズ 10）を追加し、仕上げをフェーズ 11 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -32,7 +32,9 @@
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 完了（PR #11 を `develop` にマージ済み。下記 4 章） |
 | 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
-| 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
+| 9 | [10-phase9-project-reorder.md](10-phase9-project-reorder.md) | Opus 5.5 | ⬜ 未着手（2026-10-30 に追加） |
+| 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5 | ⬜ 未着手（2026-10-30 に追加） |
+| 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9） |
 
 ---
 
@@ -58,6 +60,8 @@
 ## 4-00. フェーズ 8 の完了状況
 
 フェーズ 8 は完了（ブランチ `feat/gantt-bar-drag`、PR #13 を `develop` にマージ済み）。フェーズ 9 は未着手。
+
+> 2026-10-30 にフェーズの番号を振り直した。この章より前に書かれた「フェーズ 9（仕上げ）」は、今の**フェーズ 11** を指す（下の申し送りの「フェーズ 9」も同じ）。
 
 ### フェーズ 8 の確認結果
 
@@ -87,7 +91,7 @@
 - 保存: 離したとき期間が変わっていれば `useGanttPage` の `barDrag.changePeriod`（`updateProject` に開始日・終了日だけを渡す部分更新）を 1 回だけ呼ぶ。保存中は変更後の位置に描き（`savingPeriod`）、終わったら保存済みの値に戻す。失敗は例外にせず `barDrag.error` に載せ、`GanttChart` が左下にお知らせを出す
 - **サイドパネルで編集中の案件の帯はドラッグできない**（ユーザーの希望。`useBarDrag` の `isDisabled` に `isEditing` を渡す。つかみも出さない）。パネルのフォームの日付とドラッグの結果が食い違い、古い日付のまま保存して戻してしまうのを防ぐ意味もある。このため `sidePanelKey` は案件の ID だけのまま（期間で作り直さない）。クリックは受け付ける
 - 帯は `touch-action: pan-y`（横のドラッグは帯の操作、縦のスワイプは画面のスクロール）。そのため、タッチで帯の上から横にスクロールすることはできない
-- 新しいトークン: `$z-index-bar-dragging`（ドラッグ中の帯と期間の表示）、`$z-index-notice`（お知らせ。パネルより上）。つかみの幅は `ProjectBar.module.scss` の Sass 変数で、マウスは 6px、指で操作する端末（`@media (pointer: coarse)`）は 10px（1 日の帯でも中央が 12px 残る。PR #13 のレビュー指摘。実機では未確認なので、狭い・広いと感じたらフェーズ 9 で調整する）
+- 新しいトークン: `$z-index-bar-dragging`（ドラッグ中の帯と期間の表示）、`$z-index-notice`（お知らせ。パネルより上）。つかみの幅は `ProjectBar.module.scss` の Sass 変数で、マウスは 6px、指で操作する端末（`@media (pointer: coarse)`）は 10px（1 日の帯でも中央が 12px 残る。PR #13 のレビュー指摘。実機では未確認なので、狭い・広いと感じたらフェーズ 11 で調整する）
 - テストは jsdom を入れず、状態遷移を純粋関数に切り出して node 環境で確認した（ポインターイベントの順番を変えた流れを `dragThrough` で再現）。フック自体の配線（キャプチャ・window の登録・click の抑止）はブラウザでの手動確認のみ
 - 開発サーバーが別のセッションで動いていると、このセッションの `preview_start`（`dev-http`）は「Another next dev server is already running」で失敗する。同じフォルダーのサーバーなら、`http://localhost:3000` を開けばこの作業ツリーの変更が反映されている
 
@@ -185,7 +189,7 @@
 - 「案件を追加」は**各担当者の案件リストの下**（開いているときだけ）に置いてある（2026-10-29 に最下部から変更）。押すと `addProject(memberId)` が呼ばれるので、フェーズ 6 ではその担当者を担当者の初期値にしてサイドパネルを開く。`Timeline` 側にも同じ高さの空行があり、左右の行をそろえている。「担当者を管理」は最下部のまま。ボタンの処理は `useGanttPage` の `addProject` / `manageMembers`（今は空の関数で `TODO:` が付いている）を差し替える。`ProjectBar` はまだクリックできない（フェーズ 6 でサイドパネルを開く、フェーズ 8 でドラッグを足す）
 - 「サンプルデータを入れる（開発用）」は担当者が 0 人のときの空の画面にだけ出る（本番ビルドでは出ない）。再度入れたいときはブラウザの localStorage（`gantt:*`）を消す
 - `gantt.utils.ts` に追加した関数: `getDayColumns` / `getMonthSegments` / `formatYearMonth` / `groupProjectsByMember`（担当者ごとの案件のまとまり。開始日順）/ `toError`。型は `IDayColumn` / `IMonthSegment` / `IMemberGroup`
-- `isRangeOverlapping` は引き続きどこからも呼ばれていない（`getBarLayout` が `null` を返すことで代用している）。使わないなら、フェーズ 9 で削除を検討する
+- `isRangeOverlapping` は引き続きどこからも呼ばれていない（`getBarLayout` が `null` を返すことで代用している）。使わないなら、フェーズ 11 で削除を検討する
 - スタイル: 土日祝の文字色のうち祝日の赤は `TimelineDateHeader.module.scss` に生の色コード（`#e5575b`）を書いてしまっている。`--color-bar-red` と同じ値なので、必要なら `_tokens.scss` に `$color-holiday-text` を足して置き換える
 - 開発サーバーを Basic 認証なしで起動するには `BASIC_AUTH_USER= BASIC_AUTH_PASSWORD= pnpm dev:http`（`.env.local` に値があると 401 になるため）
 
@@ -225,7 +229,7 @@
   - 帯の色の実際の値は `_tokens.scss` に `--color-bar-*` として追加した（`BAR_COLORS[key].cssVariable` で参照できる）
 - **名前の必須チェックは画面側の責務**。`isMember` / `isProject` と repository は名前が文字列かどうかしか見ないので、空文字や空白だけの案件名・担当者名も保存できる。フェーズ 6（サイドパネル）・フェーズ 7（担当者管理）で、前後の空白を除いて空なら保存できないようにする
 - `listProjects` は保存順（作成順）で返す。並び替えが必要なら画面側で行う
-- 壊れたデータを読んだときは配列ごと捨てて空から始め、元の値をコンソールの警告に出す。次に書き込むと元のデータは上書きされる（身内利用なので許容。必要ならフェーズ 9 でバックアップを検討）
+- 壊れたデータを読んだときは配列ごと捨てて空から始め、元の値をコンソールの警告に出す。次に書き込むと元のデータは上書きされる（身内利用なので許容。必要ならフェーズ 11 でバックアップを検討）
 - localStorage の容量超過（`QuotaExceededError`）は握りつぶさずそのまま投げる。画面側でエラー表示するかはフェーズ 6 以降で決める
 - **画面確認の注意**: ID の生成に使う `crypto.randomUUID()` は HTTPS か `localhost` でしか使えない。`pnpm dev:http` に LAN の IP で接続する（スマホ実機での確認など）と、担当者・案件の追加で `TypeError` になる。実機で確認するときは `pnpm dev`（HTTPS）を使う（`localStorageRepository.ts` の `generateId` にも `MEMO:` あり）
 - テストはメモリ上の `Storage` のモックを渡す方式にした（jsdom は入れていない。`vitest.config.mts` のコメントも更新済み）
@@ -284,8 +288,12 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 9**（[10-phase9-polish-review.md](10-phase9-polish-review.md)）。フェーズ 8 までは `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-00 章（帯のドラッグ。未確認のタッチ操作など）と、各章の「未確認」「残課題」を先に読むこと
-- 担当: フェーズ 9 は Sonnet 5.5 / Codex
+- 次にやること: **フェーズ 9**（[10-phase9-project-reorder.md](10-phase9-project-reorder.md)。案件の並び替え）。フェーズ 8 までは `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-00 章（帯のドラッグ。並び替えのドラッグも同じ作りにする）を先に読むこと
+- 担当: フェーズ 9 は Opus 5.5、フェーズ 10 は Sonnet 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
+- 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
+  - フェーズ 9: `IProject.sortOrder`（担当者ごとに 0 から）を足し、スキーマを 1 → 2 に移行（既存データは今と同じ開始日順で番号を振る）。左リストの案件名の左のつかみをドラッグして、同じ担当者の中だけで並べ替える
+  - フェーズ 10: `IProject.completedAt`（未完了は `null`）を足し、スキーマを 2 → 3 に移行。サイドパネルに「完了にする / 未完了に戻す」、ヘッダー右上に「完了済みを表示」の切り替え（保存しない。初期値は表示しない）
+  - スキーマの移行はフェーズごとに 1 段ずつ行う（`SCHEMA_MIGRATIONS` に足していく）。フェーズ 10 を先にやる場合は番号の順を入れ替えること
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
