@@ -20,9 +20,13 @@ $color-primary-hover: #8794ff;
 $color-primary-soft: rgb(113 130 255 / 16%);
 $color-on-primary: #ffffff;
 $color-hover: rgb(255 255 255 / 5%);
-$color-weekend: rgb(255 255 255 / 2.5%);
-$color-holiday: rgb(242 102 122 / 7%);
+// 日本のカレンダーの慣習に合わせ、土曜は青、日曜と祝日は赤で色分けする（背景と日付ヘッダーの文字）
+$color-saturday: rgb(79 125 255 / 12%);
+$color-saturday-text: #6f9cff;
+$color-holiday: rgb(242 102 122 / 12%);
 $color-holiday-text: #f2667a;
+// 月の最初の日の列の左に引く区切り線（日の列の線 $color-border より目立たせる）
+$color-month-divider: rgb(255 255 255 / 28%);
 $color-today: rgb(113 130 255 / 18%);
 $color-row-member: rgb(255 255 255 / 2.5%);
 $color-danger: #f2667a;
@@ -52,10 +56,10 @@ $space-5: 20px;
 $space-6: 24px;
 
 // ---- フォントサイズ ----
-$font-size-xs: 11px;
-$font-size-sm: 12px;
-$font-size-md: 14px;
-$font-size-lg: 16px;
+// 画面の文字は最小 16px にそろえる。補足・本文などの大きさの差は、色（$color-text-muted）と太さで付ける。
+// 開閉の三角などの記号は文字ではないので、このトークンを使わず見た目の大きさで決める
+$font-size-base: 16px;
+$font-size-lg: 18px;
 
 // ---- 角丸 ----
 $radius-sm: 6px;
@@ -120,7 +124,7 @@ $font-family-base:
   --color-text: #{$color-text};
   --color-text-muted: #{$color-text-muted};
   --color-primary: #{$color-primary};
-  --color-weekend: #{$color-weekend};
+  --color-saturday: #{$color-saturday};
   --color-holiday: #{$color-holiday};
   --color-today: #{$color-today};
   --color-row-member: #{$color-row-member};
@@ -137,9 +141,7 @@ $font-family-base:
   --space-4: #{$space-4};
   --space-5: #{$space-5};
   --space-6: #{$space-6};
-  --font-size-xs: #{$font-size-xs};
-  --font-size-sm: #{$font-size-sm};
-  --font-size-md: #{$font-size-md};
+  --font-size-base: #{$font-size-base};
   --font-size-lg: #{$font-size-lg};
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};

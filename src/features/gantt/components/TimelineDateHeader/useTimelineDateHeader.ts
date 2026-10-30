@@ -20,16 +20,23 @@ export function useTimelineDateHeader({
   columns,
   today,
 }: IUseTimelineDateHeaderParams) {
-  const months = getMonthSegments(columns).map((segment) => ({
+  // 表示期間の最初の月は途中から始まることがあるので、最初の列が 1 日のときだけ区切り線を引く
+  const months = getMonthSegments(columns).map((segment, index) => ({
     key: segment.key,
     label: segment.label,
     width: segment.days * DAY_COLUMN_WIDTH,
+    className:
+      index > 0 || columns[0]?.isMonthStart
+        ? `${styles.month} ${styles.monthStart}`
+        : styles.month,
   }))
 
   const days = columns.map((column) => {
     const classNames = [styles.day]
-    if (column.isWeekend) classNames.push(styles.weekend)
+    if (column.isSaturday) classNames.push(styles.saturday)
+    else if (column.isWeekend) classNames.push(styles.holiday)
     if (column.holidayName !== null) classNames.push(styles.holiday)
+    if (column.isMonthStart) classNames.push(styles.monthStart)
     if (column.date === today) classNames.push(styles.today)
     return {
       key: column.date,

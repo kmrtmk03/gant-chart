@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 11 の 8 点を実装。ユーザーの確認待ち。更新: Claude Sonnet 5.5）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -34,7 +34,7 @@
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
-| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ⬜ 未着手（2026-10-30 に追加。プランのユーザー確認待ち） |
+| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | 🔶 実装完了・ユーザーの確認待ち（ブランチ `feat/gantt-ui-adjustments`、PR 未作成。下記 4-00000 章） |
 | 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9 → 11 → 12） |
 
 ---
@@ -59,6 +59,29 @@
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
+
+## 4-00000. フェーズ 11 の実装状況
+
+ブランチ `feat/gantt-ui-adjustments`（`develop` から作成。push・PR はまだ）。8 点すべて実装し、ブラウザで確認した。ユーザーの確認と PR 作成が残っている。
+
+- 検証: `pnpm lint` / `typecheck` / `test`（280 件）/ `format:check` / `build` が成功
+- ブラウザ（Playwright ではなくアプリ内ブラウザ、`pnpm dev:http`、800×600 と 1280×800）で確認済み: 土曜は青・日曜と祝日は赤、月の区切り線、文字 16px、「案件を追加」行いっぱいのクリック、空きのクリックでパネルが閉じる（帯・ボタン・ヘッダーでは閉じない。帯を空きへドラッグして離しても閉じない）、状態の欄と下部 1 段のボタン、カレンダー（クリックで開く・矢印キーと Enter で選ぶ・Esc でカレンダーだけ閉じる・外側クリックで閉じる・右寄せで終了日が収まる）
+- **未確認**: 「今日」の瞬時移動の目視（コードのみ）、375px 幅の見た目、タッチ操作、完了済みの案件での状態の欄の見た目、カレンダーがパネルの高さに収まらない低い画面での挙動（フォームがスクロールして対応）
+- 決めたこと
+  - 文字サイズ: トークン名は残し値だけ変更（`xs` / `sm` / `md` = 16px、`lg` = 18px）。差分を小さくするため
+  - 土日祝: `IDayColumn` に `isSaturday` / `isMonthStart` を追加。トークンは `$color-saturday` / `$color-saturday-text` / `$color-holiday`（日曜・祝日）/ `$color-month-divider`。`$color-weekend` は削除
+  - 月の区切り: `box-shadow: inset 2px 0 0` で列の幅を変えずに描く（タイムラインと日付ヘッダーの両方）
+  - 「今日」: `scrollToPosition(target, behavior)` に引数を足した。`scrollToToday` は `"instant"`、月の移動は `"smooth"`
+  - パネルを閉じる: `useGanttChart.handleScrollAreaClick`。`button, a, input, select, textarea` の中なら閉じない（帯のデータ属性は不要だった）
+  - サイドパネル: 「状態」の欄をフォーム最上部に置き、見出しの札は廃止。下部は削除／キャンセル・保存の 1 段で、項目の領域（`.body`）だけがスクロールする
+  - カレンダー: `react-day-picker` 10.0.2（`@daypicker/react` が新しい名前で、README はこちらを勧めているが API は同じ。ユーザーの承認はこの名前）。`components/DateField/`。既定の `style.css` を読み込み、`--rdp-*` と `button` の既定スタイルを `DateField.module.scss` で上書き。**Esc は `event.nativeEvent.stopImmediatePropagation()` で止める**（Next.js は React のルートを `document` に置くため、`stopPropagation` ではパネルの document リスナーが止まらなかった）。ボタンの検証エラー表示は `aria-invalid` ではなく `data-invalid`（lint の a11y 警告のため）
+- PR #20 のレビュー対応（6 件。セルフレビュー 4 件と追加の 2 件）
+  - 375px・360px 幅でヘッダーがはみ出していた（16px にしたため）: 480px 以下でバーの左右の余白と ◀ 今日 ▶ の余白を詰め、400px 以下でさらに詰めた。375px・360px で `scrollWidth` がビューポートと一致することを確認
+  - Tab でカレンダーの外へ出ても開いたままだった、その後の Esc でパネルが閉じる: `DateField` のルートに `onBlur` を付け、移り先がルートの外のノードのときだけ閉じる（移り先が null のときは閉じない）
+  - 保存・削除の実行中に、空きのクリック・✕・別の案件の帯・「案件を追加」でパネルが閉じる／切り替わる: `useSidePanel` の `runWhileBusy` の中は、開く・閉じる・切り替えをすべて受け付けない（ref で持つ）。成功後の閉じる処理は `runWhileBusy` が終わってから呼ぶ。**遅い保存は再現できないため、実行中の抑止そのものは画面では確かめていない**（失敗時にパネルが開いたままエラーが出ること、その後に閉じられること、通常の保存で閉じることは確認済み）
+  - 文字サイズのトークンを `$font-size-base`（16px）と `$font-size-lg`（18px）にまとめ、`xs` / `sm` / `md` の参照を置き換えた
+- 動作確認のため、ブラウザの localStorage のサンプルを変更した（「Web サイト改修 v2」を 11/3〜11/9 に）。戻すには `gantt:*` を消して「サンプルデータを入れる」
+- 作業中に開発サーバー（`pnpm dev` の HTTPS、Basic 認証あり）をユーザーの許可を得て止めた。再開はユーザーが行う
 
 ## 4-0000. フェーズ 10 の完了状況
 
@@ -357,7 +380,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 11**（[12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md)。画面の使い勝手の調整 8 点）。プランをユーザーが確認してから始める。とくに 1 章（カレンダーに `react-day-picker` を使うか）と 7 章（サイドパネルのボタンの配置）はユーザーの判断を受けてから実装する。ローカルの `develop` を最新にしてから、作業用ブランチ `feat/gantt-ui-adjustments` を切って始める
+- 次にやること: **フェーズ 11 のユーザー確認**（4-00000 章）。OK が出たら push して `develop` 宛ての PR を作る。直す点が出たらこのブランチで続ける
 - その次: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす

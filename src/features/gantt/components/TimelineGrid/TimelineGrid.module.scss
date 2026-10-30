@@ -12,10 +12,16 @@
   border-right: 1px solid tokens.$color-border;
 }
 
-.weekend {
-  background: tokens.$color-weekend;
+.saturday {
+  background: tokens.$color-saturday;
 }
 
+// 日曜と祝日
 .holiday {
   background: tokens.$color-holiday;
+}
+
+// 月の 1 日の列の左に区切り線を引く。border だと列の幅が変わって帯の位置がずれるため、内側の影で描く
+.monthStart {
+  box-shadow: inset 2px 0 0 tokens.$color-month-divider;
 }

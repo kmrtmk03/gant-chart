@@ -1,0 +1,98 @@
+@use "tokens";
+
+.root {
+  position: relative;
+}
+
+// 入力欄と同じ見た目のボタン。幅いっぱいに広げ、文字は左寄せにする
+.button {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: nowrap;
+
+  &[data-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+// ボタンのすぐ下に出す。右端の欄は右寄せにして、パネルの外にはみ出さないようにする
+.popover {
+  position: absolute;
+  top: calc(100% + #{tokens.$space-1});
+  left: 0;
+  z-index: 1;
+  padding: tokens.$space-2;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-md;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+}
+
+.popoverRight {
+  right: 0;
+  left: auto;
+}
+
+// react-day-picker の既定の見た目（style.css）を、ページの色・角丸・文字に合わせて上書きする。
+// 既定の変数は `.rdp-root` 自身に定義されているため、同じ要素に詳細度を上げて指定する
+.popover :global(.rdp-root) {
+  --rdp-accent-color: #{tokens.$color-primary};
+  --rdp-accent-background-color: #{tokens.$color-primary-soft};
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: #{tokens.$radius-sm};
+  --rdp-nav_button-height: 32px;
+  --rdp-nav_button-width: 32px;
+  --rdp-nav-height: 36px;
+  --rdp-weekday-opacity: 1;
+  --rdp-today-color: #{tokens.$color-text};
+
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-base;
+}
+
+// globals.scss のボタンの基本スタイル（枠・余白・背景）を、カレンダーの中では打ち消す
+.popover :global(.rdp-root) button {
+  min-height: 0;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  color: inherit;
+
+  &:hover:not(:disabled) {
+    background: tokens.$color-hover;
+  }
+}
+
+.popover :global(.rdp-weekday) {
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-base;
+  font-weight: 500;
+}
+
+// 選んでいる日は主色で塗る。今日は太字にして区別する
+.popover :global(.rdp-selected) button {
+  border-color: tokens.$color-primary;
+  background: tokens.$color-primary;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    background: tokens.$color-primary-hover;
+  }
+}
+
+.popover :global(.rdp-today) button {
+  font-weight: 700;
+}
+
+// 土曜は青、日曜と祝日は赤の文字（タイムラインと同じ色）。選んでいる日は白文字を保つ
+.saturday:not(:global(.rdp-selected)) button {
+  color: tokens.$color-saturday-text;
+}
+
+.holiday:not(:global(.rdp-selected)) button {
+  color: tokens.$color-holiday-text;
+}

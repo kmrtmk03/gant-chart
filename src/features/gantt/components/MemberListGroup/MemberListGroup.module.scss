@@ -14,18 +14,24 @@
   font-weight: 600;
 }
 
+// 行の余白はボタンの中の padding で取り、行のどこを押しても反応するようにする
 .addProjectRow {
-  padding: 0 tokens.$space-3 0 tokens.$space-6;
+  padding: 0;
 }
 
+// 案件の行（MemberListProjectRow の .projectButton）と同じく、行いっぱいに広げる。
+// 文字の左端は案件名にそろえる（つかみ・色の丸の分だけ左に余白を取る）
 .addProjectButton {
-  min-height: 24px;
-  padding: 0 tokens.$space-2;
-  margin-left: -(tokens.$space-2);
+  flex: 1;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
   border: 0;
   background: none;
   color: tokens.$color-text-subtle;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
+
+  text-align: left;
 
   &:hover:not(:disabled) {
     background: tokens.$color-primary-soft;
@@ -62,7 +68,7 @@
   border-radius: 999px;
   background: tokens.$color-hover;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }

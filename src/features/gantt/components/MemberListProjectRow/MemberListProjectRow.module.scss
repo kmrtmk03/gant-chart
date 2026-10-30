@@ -10,7 +10,7 @@
   padding: 0 tokens.$space-3 0 tokens.$space-1;
   border-bottom: 1px solid tokens.$color-border;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   transition: background-color tokens.$transition-fast;
 
   &:hover {

@@ -18,7 +18,7 @@
   overflow: hidden;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   font-weight: 600;
   line-height: 24px;
   white-space: nowrap;
@@ -28,19 +28,25 @@
   flex-shrink: 0;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
   line-height: 28px;
   text-align: center;
 }
 
-// 土日と祝日は文字色を変える（祝日が優先）
-.weekend {
-  color: tokens.$color-text-subtle;
+// 土曜は青、日曜と祝日は赤の文字色にする
+.saturday {
+  color: tokens.$color-saturday-text;
 }
 
 .holiday {
   color: tokens.$color-holiday-text;
+}
+
+// 月の 1 日の列（と月の区間）の左に区切り線を引く。タイムライン本体（TimelineGrid）と同じ位置・太さで、
+// 上から下まで 1 本につなげる。border だと幅が変わるので内側の影で描く
+.monthStart {
+  box-shadow: inset 2px 0 0 tokens.$color-month-divider;
 }
 
 // 今日は丸いバッジで目立たせる

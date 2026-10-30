@@ -103,15 +103,16 @@ export function useProjectSidePanel({
     },
     [setField],
   )
+  // 日付は DateField から "YYYY-MM-DD" の文字列で受け取る
   const handleChangeStartDate = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setField("startDate", event.target.value)
+    (value: TDateString) => {
+      setField("startDate", value)
     },
     [setField],
   )
   const handleChangeEndDate = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setField("endDate", event.target.value)
+    (value: TDateString) => {
+      setField("endDate", value)
     },
     [setField],
   )
@@ -141,9 +142,10 @@ export function useProjectSidePanel({
     // 表示用の値
     isEditing,
     title: isEditing ? "案件を編集" : "案件を追加",
-    // 完了済みの案件を編集しているときだけ、見出しの横に出す（例: "完了済み（10/30）"）
-    completedLabel:
-      completedAt === null ? null : formatCompletedLabel(completedAt),
+    // 「状態」の欄の表示（例: "未完了" / "完了済み（10/30）"）
+    isCompleted: completedAt !== null,
+    statusLabel:
+      completedAt === null ? "未完了" : formatCompletedLabel(completedAt),
     // 完了ボタンの文言（編集のときだけ出す）
     completeButtonLabel: completedAt === null ? "完了にする" : "未完了に戻す",
     // 削除は編集のときだけ使うので、追加のときは空にする

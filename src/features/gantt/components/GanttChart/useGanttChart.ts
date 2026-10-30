@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react"
+import type { CSSProperties, MouseEvent } from "react"
 
 import {
   DATE_HEADER_DAY_ROW_HEIGHT,
@@ -7,6 +7,13 @@ import {
   MEMBER_LIST_WIDTH,
 } from "../../gantt.constants"
 import { useGanttPage } from "../../hooks/useGanttPage"
+
+/**
+ * 押してもサイドパネルを閉じない要素。帯・左のリストのボタン類（案件名・追加・開閉・つかみ）は、
+ * いずれも `button` で、帯の伸縮のつかみは帯（`button`）の中にある。
+ * チャートの上で独自の操作を持つ要素を足すときは、ここに追加すること
+ */
+const KEEP_SIDE_PANEL_SELECTOR = "button, a, input, select, textarea"
 
 /**
  * `GanttChart` 専用のフック。ページ全体のフック（`useGanttPage`）の結果から、
@@ -61,6 +68,20 @@ export function useGanttChart() {
       ? `create:${sidePanelState.defaultMemberId ?? ""}`
       : `edit:${editingProject?.id ?? ""}`
 
+  // スクロール領域の何もないところ（帯のない行・日付ヘッダー・左リストの空き）のクリックで、パネルを閉じる。
+  // 入力途中でも確認せずに閉じる（Esc・✕ と同じ扱い）。ヘッダーはスクロール領域の外なので対象にならない。
+  // 保存・削除の実行中は、`sidePanel.close` 側（useSidePanel）が閉じる操作を受け付けない
+  const handleScrollAreaClick = (event: MouseEvent<HTMLElement>) => {
+    if (!isSidePanelVisible) return
+    if (
+      event.target instanceof Element &&
+      event.target.closest(KEEP_SIDE_PANEL_SELECTOR) !== null
+    ) {
+      return
+    }
+    sidePanel.close()
+  }
+
   // 左上の角の高さは、日付ヘッダー（月の行 + 日の行）に合わせる
   const cornerStyle: CSSProperties = {
     height: DATE_HEADER_MONTH_ROW_HEIGHT + DATE_HEADER_DAY_ROW_HEIGHT,
@@ -104,6 +125,7 @@ export function useGanttChart() {
     scrollArea: {
       attachScroller: scroll.attachScroller,
       handleScroll: scroll.handleScroll,
+      handleClick: handleScrollAreaClick,
     },
     // 折りたたみ・ボタンの操作
     collapsedMemberIds: page.collapsedMemberIds,

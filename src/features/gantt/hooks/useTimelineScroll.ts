@@ -86,13 +86,13 @@ export function useTimelineScroll({
   )
 
   /**
-   * 指定した位置（scrollLeft）まで、なめらかにスクロールする。
+   * 指定した位置（scrollLeft）までスクロールする。`behavior` が "smooth" ならなめらかに、"instant" なら瞬時に動く。
    * `scrollLeft` を書き換えるとスクロール中のアニメーションが打ち切られるため、目的地が左端に近いときは
    * アニメーションを始める前に範囲を広げ、目的地を広げた分だけずらしてから開始する。
    * これでアニメーションの途中で範囲の拡張（と位置の補正）が起きない。
    */
   const scrollToPosition = useCallback(
-    (targetLeft: number) => {
+    (targetLeft: number, behavior: ScrollBehavior) => {
       if (scrollerElement === null) return
       let target = targetLeft
       while (target < RANGE_EDGE_THRESHOLD_PX) {
@@ -100,25 +100,31 @@ export function useTimelineScroll({
         scrollerElement.scrollBy({ left: EXTEND_PX, behavior: "instant" })
         target += EXTEND_PX
       }
-      scrollerElement.scrollTo({ left: target, behavior: "smooth" })
+      scrollerElement.scrollTo({ left: target, behavior })
     },
     [scrollerElement, onExtendBackward],
   )
 
-  /** 今日が見える位置までスクロールする */
+  /** 今日が見える位置まで、アニメーションなしで一気に移動する */
   const scrollToToday = useCallback(() => {
     if (scrollerElement === null || rangeStart === null || today === null) {
       return
     }
     const todayIndex = diffInDays(rangeStart, today)
-    scrollToPosition((todayIndex - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH)
+    scrollToPosition(
+      (todayIndex - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH,
+      "instant",
+    )
   }, [scrollerElement, rangeStart, today, scrollToPosition])
 
-  /** 日数ぶん左右にスクロールする（マイナスで過去側） */
+  /** 日数ぶん左右になめらかにスクロールする（マイナスで過去側） */
   const scrollByDays = useCallback(
     (days: number) => {
       if (scrollerElement === null) return
-      scrollToPosition(scrollerElement.scrollLeft + days * DAY_COLUMN_WIDTH)
+      scrollToPosition(
+        scrollerElement.scrollLeft + days * DAY_COLUMN_WIDTH,
+        "smooth",
+      )
     },
     [scrollerElement, scrollToPosition],
   )

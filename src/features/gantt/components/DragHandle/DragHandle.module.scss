@@ -16,7 +16,7 @@ $handle-height: 28px;
   border-radius: tokens.$radius-sm;
   background: none;
   color: tokens.$color-text-subtle;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   letter-spacing: -0.3em;
   cursor: grab;
   // タッチでもスクロールではなくドラッグにする
