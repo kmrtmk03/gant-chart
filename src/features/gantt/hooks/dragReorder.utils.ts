@@ -2,8 +2,9 @@ import { DRAG_THRESHOLD_PX } from "../gantt.constants"
 import { moveIdToIndex } from "../gantt.utils"
 
 // MEMO: ドラッグによる並び替え（`useDragReorder`）の状態遷移を、ポインターイベントから切り離した純粋関数にまとめる。
-// 座標はすべて「ドラッグを始めた時点の画面の座標」にそろえる。ドラッグ中にスクロールしたときは、
-// 呼び出し側（フック）がスクロールでずれた量を差し引いた Y 座標を渡す。
+// 座標はすべて今の画面の座標（clientY）。行の位置は、呼び出し側（フック）がポインターの動きやスクロールのたびに測り直して渡す
+// （ドラッグ中に行の高さが変わったり、画面がスクロールしたりしても、落とす先がずれないようにするため）。
+// つかんだ行の位置は、ドラッグで動かす前（transform を除いた）位置を渡すこと。
 
 /** 行の縦の位置（getBoundingClientRect の top / bottom） */
 export interface IRowRect {
@@ -13,16 +14,18 @@ export interface IRowRect {
 
 /**
  * ドラッグ中の状態。つかみを押してから離す（または取り消す）までの間だけ存在する。
- * 行の位置は、つかんだ時点で測ったものを使い続ける（行の高さが違っても、測った値から落とす先を決める）
+ * 行の位置は最後に測ったものを持つ（行の高さが違っても、測った値から落とす先を決める）
  */
 export interface IDragReorderState {
   /** つかんでいる行の id */
   activeId: string
   /** ドラッグに使っているポインターの ID（2 本目の指の動きを無視するため） */
   pointerId: number
-  /** ドラッグ開始時のポインターの Y 座標（clientY） */
+  /** ドラッグ開始時のポインターの Y 座標（clientY）。しきい値の判定に使う */
   startClientY: number
-  /** つかんだ時点の各行の位置。並びは id の並びと同じ */
+  /** つかんだ位置の、つかんだ行の上端からの距離（px）。行をポインターに追従させるのに使う */
+  grabOffsetY: number
+  /** 最後に測った各行の位置。並びは id の並びと同じ */
   rowRects: IRowRect[]
   /** つかんだときの位置（id の並びの添字） */
   fromIndex: number
@@ -63,6 +66,7 @@ export function startDragReorder(
     activeId,
     pointerId,
     startClientY: clientY,
+    grabOffsetY: clientY - (rowRects[fromIndex]?.top ?? clientY),
     rowRects,
     fromIndex,
     toIndex: fromIndex,
@@ -76,7 +80,7 @@ export function startDragReorder(
  * つかんだ行を除いた各行のうち、中央がポインターより上にある行の数が、そのまま並べ替え後の位置になる。
  * 一番上の行より上・一番下の行より下に出ても、0 〜 件数 - 1 に収まる（先頭・末尾で止まる）。
  *
- * @param pointerY ドラッグを始めた時点の座標にそろえたポインターの Y 座標
+ * @param pointerY ポインターの Y 座標（clientY）
  */
 export function getDropIndex(
   rowRects: IRowRect[],
@@ -115,26 +119,35 @@ export function clampDragOffset(
 }
 
 /**
- * ポインターが動いたときの状態を返す。
+ * ポインターが動いた（または画面がスクロールした）ときの状態を返す。
  * ドラッグしていない（null）ときや、別のポインターの動きのときは、受け取った状態をそのまま返す。
  * しきい値を超えるまでは、落とす先を元の位置のままにする（つかみをクリックしただけで並びを変えないため）。
  *
- * @param pointerY ドラッグを始めた時点の座標にそろえたポインターの Y 座標
+ * @param clientY ポインターの Y 座標
+ * @param rowRects 測り直した各行の位置。測れなかったときは省略すると、前回の位置を使う
  */
 export function updateDragReorder(
   state: IDragReorderState | null,
   pointerId: number,
-  pointerY: number,
+  clientY: number,
+  rowRects: IRowRect[] = state?.rowRects ?? [],
 ): IDragReorderState | null {
   if (state === null || state.pointerId !== pointerId) return state
 
-  const deltaY = pointerY - state.startClientY
-  const isDragging = state.isDragging || Math.abs(deltaY) >= DRAG_THRESHOLD_PX
+  const isDragging =
+    state.isDragging ||
+    Math.abs(clientY - state.startClientY) >= DRAG_THRESHOLD_PX
   const toIndex = isDragging
-    ? getDropIndex(state.rowRects, state.fromIndex, pointerY)
+    ? getDropIndex(rowRects, state.fromIndex, clientY)
     : state.fromIndex
-  const offsetY = clampDragOffset(state.rowRects, state.fromIndex, deltaY)
-  return { ...state, offsetY, isDragging, toIndex }
+  // つかんだ位置がポインターの下に来るように動かす（スクロールで行が動いても追従する）
+  const activeTop = rowRects[state.fromIndex]?.top ?? 0
+  const offsetY = clampDragOffset(
+    rowRects,
+    state.fromIndex,
+    clientY - state.grabOffsetY - activeTop,
+  )
+  return { ...state, rowRects, offsetY, isDragging, toIndex }
 }
 
 /** ポインターを離したときの結果を決める。`ids` はドラッグ前の id の並び */

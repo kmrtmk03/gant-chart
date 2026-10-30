@@ -94,6 +94,34 @@ describe("updateDragReorder", () => {
     expect(dragThrough(1, [5000])).toMatchObject({ offsetY: 72, toIndex: 3 })
   })
 
+  it("測り直した行の位置で落とす先を決める（ドラッグ中に行の高さが変わったとき）", () => {
+    // 0 行目をつかんで 200px へ。つかんだ時点の位置なら 2 行目（中央 190px）の下で toIndex 2
+    const state = dragThrough(0, [])
+    // ドラッグ中に 1 行目にエラーが出て高くなり、2 行目以降が 40px 下がった
+    const remeasured: IRowRect[] = [
+      { top: 100, bottom: 136 },
+      { top: 136, bottom: 212 }, // 中央 174
+      { top: 212, bottom: 248 }, // 中央 230
+      { top: 248, bottom: 284 },
+    ]
+    expect(updateDragReorder(state, POINTER_ID, 200, remeasured)).toMatchObject(
+      { toIndex: 1, rowRects: remeasured },
+    )
+  })
+
+  it("ポインターを止めたままスクロールしても、つかんだ行はポインターの下に残る", () => {
+    // 1 行目（136〜172px）の中央 154px をつかみ、30px 下へ動かした
+    const state = dragThrough(1, [184])
+    expect(state?.offsetY).toBe(30)
+    // 中身が 20px 上へスクロールして、行がすべて 20px 上がった（ポインターは 184px のまま）
+    const scrolled = buildRowRects(IDS.length, 36, 80)
+    expect(updateDragReorder(state, POINTER_ID, 184, scrolled)).toMatchObject({
+      offsetY: 50,
+      // 中央が 184px より上の行（つかんだ行を除く）: 0 行目(98)・2 行目(170)
+      toIndex: 2,
+    })
+  })
+
   it("一度しきい値を超えたら、元の位置に戻しても isDragging のまま", () => {
     const state = dragThrough(1, [300, 154])
     expect(state).toMatchObject({ isDragging: true, offsetY: 0, toIndex: 1 })

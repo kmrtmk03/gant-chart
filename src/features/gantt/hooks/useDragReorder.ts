@@ -40,6 +40,24 @@ export interface IDragReorderRowState {
   dropIndicator: TDropIndicator
 }
 
+/**
+ * 行の縦の位置を、今の画面の座標（clientY と同じ）で測る。
+ * getBoundingClientRect ではなく offsetTop / offsetHeight を使うのは、ドラッグ中の行に付けた transform の影響を受けず、
+ * 動かす前の位置を測れるようにするため。offsetTop は offsetParent（位置の基準の要素）からの距離なので、
+ * offsetParent の画面上の位置を足し、そのスクロール量を引いて画面の座標にそろえる。
+ * 画面に出ていない（offsetParent がない）ときは null
+ */
+function measureRowRect(element: HTMLElement): IRowRect | null {
+  const parent = element.offsetParent
+  if (!(parent instanceof HTMLElement)) return null
+  const top =
+    parent.getBoundingClientRect().top +
+    parent.clientTop -
+    parent.scrollTop +
+    element.offsetTop
+  return { top, bottom: top + element.offsetHeight }
+}
+
 /** つかまれていない行の状態。毎回作らずに使い回す */
 const IDLE_ROW_STATE: IDragReorderRowState = {
   isDragging: false,
@@ -52,13 +70,14 @@ const IDLE_ROW_STATE: IDragReorderRowState = {
  * 状態遷移の計算は `dragReorder.utils.ts` が受け持つ。
  *
  * 使い方:
- * - 各行の要素を `registerRow(id, element)` で登録する（ref のコールバックから呼ぶ）。つかんだ時点の位置を測るのに使う
+ * - 各行の要素を `registerRow(id, element)` で登録する（ref のコールバックから呼ぶ）。行の位置を測るのに使う
  * - つかみの `onPointerDown` で `handleHandlePointerDown(id, event)`、`onLostPointerCapture` で `handleLostPointerCapture` を呼ぶ
  * - 行は `displayIds` の順に描き、`getRowState(id)` で浮かせる量・挿入位置の線を決める
  *
  * 流れ:
  * 1. つかみの pointerdown で、ポインターをキャプチャし、各行の位置を測ってドラッグを始める
- * 2. ドラッグ中だけ window に pointermove / pointerup / pointercancel / keydown / scroll を登録する（同じ effect の中で解除する）
+ * 2. ドラッグ中だけ window に pointermove / pointerup / pointercancel / keydown / scroll を登録する（同じ effect の中で解除する）。
+ *    ポインターの動きとスクロールのたびに行の位置を測り直す（ドラッグ中に行の高さが変わっても、落とす先がずれないように）
  * 3. 動いている間は並びを変えず、つかんだ行を浮かせて追従させ、落とす先に線を出す
  * 4. 離したとき、位置が変わっていれば `onReorder`。しきい値未満（クリック）なら何もしない
  * 5. pointercancel・Esc・キャプチャを失ったときは取り消して元に戻す
@@ -78,10 +97,6 @@ export function useDragReorder({
   const rowElementsRef = useRef(new Map<string, HTMLElement>())
   // キャプチャしている要素。取り消すときにキャプチャを外すために持つ
   const capturedElementRef = useRef<Element | null>(null)
-  // スクロールのずれを求めるための基準の要素（行の親）と、ドラッグ開始時のその上端の位置
-  const scrollAnchorRef = useRef<{ element: Element; startTop: number } | null>(
-    null,
-  )
   // 最後に受けたポインターの Y 座標。スクロールしただけのとき（ポインターは動いていない）の計算に使う
   const lastClientYRef = useRef(0)
 
@@ -93,7 +108,7 @@ export function useDragReorder({
 
   /**
    * 行の要素を登録する（null で登録を外す）。ref のコールバックから呼ぶこと。
-   * MEMO: 要素は ref に持つだけで、描画には使わない（つかんだ時点の位置を測るためだけのもの）
+   * MEMO: 要素は ref に持つだけで、描画には使わない（行の位置を測るためだけのもの）
    */
   const registerRow = useCallback((id: string, element: HTMLElement | null) => {
     if (element === null) {
@@ -103,20 +118,25 @@ export function useDragReorder({
     }
   }, [])
 
-  /** ドラッグを始めた時点の座標にそろえた、ポインターの Y 座標を返す（スクロールでずれた量を差し引く） */
-  const toStartPointerY = useCallback((clientY: number) => {
-    const anchor = scrollAnchorRef.current
-    if (anchor === null) return clientY
-    const scrolledY =
-      anchor.element.getBoundingClientRect().top - anchor.startTop
-    return clientY - scrolledY
+  /**
+   * `rowIds` の並びのとおりに各行の位置を測る。
+   * 登録されていない・画面に出ていない行があるとき（描画の途中など）は null
+   */
+  const measureRowRects = useCallback((rowIds: string[]): IRowRect[] | null => {
+    const rowRects: IRowRect[] = []
+    for (const rowId of rowIds) {
+      const element = rowElementsRef.current.get(rowId)
+      const rect = element === undefined ? null : measureRowRect(element)
+      if (rect === null) return null
+      rowRects.push(rect)
+    }
+    return rowRects
   }, [])
 
   /** ドラッグを終える（取り消し・離したときの共通処理）。キャプチャを外し、状態を消す */
   const endDrag = useCallback(() => {
     const state = dragStateRef.current
     applyDragState(null)
-    scrollAnchorRef.current = null
     // キャプチャを外す。外したことで lostpointercapture が来ても、状態は null なので何もしない
     const element = capturedElementRef.current
     capturedElementRef.current = null
@@ -140,17 +160,10 @@ export function useDragReorder({
         return
       }
 
-      // つかんだ時点の各行の位置を測る。登録されていない行があるとき（描画の途中など）は始めない
-      const rowRects: IRowRect[] = []
-      for (const rowId of ids) {
-        const element = rowElementsRef.current.get(rowId)
-        if (element === undefined) return
-        const rect = element.getBoundingClientRect()
-        rowRects.push({ top: rect.top, bottom: rect.bottom })
-      }
+      // つかんだ時点の各行の位置を測る。測れない行があるとき（描画の途中など）は始めない
+      const rowRects = measureRowRects(ids)
       const fromIndex = ids.indexOf(id)
-      const parentElement = rowElementsRef.current.get(id)?.parentElement
-      if (fromIndex === -1 || parentElement == null) return
+      if (rowRects === null || fromIndex === -1) return
 
       // MEMO: preventDefault はしない。すると入力欄からフォーカスが外れず（blur が来ない）、
       // 管理ダイアログで編集中の名前が保存されないまま残るため。タッチのスクロールはつかみの
@@ -158,11 +171,6 @@ export function useDragReorder({
       // 行の外にポインターが出ても、このあとのイベントがこの要素に届くようにする
       event.currentTarget.setPointerCapture(event.pointerId)
       capturedElementRef.current = event.currentTarget
-      // 行の親はドラッグ中も動かない（つかんだ行だけを動かす）ので、スクロールのずれの基準にする
-      scrollAnchorRef.current = {
-        element: parentElement,
-        startTop: parentElement.getBoundingClientRect().top,
-      }
       lastClientYRef.current = event.clientY
       applyDragState(
         startDragReorder(
@@ -174,7 +182,7 @@ export function useDragReorder({
         ),
       )
     },
-    [ids, isDisabled, savingIds, applyDragState],
+    [ids, isDisabled, savingIds, measureRowRects, applyDragState],
   )
 
   /** キャプチャを失った（要素が消えた・ブラウザが外した）とき。ドラッグ中なら取り消す */
@@ -189,13 +197,14 @@ export function useDragReorder({
   useEffect(() => {
     if (!isDragActive) return
 
-    /** 今のポインターの位置で状態を更新する */
+    /** 今のポインターの位置と、測り直した行の位置で状態を更新する（測れなければ前回の位置を使う） */
     const updateWithPointer = (pointerId: number, clientY: number) => {
       lastClientYRef.current = clientY
       const next = updateDragReorder(
         dragStateRef.current,
         pointerId,
-        toStartPointerY(clientY),
+        clientY,
+        measureRowRects(ids) ?? undefined,
       )
       if (next !== dragStateRef.current) applyDragState(next)
       return next
@@ -263,8 +272,8 @@ export function useDragReorder({
     isDragActive,
     ids,
     onReorder,
+    measureRowRects,
     applyDragState,
-    toStartPointerY,
     endDrag,
     cancelDrag,
   ])
