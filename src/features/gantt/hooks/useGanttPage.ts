@@ -28,6 +28,13 @@ const repository = createGanttRepository()
 const CAN_SEED_SAMPLE_DATA = process.env.NODE_ENV !== "production"
 
 /**
+ * 並び替えた案件を、手元の案件の一覧から見つけられなかったときの文言。
+ * 別のタブで案件・担当者が削除された直後などに起きる（一覧を読み込み直せば直る）
+ */
+const STALE_PROJECTS_MESSAGE =
+  "案件の一覧が古くなっています。ページを再読み込みしてから並べ替えてください"
+
+/**
  * ガントチャートのページ全体のフック。責務別のフックを束ね、画面に必要な値と操作をまとめて返す。
  * データ（担当者・案件）と表示期間のどれかが未確定の間は `isLoading` が true になる。
  */
@@ -91,9 +98,16 @@ export function useGanttPage() {
         : excludeCompletedProjects(allMemberGroups),
     [allMemberGroups, isCompletedVisible],
   )
+  // 件数は画面に出しうる案件（担当者が見つかる案件）だけで数える。
+  // 担当者のいない孤立した案件まで数えると、表示に切り替えても件数ぶんの案件が出てこないため
   const completedCount = useMemo(
-    () => (projects === null ? 0 : countCompletedProjects(projects)),
-    [projects],
+    () =>
+      allMemberGroups === null
+        ? 0
+        : countCompletedProjects(
+            allMemberGroups.flatMap((group) => group.projects),
+          ),
+    [allMemberGroups],
   )
   const { rangeStart, rangeDays } = timelineRange
   const columns = useMemo(
@@ -172,21 +186,28 @@ export function useGanttPage() {
   const handleReorderProjects = useCallback(
     async (memberId: string, orderedVisibleIds: string[], movedId: string) => {
       setProjectReorderError(null)
-      // 全体の並び（表示順）。見つからないときは見えている並びのまま渡し、repository の検証に任せる
-      const allIds =
-        allMemberGroups
-          ?.find((group) => group.member.id === memberId)
-          ?.projects.map((project) => project.id) ?? orderedVisibleIds
+      // 全体の並び（表示順）
+      const allIds = allMemberGroups
+        ?.find((group) => group.member.id === memberId)
+        ?.projects.map((project) => project.id)
       // 並べ替える前の見えている並び（全体の並びから、見えている id だけを同じ順で取り出す）
       const visibleIdSet = new Set(orderedVisibleIds)
-      const visibleIds = allIds.filter((id) => visibleIdSet.has(id))
       const orderedIds =
-        moveIdAmongVisible(
-          allIds,
-          visibleIds,
-          movedId,
-          orderedVisibleIds.indexOf(movedId),
-        ) ?? orderedVisibleIds
+        allIds === undefined
+          ? null
+          : moveIdAmongVisible(
+              allIds,
+              allIds.filter((id) => visibleIdSet.has(id)),
+              movedId,
+              orderedVisibleIds.indexOf(movedId),
+            )
+      // 担当者・動かした案件が手元の一覧に見つからない（別のタブで削除された直後など）ときは保存しない。
+      // 見えている並びのまま渡すと、完了済みを隠しているときに id が足りず、
+      // repository の分かりにくい検証エラーになるため、原因の分かる文言を出す
+      if (orderedIds === null) {
+        setProjectReorderError(new Error(STALE_PROJECTS_MESSAGE))
+        return
+      }
       try {
         await reorderProjects(memberId, orderedIds)
       } catch (caught) {
