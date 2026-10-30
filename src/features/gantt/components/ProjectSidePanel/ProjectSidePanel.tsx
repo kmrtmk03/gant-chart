@@ -30,7 +30,8 @@ interface IProjectSidePanelProps {
  * 案件を追加・編集する右側のサイドパネル。タイムラインの上に重ねて出し、タイムラインの幅は変えない。
  * 開き直すとき（別の案件・別の担当者）は、呼び出し側で `key` を変えてフォームを作り直すこと。
  * Esc で閉じる（入力途中でも確認しない）。開いた直後は案件名の入力欄にフォーカスする。
- * 編集のときは「完了にする / 未完了に戻す」も出す（フォームの内容と一緒に保存する）。
+ * 編集のときは、フォームの最上部の「状態」の欄に「完了にする / 未完了に戻す」を出す（フォームの内容と一緒に保存する）。
+ * 下部のボタンは「削除（左）／キャンセル・保存（右）」の 1 段で、フォームがスクロールしても下に固定される。
  * フォームの状態や Esc の扱いは `useProjectSidePanel` が受け持つ。
  */
 export function ProjectSidePanel({
@@ -58,11 +59,6 @@ export function ProjectSidePanel({
       <header className={styles.header}>
         <div className={styles.heading}>
           <h2 className={styles.title}>{panel.title}</h2>
-          {panel.completedLabel && (
-            <span className={styles.completedBadge}>
-              {panel.completedLabel}
-            </span>
-          )}
         </div>
         <button type="button" aria-label="閉じる" onClick={onClose}>
           ✕
@@ -70,114 +66,131 @@ export function ProjectSidePanel({
       </header>
 
       <form className={styles.form} noValidate onSubmit={panel.handleSubmit}>
-        <div className={styles.field}>
-          <label htmlFor={fieldIds.member}>担当者</label>
-          <select
-            id={fieldIds.member}
-            value={values.memberId}
-            aria-invalid={errors.memberId !== undefined}
-            onChange={panel.handleChangeMember}
-          >
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-          {errors.memberId && <p className={styles.error}>{errors.memberId}</p>}
-        </div>
+        <div className={styles.body}>
+          {panel.isEditing && (
+            <div className={styles.status}>
+              <span className={styles.statusTitle}>状態</span>
+              <span
+                className={
+                  panel.isCompleted ? styles.statusDone : styles.statusOpen
+                }
+              >
+                {panel.statusLabel}
+              </span>
+              <button
+                type="button"
+                className={styles.completeButton}
+                disabled={panel.isSubmitting}
+                onClick={panel.handleToggleCompleted}
+              >
+                {panel.completeButtonLabel}
+              </button>
+            </div>
+          )}
 
-        <div className={styles.field}>
-          <label htmlFor={fieldIds.name}>案件名</label>
-          <input
-            id={fieldIds.name}
-            type="text"
-            autoFocus
-            value={values.name}
-            aria-invalid={errors.name !== undefined}
-            onChange={panel.handleChangeName}
-          />
-          {errors.name && <p className={styles.error}>{errors.name}</p>}
-        </div>
-
-        <div className={styles.dateRow}>
           <div className={styles.field}>
-            <label htmlFor={fieldIds.startDate}>開始日</label>
-            <input
-              id={fieldIds.startDate}
-              type="date"
-              value={values.startDate}
-              aria-invalid={errors.startDate !== undefined}
-              onChange={panel.handleChangeStartDate}
-            />
-            {errors.startDate && (
-              <p className={styles.error}>{errors.startDate}</p>
+            <label htmlFor={fieldIds.member}>担当者</label>
+            <select
+              id={fieldIds.member}
+              value={values.memberId}
+              aria-invalid={errors.memberId !== undefined}
+              onChange={panel.handleChangeMember}
+            >
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+            {errors.memberId && (
+              <p className={styles.error}>{errors.memberId}</p>
             )}
           </div>
+
           <div className={styles.field}>
-            <label htmlFor={fieldIds.endDate}>終了日</label>
+            <label htmlFor={fieldIds.name}>案件名</label>
             <input
-              id={fieldIds.endDate}
-              type="date"
-              value={values.endDate}
-              aria-invalid={errors.endDate !== undefined}
-              onChange={panel.handleChangeEndDate}
+              id={fieldIds.name}
+              type="text"
+              autoFocus
+              value={values.name}
+              aria-invalid={errors.name !== undefined}
+              onChange={panel.handleChangeName}
             />
-            {errors.endDate && <p className={styles.error}>{errors.endDate}</p>}
+            {errors.name && <p className={styles.error}>{errors.name}</p>}
           </div>
-        </div>
 
-        <fieldset className={styles.colorField}>
-          <legend>帯の色</legend>
-          <div className={styles.colors}>
-            {panel.colorOptions.map((option) => (
-              <label key={option.key} className={styles.colorOption}>
-                <input
-                  type="radio"
-                  name={fieldIds.color}
-                  className={styles.colorInput}
-                  value={option.key}
-                  checked={option.isChecked}
-                  onChange={() => panel.handleChangeColor(option.key)}
-                />
-                <span
-                  className={styles.colorSwatch}
-                  style={option.swatchStyle}
-                  title={option.label}
-                />
-                <span className={styles.srOnly}>{option.label}</span>
-              </label>
-            ))}
+          <div className={styles.dateRow}>
+            <div className={styles.field}>
+              <label htmlFor={fieldIds.startDate}>開始日</label>
+              <input
+                id={fieldIds.startDate}
+                type="date"
+                value={values.startDate}
+                aria-invalid={errors.startDate !== undefined}
+                onChange={panel.handleChangeStartDate}
+              />
+              {errors.startDate && (
+                <p className={styles.error}>{errors.startDate}</p>
+              )}
+            </div>
+            <div className={styles.field}>
+              <label htmlFor={fieldIds.endDate}>終了日</label>
+              <input
+                id={fieldIds.endDate}
+                type="date"
+                value={values.endDate}
+                aria-invalid={errors.endDate !== undefined}
+                onChange={panel.handleChangeEndDate}
+              />
+              {errors.endDate && (
+                <p className={styles.error}>{errors.endDate}</p>
+              )}
+            </div>
           </div>
-        </fieldset>
 
-        <div className={styles.field}>
-          <label htmlFor={fieldIds.note}>メモ</label>
-          <textarea
-            id={fieldIds.note}
-            rows={4}
-            value={values.note}
-            onChange={panel.handleChangeNote}
-          />
+          <fieldset className={styles.colorField}>
+            <legend>帯の色</legend>
+            <div className={styles.colors}>
+              {panel.colorOptions.map((option) => (
+                <label key={option.key} className={styles.colorOption}>
+                  <input
+                    type="radio"
+                    name={fieldIds.color}
+                    className={styles.colorInput}
+                    value={option.key}
+                    checked={option.isChecked}
+                    onChange={() => panel.handleChangeColor(option.key)}
+                  />
+                  <span
+                    className={styles.colorSwatch}
+                    style={option.swatchStyle}
+                    title={option.label}
+                  />
+                  <span className={styles.srOnly}>{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className={styles.field}>
+            <label htmlFor={fieldIds.note}>メモ</label>
+            <textarea
+              id={fieldIds.note}
+              rows={4}
+              value={values.note}
+              onChange={panel.handleChangeNote}
+            />
+          </div>
+
+          {panel.submitError && (
+            <p className={styles.error} role="alert">
+              保存できませんでした。{panel.submitError.message}
+            </p>
+          )}
         </div>
-
-        {panel.submitError && (
-          <p className={styles.error} role="alert">
-            保存できませんでした。{panel.submitError.message}
-          </p>
-        )}
 
         <div className={styles.actions}>
-          {panel.isEditing && (
-            <button
-              type="button"
-              className={styles.completeButton}
-              disabled={panel.isSubmitting}
-              onClick={panel.handleToggleCompleted}
-            >
-              {panel.completeButtonLabel}
-            </button>
-          )}
           {panel.isEditing && (
             <button
               type="button"
