@@ -5,6 +5,7 @@ import type {
   TProjectInput,
 } from "../../gantt.type"
 import { ConfirmDialog } from "../ConfirmDialog"
+import { DateField } from "../DateField"
 import styles from "./ProjectSidePanel.module.scss"
 import { useProjectSidePanel } from "./useProjectSidePanel"
 
@@ -123,11 +124,10 @@ export function ProjectSidePanel({
           <div className={styles.dateRow}>
             <div className={styles.field}>
               <label htmlFor={fieldIds.startDate}>開始日</label>
-              <input
+              <DateField
                 id={fieldIds.startDate}
-                type="date"
                 value={values.startDate}
-                aria-invalid={errors.startDate !== undefined}
+                isInvalid={errors.startDate !== undefined}
                 onChange={panel.handleChangeStartDate}
               />
               {errors.startDate && (
@@ -136,11 +136,11 @@ export function ProjectSidePanel({
             </div>
             <div className={styles.field}>
               <label htmlFor={fieldIds.endDate}>終了日</label>
-              <input
+              <DateField
                 id={fieldIds.endDate}
-                type="date"
                 value={values.endDate}
-                aria-invalid={errors.endDate !== undefined}
+                isInvalid={errors.endDate !== undefined}
+                align="right"
                 onChange={panel.handleChangeEndDate}
               />
               {errors.endDate && (

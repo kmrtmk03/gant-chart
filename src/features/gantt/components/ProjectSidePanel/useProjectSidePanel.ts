@@ -103,15 +103,16 @@ export function useProjectSidePanel({
     },
     [setField],
   )
+  // 日付は DateField から "YYYY-MM-DD" の文字列で受け取る
   const handleChangeStartDate = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setField("startDate", event.target.value)
+    (value: TDateString) => {
+      setField("startDate", value)
     },
     [setField],
   )
   const handleChangeEndDate = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setField("endDate", event.target.value)
+    (value: TDateString) => {
+      setField("endDate", value)
     },
     [setField],
   )
