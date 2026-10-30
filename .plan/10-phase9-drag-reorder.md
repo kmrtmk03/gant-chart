@@ -39,8 +39,15 @@
   - `listProjects` は今のまま保存順で返す（並べるのは画面側）
 - **スキーマの移行（バージョン 1 → 2）**: `CURRENT_SCHEMA_VERSION` を 2 にし、`SCHEMA_MIGRATIONS` に `1: (storage) => { ... }` を足す
   - 既存の案件に、**今の画面と同じ並び（開始日順 → 終了日順）**で担当者ごとに 0 から `sortOrder` を振る。移行の直後に見た目の並びが変わらないようにするため
+  - 担当者が見つからない案件（`memberId` が不正）にも、`memberId` ごとに番号を振る（`groupProjectsByMember` は表示から外すが、データとしては残っているため）
   - 移行前のデータが壊れている（JSON として読めない・形が違う）ときは何もしない（読み込み時の既存の扱い = 空から始める、に任せる）
-  - 移行のテスト（バージョン 1 のデータを入れて読むと `sortOrder` が付く・バージョン 2 として保存される・壊れたデータでも例外にならない）を `localStorageRepository.test.ts` に足す
+  - **注意（既存の案件が消えないように）**
+    - 「形が違う」の判定に、`sortOrder` を足した後の `isProject` / `isProjectList` を**使わない**。バージョン 1 のデータは `sortOrder` がないため、すべて「形が違う」と判定されて移行されず、その後の読み込みで捨てられてしまう。**旧形式（バージョン 1）の形**で確かめる（例: 移行処理の中に旧形式用の型ガードを置く。または「`sortOrder` を除けば `isProject` と同じ」を確かめる）
+    - 移行関数は、渡された `storage` から `getItem` / `setItem` で直接読み書きする。`this.readProjects()` などを呼ぶと `getPreparedStorage` → `migrateSchemaIfNeeded` に戻って無限再帰になる
+  - 移行のテストを `localStorageRepository.test.ts` に足す
+    - **バージョン 1 の正しいデータを読むと、案件が 1 件も消えずに `sortOrder` 付きで読める**（開始日順に 0 から。担当者が見つからない案件も残る）
+    - バージョン 2 として保存される
+    - 壊れたデータでも例外にならない
 - `devSeed.ts` のサンプルデータが新しい形で作られることを確認する
 
 ### 2. 画面側の並び
@@ -53,6 +60,7 @@
 案件のリストと担当者の管理ダイアログの 2 か所で使うため、feature 共通の `hooks/useDragReorder.ts` に置く。並べる対象（案件・担当者）は知らず、「id の並びの中で 1 つを動かす」ことだけを受け持つ。
 
 - 引数（例）: 並んでいる id の配列、離したときに呼ぶ `onReorder(orderedIds)`、無効にするか（`isDisabled`）
+- **フックは渡された id の並びだけを扱う**。`onReorder` に渡すのも、渡された id を並べ替えたもの。渡していない id（フェーズ 10 で隠す完了済みの案件など）を含めた全体の並びに戻すのは、呼び出し側の責務にする（フェーズ 10 でこのフックを作り直さずに済むようにするため）
 - 戻り値（例）: つかみに渡す `pointerdown` のハンドラ、行の要素を登録する ref のコールバック、ドラッグ中の状態（つかんでいる id・落とす先の位置）、描画用の並び（ドラッグ中・保存中は変更後の並び）
 - Pointer Events（`pointerdown` / `pointermove` / `pointerup` / `pointercancel`）で実装する。**ライブラリは使わない**（帯のドラッグと同じ方針）
 - `pointerdown` はつかみのアイコンだけで受け、`setPointerCapture` する。`pointermove` 以降は、帯のドラッグと同じくドラッグ中だけ `window` に登録し、同じ `useEffect` で解除する
@@ -79,6 +87,8 @@
 - `useProjects` に `reorderProjects(memberId, orderedIds)` を足す。ほかの操作と同じく、保存が成功してから state を更新し、失敗は例外のまま投げる
 - `useGanttPage` で `projectReorder` のようなグループにまとめて公開する。保存の失敗は、帯のドラッグの `barDrag.error` と同じく左下のお知らせに出す
 - `useDragReorder` は担当者 1 人ぶんの案件ごとに使う（並べ替えの範囲が担当者の中に限られるため。範囲の外へ出ても、その担当者の先頭・末尾で止まる）
+  - 今の `MemberList` は 1 つのコンポーネントの中で `memberRows.map(...)` しているため、ループの中でフックを呼べない。担当者 1 人ぶん（担当者行・案件の行・「案件を追加」）を新しいコンポーネント（例: `components/MemberListGroup/`）に切り出し、その専用フックで `useDragReorder` を呼ぶ
+  - 切り出したコンポーネントも `React.memo` にし、渡す関数（`onReorder` など）は参照が変わらないものにする（引き継ぎ資料の「フェーズ 6 以降への申し送り（画面）」にある「再描画の範囲」の注意）
 - 見た目（`MemberList`）
   - 案件の行の左端（案件名の左、色の丸の手前）に、つかみのアイコン（縦の点 6 つ `⋮⋮` など）を置く
   - カーソルは `grab`、ドラッグ中は `grabbing`。`touch-action: none` にして、タッチでもスクロールではなくドラッグになるようにする
