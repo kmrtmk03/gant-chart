@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 12 の仕上げ・README・本番ビルドの Basic 認証の確認までを `feat/gantt-polish` で実施。Codex レビューと残りの手動確認は未了。更新: Claude Sonnet 5.5）（その前: フェーズ 11 の PR #20 が `develop` にマージされた）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 12 の仕上げ・README の PR #22 が `develop` にマージされた。Codex レビューと残りの手動確認は未了。更新: Claude Sonnet 5.5）（その前: フェーズ 11 の PR #20 が `develop` にマージされた）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -35,7 +35,7 @@
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
 | 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ✅ 完了（PR #20 を `develop` にマージ済み。下記 4-00000 章） |
-| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | 🔶 進行中（仕上げ・README は PR #22 で `develop` 宛てに出してレビュー対応中。Codex レビュー・残りの手動確認が未了。下記 4-000000 章） |
+| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | 🔶 進行中（仕上げ・README は PR #22 を `develop` にマージ済み。Codex レビュー・残りの手動確認が未了。下記 4-000000 章） |
 
 ---
 
@@ -55,7 +55,7 @@
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
   - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
   - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成。PR #15 で `develop` にマージ済み）
-  - `feat/gantt-polish`: フェーズ 12 の作業ブランチ（`develop` の fba4684 から作成。push 済み。PR #22 は `develop` 宛て・マージ前）
+  - `feat/gantt-polish`: フェーズ 12 の作業ブランチ（`develop` の fba4684 から作成。PR #22 で `develop` にマージ済み）
   - `claude/nice-brown-di5gxi`: フェーズ 10 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-project-complete` ではない。`develop` の 0c752eb から作成。PR #17 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
@@ -63,7 +63,7 @@
 
 ## 4-000000. フェーズ 12 の進捗
 
-ブランチ `feat/gantt-polish`、PR #22（`develop` 宛て、マージ前）。PR 作成後にセルフレビュー（コメント 2 件）と、別のレビューのコメント（README のスマホ実機の手順、1 件）が付き、その対応を同じブランチに追加した。
+ブランチ `feat/gantt-polish`、PR #22 を `develop` にマージ済み（マージコミット `97facea`）。PR 作成後にセルフレビュー（コメント 2 件）と、別のレビューのコメント（README のスマホ実機の手順、handoff の旧記述の 2 件）が付き、その対応は同じブランチでマージ前に入れた。以下の「済んだこと」はマージ済みの内容。
 
 ### 済んだこと
 
@@ -82,7 +82,7 @@
 - 全体プラン 7 章の手動チェックのうち、**このセッションでは通しで確認していない項目**: 再読み込み後のデータ保持、帯のドラッグの吸着、担当者の削除、案件・担当者の並び替え、完了の表示切り替え、左リストとタイムラインの縦スクロール（いずれも各フェーズで確認済みだが、仕上げの時点での通しの確認はしていない）。**PWA のインストールとアプリのウィンドウでの起動**（ブラウザの操作が必要）、`npm install` が止まること
 - 「README の手順どおりに、別の環境で起動できる」: 別の環境では試していない。mkcert の自動取得（`pnpm dev` の初回）は、Next.js のコード（`node_modules/next/dist/lib/mkcert.js`）で確認しただけで、mkcert を入れていない環境での初回起動は試していない（この開発機には mkcert が入っている）。README は「mkcert は入れなくてよい（Next.js が自動でダウンロードする）」と書いてあり、未確認の点はここに残している
 - 6 色すべての帯の色の目視、タッチ操作、320px 以下の見た目（フェーズ 11 の「未確認」も同じ）
-- PR #22 のレビュー対応の続き・マージ（push・マージはユーザーの依頼があってから）。スマホ実機での HTTPS（README の手順）の確認
+- スマホ実機での HTTPS（README の手順）の確認
 
 ## 4-00000. フェーズ 11 の実装状況
 
@@ -404,7 +404,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 12 の残り**（4-000000 章の「未了」。Codex のレビュー・手動チェックの通し・PR）。仕上げ・README はコミット済み。4-00000 章の「未確認」（320px 以下・タッチ操作・保存中の抑止の実機確認など）も見ること
+- 次にやること: **フェーズ 12 の残り**（4-000000 章の「未了」。Codex のレビュー・手動チェックの通し）。仕上げ・README は PR #22 でマージ済み。Codex の指摘の修正は `fix/...` ブランチを `develop` から切って行う（プラン 13 の「コミットの単位」）。4-00000 章の「未確認」（320px 以下・タッチ操作・保存中の抑止の実機確認など）も見ること
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
