@@ -1,7 +1,7 @@
 import { memo } from "react"
 
 import type { IMemberGroup } from "../../gantt.utils"
-import { DragHandle } from "../DragHandle"
+import { MemberListProjectRow } from "../MemberListProjectRow"
 import styles from "./MemberListGroup.module.scss"
 import { useMemberListGroup } from "./useMemberListGroup"
 
@@ -44,7 +44,6 @@ export const MemberListGroup = memo(function MemberListGroup({
     memberRowHeight,
     projectRowHeight,
     projectRows,
-    isReorderDisabled,
     registerRow,
     handleHandlePointerDown,
     handleLostPointerCapture,
@@ -67,38 +66,17 @@ export const MemberListGroup = memo(function MemberListGroup({
       </div>
       {isExpanded && (
         <>
-          {/* 案件の行だけを 1 つの要素にまとめる（並び替えのスクロールのずれは、この要素の位置で求める） */}
-          <div>
-            {projectRows.map((project) => (
-              <div
-                key={project.id}
-                ref={(element) => registerRow(project.id, element)}
-                className={project.rowClassName}
-                style={project.rowStyle}
-              >
-                <DragHandle
-                  label={project.handleLabel}
-                  isDragging={project.isDragging}
-                  isDisabled={isReorderDisabled}
-                  onPointerDown={(event) =>
-                    handleHandlePointerDown(project.id, event)
-                  }
-                  onLostPointerCapture={handleLostPointerCapture}
-                />
-                <button
-                  type="button"
-                  className={styles.projectButton}
-                  onClick={() => onSelectProject(project.id)}
-                >
-                  <span
-                    className={styles.colorDot}
-                    style={project.colorDotStyle}
-                  />
-                  <span className={styles.name}>{project.name}</span>
-                </button>
-              </div>
-            ))}
-          </div>
+          {projectRows.map(({ project, dragState }) => (
+            <MemberListProjectRow
+              key={project.id}
+              project={project}
+              dragState={dragState}
+              registerRow={registerRow}
+              onHandlePointerDown={handleHandlePointerDown}
+              onHandleLostPointerCapture={handleLostPointerCapture}
+              onSelectProject={onSelectProject}
+            />
+          ))}
           <div
             className={styles.addProjectRow}
             style={{ height: projectRowHeight }}

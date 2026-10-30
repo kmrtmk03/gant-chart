@@ -1,14 +1,8 @@
 import { useCallback, useMemo } from "react"
-import type { CSSProperties } from "react"
 
-import {
-  BAR_COLORS,
-  MEMBER_ROW_HEIGHT,
-  PROJECT_ROW_HEIGHT,
-} from "../../gantt.constants"
+import { MEMBER_ROW_HEIGHT, PROJECT_ROW_HEIGHT } from "../../gantt.constants"
 import type { IMemberGroup } from "../../gantt.utils"
 import { useDragReorder } from "../../hooks/useDragReorder"
-import styles from "./MemberListGroup.module.scss"
 
 interface IUseMemberListGroupParams {
   memberGroup: IMemberGroup
@@ -16,21 +10,6 @@ interface IUseMemberListGroupParams {
   isExpanded: boolean
   /** 並べ替え後の案件の id の並びを保存する（例外を投げない契約） */
   onReorderProjects: (memberId: string, orderedIds: string[]) => Promise<void>
-}
-
-/** 案件の行 1 つぶんの表示用の値 */
-interface IMemberListGroupProjectView {
-  id: string
-  name: string
-  rowClassName: string
-  /** 行の高さと、ドラッグ中の追従（transform）。値が動的なのでインラインスタイルで渡す */
-  rowStyle: CSSProperties
-  /** 色の丸に付ける背景色。値が動的なのでインラインスタイルで渡す */
-  colorDotStyle: CSSProperties
-  /** つかみの読み上げ用のラベル */
-  handleLabel: string
-  /** この行をドラッグしているか（つかみのカーソルに使う） */
-  isDragging: boolean
 }
 
 /**
@@ -59,7 +38,6 @@ export function useMemberListGroup({
 
   const {
     displayIds,
-    isSaving,
     getRowState,
     registerRow,
     handleHandlePointerDown,
@@ -70,40 +48,13 @@ export function useMemberListGroup({
     isDisabled: false,
   })
 
-  // 行は displayIds の順（保存中は並べ替え後の順）に並べる
+  // 行は displayIds の順（保存中は並べ替え後の順）に並べる。行の見た目は MemberListProjectRow が組み立てる
   const projectById = new Map(projects.map((project) => [project.id, project]))
-  const projectRows: IMemberListGroupProjectView[] = displayIds.flatMap(
-    (id) => {
-      const project = projectById.get(id)
-      if (project === undefined) return []
-      const rowState = getRowState(id)
-      return [
-        {
-          id,
-          name: project.name,
-          rowClassName: [
-            styles.projectRow,
-            rowState.isDragging && styles.dragging,
-            rowState.dropIndicator === "before" && styles.dropBefore,
-            rowState.dropIndicator === "after" && styles.dropAfter,
-          ]
-            .filter(Boolean)
-            .join(" "),
-          rowStyle: {
-            height: PROJECT_ROW_HEIGHT,
-            transform: rowState.isDragging
-              ? `translateY(${rowState.offsetY}px)`
-              : undefined,
-          },
-          colorDotStyle: {
-            background: `var(${BAR_COLORS[project.color].cssVariable})`,
-          },
-          handleLabel: `${project.name} の並び順を変更`,
-          isDragging: rowState.isDragging,
-        },
-      ]
-    },
-  )
+  const projectRows = displayIds.flatMap((id) => {
+    const project = projectById.get(id)
+    if (project === undefined) return []
+    return [{ project, dragState: getRowState(id) }]
+  })
 
   return {
     // 担当者行
@@ -116,10 +67,9 @@ export function useMemberListGroup({
     // 行の高さ（`Timeline` と同じ定数を使い、左右の行をそろえる）
     memberRowHeight: MEMBER_ROW_HEIGHT,
     projectRowHeight: PROJECT_ROW_HEIGHT,
-    // 案件の行
+    // 案件の行（案件と、その行のドラッグの状態）
     projectRows,
     // 案件の並び替え（行の要素の登録と、つかみに渡すハンドラー）
-    isReorderDisabled: isSaving,
     registerRow,
     handleHandlePointerDown,
     handleLostPointerCapture,
