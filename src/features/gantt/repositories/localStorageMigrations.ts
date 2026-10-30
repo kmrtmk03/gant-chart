@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from "../gantt.constants"
+import { isDateString } from "../gantt.guards"
 import { GanttCorruptedDataError } from "./ganttRepository.errors"
 
 // MEMO: このファイルの移行処理は、移行元のバージョンの構造を前提に書く。
@@ -6,6 +7,14 @@ import { GanttCorruptedDataError } from "./ganttRepository.errors"
 // （例: sortOrder を足した後の isProject でバージョン 1 のデータを確かめると、すべて「形が違う」になる）。
 // また、移行処理は repository のメソッドを呼ばず、渡された Storage を直接読み書きすること
 // （repository のメソッドは読み書きの前に移行を確かめるので、移行の中から呼ぶと無限に再帰する）。
+//
+// 移行の前に、案件の全件を「移行元のバージョンの形」として検証する。1 件でも外れていれば、案件もバージョンも
+// 変えずに GanttCorruptedDataError を投げる。次の 2 つを防ぐため:
+// - 不正なデータにも移行の結果（sortOrder・completedAt）を書き足してバージョンを進め、後の読み込みで初めて不正と分かる
+// - バージョンの値だけが古く壊れていて、案件はすでに新しい形のとき、足すフィールド（completedAt など）を既存の値の上から null で上書きする
+// そのため、移行で足すフィールドを持つ案件も「移行元の形ではない」として止める。
+// 検証に使う日付の判定（isDateString。実在する "YYYY-MM-DD" か）は、今後も変わらない概念なので共通のものを使う。
+// 色や並び順の値の範囲は、バージョンごとに変わりうるので、ここでは型だけを確かめる。
 
 /** プロパティを読める「null でないオブジェクト」かを確かめる（配列も除く） */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -13,24 +22,48 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * バージョン 1 の案件のうち、表示順を決めるのに使うフィールド。
- * ほかのフィールドは触らずにそのまま残すので、ここでは確かめない（不正なら移行後の読み込みで既存の扱いになる）
+ * バージョン 1・2 の案件に共通のフィールドが、正しい型で揃っているか。
+ * バージョン 1 では表示順を決める memberId / startDate / endDate も使うので、型を絞って返す。
  */
+function hasProjectBaseFields(
+  value: unknown,
+): value is Record<string, unknown> & IProjectV1SortKeys {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    value.id !== "" &&
+    typeof value.memberId === "string" &&
+    value.memberId !== "" &&
+    typeof value.name === "string" &&
+    isDateString(value.startDate) &&
+    isDateString(value.endDate) &&
+    // "YYYY-MM-DD" は桁数が揃っているので、文字列の比較で日付の前後を判定できる
+    value.startDate <= value.endDate &&
+    typeof value.color === "string" &&
+    typeof value.note === "string" &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  )
+}
+
+/** バージョン 1 の案件のうち、表示順を決めるのに使うフィールド */
 interface IProjectV1SortKeys {
   memberId: string
   startDate: string
   endDate: string
 }
 
-/** バージョン 1 の案件として、表示順を決めるのに必要なフィールドを持っているか */
-function hasProjectV1SortKeys(
+/**
+ * バージョン 1 の案件か。共通のフィールドが揃っていて、後のバージョンで足す sortOrder・completedAt を持たないこと
+ * （持っていれば、バージョンの値だけが古く壊れていて、すでに新しい形のデータとみなす）
+ */
+function isProjectV1(
   value: unknown,
 ): value is Record<string, unknown> & IProjectV1SortKeys {
   return (
-    isRecord(value) &&
-    typeof value.memberId === "string" &&
-    typeof value.startDate === "string" &&
-    typeof value.endDate === "string"
+    hasProjectBaseFields(value) &&
+    !("sortOrder" in value) &&
+    !("completedAt" in value)
   )
 }
 
@@ -41,7 +74,7 @@ function hasProjectV1SortKeys(
  *   移行の直後に見た目の並びが変わらないようにする
  * - 番号は memberId ごとに 0 から振る。担当者が見つからない案件（memberId が不正）も、
  *   画面には出ないがデータとしては残っているので、同じように番号を振る
- * - 保存データが壊れている（JSON として読めない・配列でない・必要なフィールドがない）ときは、
+ * - 保存データが壊れている（JSON として読めない・配列でない・バージョン 1 の形でない案件がある）ときは、
  *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない。空として扱うと次の書き込みで上書きするため）
  */
 export function migrateSchemaV1ToV2(storage: Storage): void {
@@ -57,7 +90,7 @@ export function migrateSchemaV1ToV2(storage: Storage): void {
       "JSON として読めない",
     )
   }
-  if (!Array.isArray(parsed) || !parsed.every(hasProjectV1SortKeys)) {
+  if (!Array.isArray(parsed) || !parsed.every(isProjectV1)) {
     throw new GanttCorruptedDataError(
       STORAGE_KEYS.projects,
       "移行できない形のデータを含んでいる",
@@ -92,18 +125,23 @@ export function migrateSchemaV1ToV2(storage: Storage): void {
 }
 
 /**
- * バージョン 2 の案件か（バージョン 2 で足した sortOrder を持っているか）だけを確かめる。
- * 今の isProject は completedAt を求めるので、使うと既存の案件がすべて「形が違う」になる。
- * ほかのフィールドは触らずにそのまま残すので、ここでは確かめない（不正なら移行後の読み込みで既存の扱いになる）
+ * バージョン 2 の案件か。共通のフィールドに加えて、バージョン 2 で足した sortOrder（0 以上の整数）を持ち、
+ * バージョン 3 で足す completedAt を持たないこと（持っていれば、すでに新しい形のデータなので上書きしない）
  */
 function isProjectV2(value: unknown): value is Record<string, unknown> {
-  return isRecord(value) && typeof value.sortOrder === "number"
+  return (
+    hasProjectBaseFields(value) &&
+    typeof value.sortOrder === "number" &&
+    Number.isInteger(value.sortOrder) &&
+    value.sortOrder >= 0 &&
+    !("completedAt" in value)
+  )
 }
 
 /**
  * バージョン 2 → 3: 案件に完了日時（completedAt）を足す。既存の案件はすべて未完了（null）にする。
  *
- * - 保存データが壊れている（JSON として読めない・配列でない・sortOrder のない要素がある）ときは、
+ * - 保存データが壊れている（JSON として読めない・配列でない・バージョン 2 の形でない案件がある）ときは、
  *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない）
  */
 export function migrateSchemaV2ToV3(storage: Storage): void {

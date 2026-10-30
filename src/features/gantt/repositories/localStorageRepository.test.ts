@@ -833,6 +833,24 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
     )
   })
 
+  it("バージョンの値だけが古く、案件がすでに sortOrder を持っているときは、振り直さずに止める", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        ...buildProjectV1("p1", "a", "2026-10-01", "2026-10-02"),
+        sortOrder: 5,
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+  })
+
   it.each([
     ["JSON として読めない", "{壊れた JSON"],
     ["配列でない", JSON.stringify({ not: "array" })],
@@ -929,6 +947,40 @@ describe("スキーマの移行（バージョン 2 → 3）", () => {
       expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
     },
   )
+
+  it("sortOrder はあるが name など他のフィールドが欠けた案件があれば、completedAt を足さず、バージョンも進めない", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      buildProjectV2("p1", 0),
+      { ...buildProjectV2("p2", 1), name: undefined },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+  })
+
+  it("バージョンの値だけが古く、案件がすでに completedAt を持っているときは、上書きせずに止める", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        ...buildProjectV2("p1", 0),
+        completedAt: "2026-10-30T03:00:00.000Z",
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+  })
 
   it("1 → 2 は成功して 2 → 3 で失敗したら、バージョンは 2 で止まり、再試行で 1 → 2 をやり直さない", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {})
