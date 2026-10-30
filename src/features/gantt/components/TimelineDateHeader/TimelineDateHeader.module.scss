@@ -12,26 +12,30 @@
   display: flex;
 }
 
+// 文字の縦位置は行の高さ（gantt.constants.ts の DATE_HEADER_*_ROW_HEIGHT を style で指定）に合わせて中央にそろえる。
+// line-height に行の高さと同じ数値を書くと、高さだけ変えたときに文字がずれるため使わない
 .month {
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
   padding: 0 tokens.$space-2;
   overflow: hidden;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text;
   font-size: tokens.$font-size-base;
   font-weight: 600;
-  line-height: 24px;
   white-space: nowrap;
 }
 
 .day {
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text-muted;
   font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
-  line-height: 28px;
-  text-align: center;
 }
 
 // 土曜は青、日曜と祝日は赤の文字色にする
@@ -61,6 +65,6 @@
     inset: 3px 2px;
     z-index: -1;
     border-radius: tokens.$radius-sm;
-    background: tokens.$color-primary;
+    background: tokens.$color-primary-solid;
   }
 }
