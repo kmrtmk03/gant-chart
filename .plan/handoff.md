@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 11 の 8 点を実装。ユーザーの確認待ち。更新: Claude Sonnet 5.5）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 11 の PR #20 が `develop` にマージされた。更新: Claude Sonnet 5.5）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -34,7 +34,7 @@
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
-| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | 🔶 実装完了・ユーザーの確認待ち（ブランチ `feat/gantt-ui-adjustments`、PR 未作成。下記 4-00000 章） |
+| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ✅ 完了（PR #20 を `develop` にマージ済み。下記 4-00000 章） |
 | 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9 → 11 → 12） |
 
 ---
@@ -62,7 +62,7 @@
 
 ## 4-00000. フェーズ 11 の実装状況
 
-ブランチ `feat/gantt-ui-adjustments`（`develop` から作成。push・PR はまだ）。8 点すべて実装し、ブラウザで確認した。ユーザーの確認と PR 作成が残っている。
+フェーズ 11 は完了（ブランチ `feat/gantt-ui-adjustments`、PR #20 を `develop` にマージ済み）。8 点すべて実装し、ブラウザで確認し、ユーザーの確認も済んでいる。
 
 - 検証: `pnpm lint` / `typecheck` / `test`（280 件）/ `format:check` / `build` が成功
 - ブラウザ（Playwright ではなくアプリ内ブラウザ、`pnpm dev:http`、800×600 と 1280×800）で確認済み: 土曜は青・日曜と祝日は赤、月の区切り線、文字 16px、「案件を追加」行いっぱいのクリック、空きのクリックでパネルが閉じる（帯・ボタン・ヘッダーでは閉じない。帯を空きへドラッグして離しても閉じない）、状態の欄と下部 1 段のボタン、カレンダー（クリックで開く・矢印キーと Enter で選ぶ・Esc でカレンダーだけ閉じる・外側クリックで閉じる・右寄せで終了日が収まる）
@@ -380,7 +380,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 11 のユーザー確認**（4-00000 章）。OK が出たら push して `develop` 宛ての PR を作る。直す点が出たらこのブランチで続ける
+- 次にやること: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。着手前にユーザーの確認を取る。4-00000 章の「未確認」（320px 以下・タッチ操作・保存中の抑止の実機確認など）も仕上げで見ること
 - その次: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
