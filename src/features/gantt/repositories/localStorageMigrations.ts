@@ -81,3 +81,35 @@ export function migrateSchemaV1ToV2(storage: Storage): void {
   }))
   storage.setItem(STORAGE_KEYS.projects, JSON.stringify(migrated))
 }
+
+/**
+ * バージョン 2 の案件か（バージョン 2 で足した sortOrder を持っているか）だけを確かめる。
+ * 今の isProject は completedAt を求めるので、使うと既存の案件がすべて「形が違う」になる。
+ * ほかのフィールドは触らずにそのまま残すので、ここでは確かめない（不正なら移行後の読み込みで既存の扱いになる）
+ */
+function isProjectV2(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && typeof value.sortOrder === "number"
+}
+
+/**
+ * バージョン 2 → 3: 案件に完了日時（completedAt）を足す。既存の案件はすべて未完了（null）にする。
+ *
+ * - 保存データが壊れている（JSON として読めない・配列でない・sortOrder のない要素がある）ときは何もしない。
+ *   その後の読み込みの既存の扱い（警告を出して空から始める）に任せる
+ */
+export function migrateSchemaV2ToV3(storage: Storage): void {
+  const raw = storage.getItem(STORAGE_KEYS.projects)
+  if (raw === null) return
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return
+  }
+  if (!Array.isArray(parsed) || !parsed.every(isProjectV2)) return
+
+  // 保存順（配列の並び）は変えず、各案件に completedAt を足すだけにする
+  const migrated = parsed.map((project) => ({ ...project, completedAt: null }))
+  storage.setItem(STORAGE_KEYS.projects, JSON.stringify(migrated))
+}

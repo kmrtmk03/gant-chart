@@ -40,6 +40,7 @@ const PROJECT: IProject = {
   color: "green",
   note: "メモ",
   sortOrder: 0,
+  completedAt: null,
   createdAt: TIMESTAMP,
   updatedAt: TIMESTAMP,
 }

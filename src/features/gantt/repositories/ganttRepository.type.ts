@@ -42,7 +42,8 @@ export interface IGanttRepository {
   createProject(input: TProjectInput): Promise<IProject>
   /**
    * 案件の情報を書き換える。担当者を付け替えるときも、付け替え先が存在する必要がある。
-   * 担当者を付け替えたときは、付け替え先の一番下になる
+   * 担当者を付け替えたときは、付け替え先の一番下になる。
+   * `input.isCompleted` で完了・未完了を切り替える（完了日時は repository が付ける。すでに完了なら変えない）
    */
   updateProject(id: string, input: TProjectUpdate): Promise<IProject>
   /**

@@ -20,7 +20,10 @@ import {
   GanttValidationError,
 } from "./ganttRepository.errors"
 import type { IGanttRepository } from "./ganttRepository.type"
-import { migrateSchemaV1ToV2 } from "./localStorageMigrations"
+import {
+  migrateSchemaV1ToV2,
+  migrateSchemaV2ToV3,
+} from "./localStorageMigrations"
 
 /** Storage に書き込む 1 件分（キーと、書き込む文字列） */
 interface IStorageEntry {
@@ -41,6 +44,7 @@ interface IPreviousStorageEntry {
  */
 const SCHEMA_MIGRATIONS: Partial<Record<number, (storage: Storage) => void>> = {
   1: migrateSchemaV1ToV2,
+  2: migrateSchemaV2ToV3,
 }
 
 /**
@@ -70,6 +74,22 @@ function restoreEntries(
 /** 現在日時を ISO 8601 の文字列で返す（createdAt / updatedAt 用） */
 function getCurrentDateTime(): string {
   return new Date().toISOString()
+}
+
+/**
+ * 更新後の完了日時を決める。
+ * - `isCompleted` が省略されたら今のまま
+ * - true: 未完了なら今の日時を入れる。すでに完了していれば、最初に完了にした日時を変えない
+ * - false: 未完了（null）に戻す
+ */
+function resolveCompletedAt(
+  current: string | null,
+  isCompleted: boolean | undefined,
+  timestamp: string,
+): string | null {
+  if (isCompleted === undefined) return current
+  if (!isCompleted) return null
+  return current ?? timestamp
 }
 
 /**
@@ -260,6 +280,8 @@ export class LocalStorageRepository implements IGanttRepository {
       sortOrder: getNextSortOrder(
         filterProjectsOfMember(projects, input.memberId),
       ),
+      // 追加した案件は必ず未完了
+      completedAt: null,
       createdAt: timestamp,
       updatedAt: timestamp,
     }
@@ -275,7 +297,8 @@ export class LocalStorageRepository implements IGanttRepository {
     if (current === undefined) throw new GanttNotFoundError("project", id)
 
     // 指定されたフィールドだけを差し替える（undefined は「変更しない」として扱う）。
-    // id・sortOrder・createdAt は input に混ざっていても変えない
+    // id・sortOrder・completedAt・createdAt は input に混ざっていても変えない（完了の状態は isCompleted で変える）
+    const timestamp = getCurrentDateTime()
     const memberId = input.memberId ?? current.memberId
     const isMemberChanged = memberId !== current.memberId
     if (isMemberChanged) this.assertMemberExists(memberId)
@@ -292,8 +315,13 @@ export class LocalStorageRepository implements IGanttRepository {
       sortOrder: isMemberChanged
         ? getNextSortOrder(filterProjectsOfMember(projects, memberId))
         : current.sortOrder,
+      completedAt: resolveCompletedAt(
+        current.completedAt,
+        input.isCompleted,
+        timestamp,
+      ),
       createdAt: current.createdAt,
-      updatedAt: getCurrentDateTime(),
+      updatedAt: timestamp,
     }
     validateProject(updated)
 

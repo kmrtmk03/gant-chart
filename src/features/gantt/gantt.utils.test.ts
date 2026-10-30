@@ -468,6 +468,7 @@ describe("groupProjectsByMember", () => {
     color: "blue",
     note: "",
     sortOrder,
+    completedAt: null,
     createdAt: "",
     updatedAt: "",
   })

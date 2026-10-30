@@ -35,6 +35,14 @@ function isDateTimeString(value: unknown): value is string {
 }
 
 /**
+ * 完了日時（未完了の null か、日時の文字列）かを確かめる。
+ * 「完了済みを隠す」の判定に使うので、未定義（古い構造の残り）や空文字を未完了・完了のどちらかに寄せず、不正として弾く
+ */
+function isCompletedAt(value: unknown): value is string | null {
+  return value === null || isDateTimeString(value)
+}
+
+/**
  * "YYYY-MM-DD" 形式で、かつ実在する日付かを確かめる。
  * 形式だけだと "2026-02-30" や "2026-13-01" も通ってしまい、日付計算がずれるため、
  * UTC の Date に組み立て直して年・月・日がそのまま戻るかで実在を確認する。
@@ -99,6 +107,7 @@ export function isProject(value: unknown): value is IProject {
     isBarColor(value.color) &&
     typeof value.note === "string" &&
     isProjectSortOrder(value.sortOrder) &&
+    isCompletedAt(value.completedAt) &&
     isDateTimeString(value.createdAt) &&
     isDateTimeString(value.updatedAt)
   )
