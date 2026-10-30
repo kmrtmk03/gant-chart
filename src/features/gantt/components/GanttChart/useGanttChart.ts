@@ -69,7 +69,8 @@ export function useGanttChart() {
       : `edit:${editingProject?.id ?? ""}`
 
   // スクロール領域の何もないところ（帯のない行・日付ヘッダー・左リストの空き）のクリックで、パネルを閉じる。
-  // 入力途中でも確認せずに閉じる（Esc・✕ と同じ扱い）。ヘッダーはスクロール領域の外なので対象にならない
+  // 入力途中でも確認せずに閉じる（Esc・✕ と同じ扱い）。ヘッダーはスクロール領域の外なので対象にならない。
+  // 保存・削除の実行中は、`sidePanel.close` 側（useSidePanel）が閉じる操作を受け付けない
   const handleScrollAreaClick = (event: MouseEvent<HTMLElement>) => {
     if (!isSidePanelVisible) return
     if (

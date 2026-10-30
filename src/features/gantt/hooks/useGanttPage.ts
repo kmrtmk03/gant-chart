@@ -58,8 +58,13 @@ export function useGanttPage() {
     reorderProjects,
     removeProjectsOfMember,
   } = useProjects(repository)
-  const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
-    useSidePanel()
+  const {
+    sidePanelState,
+    runWhileBusy,
+    openCreatePanel,
+    openEditPanel,
+    closePanel,
+  } = useSidePanel()
   const memberManagement = useMemberManagement({
     createMember,
     renameMember,
@@ -233,28 +238,33 @@ export function useGanttPage() {
    * パネルのフォームの保存。追加か編集かはパネルの状態で決め、保存に成功してからパネルを閉じる。
    * 失敗したら例外をそのまま投げる（フォームが受け取ってパネル内に表示し、パネルは開いたままにする）。
    * `isCompleted` は「完了にする / 未完了に戻す」のときだけ渡され、編集の保存と 1 回にまとめて保存する
-   * （追加した案件は必ず未完了なので、追加のときは使わない）
+   * （追加した案件は必ず未完了なので、追加のときは使わない）。
+   * 保存している間はパネルの開閉・切り替えを受け付けない（`runWhileBusy`）
    */
   const handleSaveProject = useCallback(
     async (input: TProjectInput, isCompleted?: boolean) => {
-      if (sidePanelState.mode === "create") {
-        await createProject(input)
-      } else if (sidePanelState.mode === "edit") {
-        await updateProject(sidePanelState.projectId, { ...input, isCompleted })
-      } else {
-        return
-      }
+      if (sidePanelState.mode === "closed") return
+      await runWhileBusy(async () => {
+        if (sidePanelState.mode === "create") {
+          await createProject(input)
+        } else if (sidePanelState.mode === "edit") {
+          await updateProject(sidePanelState.projectId, {
+            ...input,
+            isCompleted,
+          })
+        }
+      })
       closePanel()
     },
-    [sidePanelState, createProject, updateProject, closePanel],
+    [sidePanelState, runWhileBusy, createProject, updateProject, closePanel],
   )
 
   /** 編集中の案件を削除する。削除に成功してからパネルを閉じる。失敗は例外のまま投げる */
   const handleDeleteProject = useCallback(async () => {
     if (sidePanelState.mode !== "edit") return
-    await deleteProject(sidePanelState.projectId)
+    await runWhileBusy(() => deleteProject(sidePanelState.projectId))
     closePanel()
-  }, [sidePanelState, deleteProject, closePanel])
+  }, [sidePanelState, runWhileBusy, deleteProject, closePanel])
 
   return {
     // 読み込みの状態
