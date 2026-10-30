@@ -120,7 +120,7 @@ export function useGanttChart() {
       isOpen: memberManagement.isDialogOpen,
       create: memberManagement.createMember,
       rename: memberManagement.renameMember,
-      move: memberManagement.moveMember,
+      reorder: memberManagement.reorderMembers,
       remove: memberManagement.deleteMember,
       close: memberManagement.closeDialog,
     },

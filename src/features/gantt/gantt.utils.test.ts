@@ -17,7 +17,6 @@ import {
   isHoliday,
   isRangeOverlapping,
   isWeekend,
-  moveId,
   moveIdToIndex,
   moveProjectDates,
   parseDateString,
@@ -569,29 +568,6 @@ describe("hasSameNameMember", () => {
   it("excludeMemberId の担当者自身は数えない", () => {
     expect(hasSameNameMember("a", members, "a")).toBe(false)
     expect(hasSameNameMember("a", members, "b")).toBe(true)
-  })
-})
-
-describe("moveId", () => {
-  it("1 つ上・下へ動かした並びを返す", () => {
-    expect(moveId(["a", "b", "c"], "b", "up")).toEqual(["b", "a", "c"])
-    expect(moveId(["a", "b", "c"], "b", "down")).toEqual(["a", "c", "b"])
-  })
-
-  it("端でこれ以上動かせないときは null", () => {
-    expect(moveId(["a", "b"], "a", "up")).toBeNull()
-    expect(moveId(["a", "b"], "b", "down")).toBeNull()
-  })
-
-  it("含まれない id・1 件だけの並びは null", () => {
-    expect(moveId(["a", "b"], "x", "up")).toBeNull()
-    expect(moveId(["a"], "a", "down")).toBeNull()
-  })
-
-  it("元の配列は変更しない", () => {
-    const ids = ["a", "b"]
-    moveId(ids, "a", "down")
-    expect(ids).toEqual(["a", "b"])
   })
 })
 

@@ -130,7 +130,7 @@ export function GanttChart() {
           memberGroups={chart.memberGroups}
           onCreate={memberDialog.create}
           onRename={memberDialog.rename}
-          onMove={memberDialog.move}
+          onReorder={memberDialog.reorder}
           onDelete={memberDialog.remove}
           onClose={memberDialog.close}
         />

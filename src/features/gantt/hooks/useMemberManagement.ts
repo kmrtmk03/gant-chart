@@ -1,11 +1,8 @@
 import { useCallback, useState } from "react"
 
-import type { IMember, TMemberInput, TMoveDirection } from "../gantt.type"
-import { moveId } from "../gantt.utils"
+import type { IMember, TMemberInput } from "../gantt.type"
 
 interface IUseMemberManagementParams {
-  /** 担当者の一覧。未読み込み（null）の間は並び替えを見送る */
-  members: IMember[] | null
   createMember: (input: TMemberInput) => Promise<IMember>
   renameMember: (id: string, name: string) => Promise<IMember>
   reorderMembers: (orderedIds: string[]) => Promise<void>
@@ -25,7 +22,6 @@ interface IUseMemberManagementParams {
  *   削除した担当者の案件を編集中のままになる状態を作らないため（入力途中の内容は破棄される）
  */
 export function useMemberManagement({
-  members,
   createMember,
   renameMember,
   reorderMembers,
@@ -62,19 +58,12 @@ export function useMemberManagement({
     [renameMember],
   )
 
-  /** 担当者を 1 つ上 / 下へ動かす。端や未読み込みのときは何もしない */
-  const handleMove = useCallback(
-    async (id: string, direction: TMoveDirection) => {
-      if (members === null) return
-      const orderedIds = moveId(
-        members.map((member) => member.id),
-        id,
-        direction,
-      )
-      if (orderedIds === null) return
+  /** 担当者を並び替える。`orderedIds` は全担当者の id を、並べ替え後の順に過不足なく含めること */
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
       await reorderMembers(orderedIds)
     },
-    [members, reorderMembers],
+    [reorderMembers],
   )
 
   /**
@@ -97,7 +86,7 @@ export function useMemberManagement({
     // ダイアログから呼ぶ操作
     createMember: handleCreate,
     renameMember: handleRename,
-    moveMember: handleMove,
+    reorderMembers: handleReorder,
     deleteMember: handleDelete,
   }
 }

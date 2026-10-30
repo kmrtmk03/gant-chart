@@ -8,12 +8,7 @@ import {
 } from "date-fns"
 
 import { DAY_COLUMN_WIDTH, MEMBER_NAME_MAX_LENGTH } from "./gantt.constants"
-import type {
-  IMember,
-  IProject,
-  TDateString,
-  TMoveDirection,
-} from "./gantt.type"
+import type { IMember, IProject, TDateString } from "./gantt.type"
 
 // MEMO: 日付は "YYYY-MM-DD" の文字列で受け渡し、Date はこのファイルの関数の内側でだけ扱う。
 // Date はローカル時刻で組み立てる（UTC だと日本時間の早朝に日付がずれるため）。
@@ -318,28 +313,6 @@ export function hasSameNameMember(
   return members.some(
     (member) => member.id !== excludeMemberId && member.name === trimmed,
   )
-}
-
-/**
- * id の並びのうち `id` を 1 つ上 / 下へ動かした新しい並びを返す。
- * `id` が含まれない、または端でこれ以上動かせないときは null（元の配列は変更しない）。
- */
-export function moveId(
-  ids: string[],
-  id: string,
-  direction: TMoveDirection,
-): string[] | null {
-  const index = ids.indexOf(id)
-  if (index === -1) return null
-  const targetIndex = direction === "up" ? index - 1 : index + 1
-  if (targetIndex < 0 || targetIndex >= ids.length) return null
-  const moved = [...ids]
-  const target = moved[targetIndex]
-  const current = moved[index]
-  if (target === undefined || current === undefined) return null
-  moved[index] = target
-  moved[targetIndex] = current
-  return moved
 }
 
 /**

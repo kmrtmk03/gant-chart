@@ -50,7 +50,6 @@ export function useGanttPage() {
   const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
     useSidePanel()
   const memberManagement = useMemberManagement({
-    members,
     createMember,
     renameMember,
     reorderMembers,
