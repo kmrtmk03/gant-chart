@@ -10,3 +10,8 @@
   opacity: 0.45;
   pointer-events: none;
 }
+
+// 完了済みの案件の帯（表示しているとき）。未完了の帯より薄くする
+.completed {
+  opacity: tokens.$opacity-completed-summary-bar;
+}

@@ -160,6 +160,24 @@ export function groupProjectsByMember(
   }))
 }
 
+/**
+ * 担当者ごとのまとまりから、完了済みの案件を取り除く（「完了済みを表示しない」ときの絞り込み）。
+ * 担当者は残す（案件が 0 件になっても担当者行は出す）。並び順は変えない
+ */
+export function excludeCompletedProjects(
+  memberGroups: IMemberGroup[],
+): IMemberGroup[] {
+  return memberGroups.map((group) => ({
+    ...group,
+    projects: group.projects.filter((project) => project.completedAt === null),
+  }))
+}
+
+/** 完了済みの案件の件数を数える（切り替えボタンに添える件数） */
+export function countCompletedProjects(projects: IProject[]): number {
+  return projects.filter((project) => project.completedAt !== null).length
+}
+
 /** 土曜・日曜か */
 export function isWeekend(value: TDateString): boolean {
   return WEEKEND_DAYS.includes(getDay(parseDateString(value)))
@@ -330,4 +348,42 @@ export function moveIdToIndex(
   const moved = ids.filter((_, index) => index !== fromIndex)
   moved.splice(clampedIndex, 0, id)
   return moved
+}
+
+/**
+ * 一部の id だけが見えている並び（`visibleIds`）の中で `id` を `toVisibleIndex` 番目へ動かし、
+ * 見えていない id も含めた全体の並び（`allIds`）を返す（完了済みを隠したままの並び替え用）。
+ *
+ * 見えていない id は、見えている id との前後関係を保つ。規則は次のとおり:
+ * - 動かした先の直後に見えている id があれば、その直前に入れる
+ * - 見えている id の末尾へ動かしたときは、直前に見えている id の直後に入れる
+ *
+ * 例: 全体が `A, (B), C, D`（B は隠れている）で D を見えている並びの先頭へ → `D, A, B, C`
+ *
+ * `visibleIds` は `allIds` と同じ順で、その一部であること。`id` が `visibleIds` にない（または `allIds` にない）ときは null
+ */
+export function moveIdAmongVisible(
+  allIds: string[],
+  visibleIds: string[],
+  id: string,
+  toVisibleIndex: number,
+): string[] | null {
+  if (!allIds.includes(id)) return null
+  const movedVisibleIds = moveIdToIndex(visibleIds, id, toVisibleIndex)
+  if (movedVisibleIds === null) return null
+
+  const movedIndex = movedVisibleIds.indexOf(id)
+  const nextVisibleId = movedVisibleIds[movedIndex + 1]
+  const previousVisibleId = movedVisibleIds[movedIndex - 1]
+  const rest = allIds.filter((otherId) => otherId !== id)
+
+  // 見えている id が自分だけのときは、動かす先がないので並びを変えない
+  let insertIndex = allIds.indexOf(id)
+  if (nextVisibleId !== undefined) {
+    insertIndex = rest.indexOf(nextVisibleId)
+  } else if (previousVisibleId !== undefined) {
+    insertIndex = rest.indexOf(previousVisibleId) + 1
+  }
+  rest.splice(insertIndex, 0, id)
+  return rest
 }

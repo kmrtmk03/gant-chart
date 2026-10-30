@@ -15,10 +15,14 @@ interface IMemberListProps {
   /** 案件名をクリックしたとき。編集する案件の ID を渡す（React.memo を保つため、参照が変わらない関数を渡すこと） */
   onSelectProject: (projectId: string) => void
   /**
-   * 案件をドラッグで並べ替えたとき。担当者 ID と、並べ替え後のその担当者の案件の id を渡す。
+   * 案件をドラッグで並べ替えたとき。担当者 ID と、並べ替え後のその担当者の（見えている）案件の id、動かした案件の id を渡す。
    * 例外を投げない関数を渡すこと（失敗の表示は呼び出し側）。React.memo を保つため、参照が変わらない関数を渡すこと
    */
-  onReorderProjects: (memberId: string, orderedIds: string[]) => Promise<void>
+  onReorderProjects: (
+    memberId: string,
+    orderedIds: string[],
+    movedId: string,
+  ) => Promise<void>
   onManageMembers: () => void
 }
 

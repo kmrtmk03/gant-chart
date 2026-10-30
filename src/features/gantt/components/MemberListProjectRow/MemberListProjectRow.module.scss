@@ -79,6 +79,29 @@
   white-space: nowrap;
 }
 
+// 完了済みの案件。✓ はそのままの濃さで出し、色の丸と案件名だけを薄くする
+.completed {
+  .colorDot,
+  .name {
+    opacity: tokens.$opacity-completed-text;
+  }
+}
+
+.completedMark {
+  flex-shrink: 0;
+  color: tokens.$color-success;
+  font-weight: 600;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 // 色は動的な値なので、背景色だけインラインスタイルで渡す
 .colorDot {
   flex-shrink: 0;

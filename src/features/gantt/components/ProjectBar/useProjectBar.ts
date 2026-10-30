@@ -79,6 +79,8 @@ export function useProjectBar({
   if (layout.isClippedStart) classNames.push(styles.clippedStart)
   if (layout.isClippedEnd) classNames.push(styles.clippedEnd)
   if (isEditing) classNames.push(styles.editing)
+  // 完了済み（表示しているとき）は薄くして、未完了と見分けられるようにする。クリック・ドラッグはそのままできる
+  if (project.completedAt !== null) classNames.push(styles.completed)
   if (drag.isDragging) classNames.push(styles.dragging)
   if (drag.isSaving) classNames.push(styles.saving)
 
@@ -103,7 +105,7 @@ export function useProjectBar({
     bar: {
       className: classNames.join(" "),
       style,
-      title: `${project.name}（${startDate} 〜 ${endDate}）`,
+      title: `${project.name}（${startDate} 〜 ${endDate}）${project.completedAt === null ? "" : "【完了済み】"}`,
       label: project.name,
       periodLabel,
       // 伸縮のつかみ。編集中・はみ出している側（または描けない）ときは null

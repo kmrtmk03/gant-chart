@@ -73,6 +73,18 @@ $shadow-bar:
 // フォーカスリング（キーボード操作時の枠）
 $focus-ring: 0 0 0 3px rgb(113 130 255 / 35%);
 
+// ---- 大きさ ----
+// 画面上部のバー（GanttHeader）の高さ。サイドパネルはこの下から出す（バーの右端の切り替えボタンを隠さないため）
+$header-height: 52px;
+
+// ---- 透明度 ----
+// 完了済みの案件（表示しているとき）の帯。未完了の帯と見分けられるよう薄くする
+$opacity-completed-bar: 0.4;
+// 完了済みの案件の、担当者行のまとめ帯（未完了のまとめ帯は 0.45）
+$opacity-completed-summary-bar: 0.15;
+// 完了済みの案件の、左のリストの案件名
+$opacity-completed-text: 0.55;
+
 // ---- アニメーション ----
 $transition-fast: 120ms ease;
 

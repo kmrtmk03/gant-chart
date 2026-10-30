@@ -49,6 +49,9 @@ export function GanttChart() {
         onScrollBackward={chart.header.scrollBackward}
         onScrollForward={chart.header.scrollForward}
         onScrollToToday={chart.header.scrollToToday}
+        isCompletedVisible={chart.header.isCompletedVisible}
+        completedCount={chart.header.completedCount}
+        onToggleCompletedVisible={chart.header.toggleCompletedVisible}
       />
 
       {chart.isEmpty ? (
@@ -127,7 +130,7 @@ export function GanttChart() {
 
       {memberDialog.isOpen && (
         <MemberManageDialog
-          memberGroups={chart.memberGroups}
+          memberGroups={chart.allMemberGroups}
           onCreate={memberDialog.create}
           onRename={memberDialog.rename}
           onReorder={memberDialog.reorder}

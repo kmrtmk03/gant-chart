@@ -1,5 +1,4 @@
 import type { IProject, TDateString } from "../../gantt.type"
-import styles from "./MemberSummaryBar.module.scss"
 import { useMemberSummaryBar } from "./useMemberSummaryBar"
 
 interface IMemberSummaryBarProps {
@@ -24,7 +23,7 @@ export function MemberSummaryBar({
       {bars.map((bar) => (
         <div
           key={bar.key}
-          className={styles.bar}
+          className={bar.className}
           style={bar.style}
           aria-hidden
         />

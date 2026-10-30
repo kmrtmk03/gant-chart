@@ -4,7 +4,9 @@ import { DAY_COLUMN_WIDTH } from "./gantt.constants"
 import type { IMember, IProject } from "./gantt.type"
 import {
   addDays,
+  countCompletedProjects,
   diffInDays,
+  excludeCompletedProjects,
   formatYearMonth,
   getBarLayout,
   getDateRange,
@@ -17,6 +19,7 @@ import {
   isHoliday,
   isRangeOverlapping,
   isWeekend,
+  moveIdAmongVisible,
   moveIdToIndex,
   moveProjectDates,
   parseDateString,
@@ -605,5 +608,113 @@ describe("moveIdToIndex", () => {
     const ids = ["a", "b"]
     moveIdToIndex(ids, "a", 1)
     expect(ids).toEqual(["a", "b"])
+  })
+})
+
+describe("excludeCompletedProjects / countCompletedProjects", () => {
+  const member: IMember = {
+    id: "m1",
+    name: "田中",
+    sortOrder: 0,
+    createdAt: "",
+    updatedAt: "",
+  }
+  const createProject = (id: string, completedAt: string | null): IProject => ({
+    id,
+    memberId: member.id,
+    name: id,
+    startDate: "2026-10-01",
+    endDate: "2026-10-02",
+    color: "blue",
+    note: "",
+    sortOrder: 0,
+    completedAt,
+    createdAt: "",
+    updatedAt: "",
+  })
+  const open1 = createProject("open-1", null)
+  const done = createProject("done", "2026-10-30T09:00:00.000Z")
+  const open2 = createProject("open-2", null)
+
+  it("完了済みの案件だけを取り除き、並び順は変えない", () => {
+    expect(
+      excludeCompletedProjects([{ member, projects: [open1, done, open2] }]),
+    ).toEqual([{ member, projects: [open1, open2] }])
+  })
+
+  it("案件がすべて完了済みでも、担当者は残す", () => {
+    expect(excludeCompletedProjects([{ member, projects: [done] }])).toEqual([
+      { member, projects: [] },
+    ])
+  })
+
+  it("完了済みの件数を数える", () => {
+    expect(countCompletedProjects([open1, done, open2])).toBe(1)
+    expect(countCompletedProjects([])).toBe(0)
+  })
+})
+
+describe("moveIdAmongVisible", () => {
+  // 全体は A, B, C, D で、B は隠れている（見えているのは A, C, D）
+  const allIds = ["A", "B", "C", "D"]
+  const visibleIds = ["A", "C", "D"]
+
+  it("見えている先頭へ動かすと、隠れた案件との前後関係を保つ（プランの例）", () => {
+    expect(moveIdAmongVisible(allIds, visibleIds, "D", 0)).toEqual([
+      "D",
+      "A",
+      "B",
+      "C",
+    ])
+  })
+
+  it("直後に見えている案件の直前に入れる", () => {
+    // A を C と D の間へ → C の後ろの D の直前
+    expect(moveIdAmongVisible(allIds, visibleIds, "A", 1)).toEqual([
+      "B",
+      "C",
+      "A",
+      "D",
+    ])
+    // C を A の前へ → A の直前（隠れた B は A の後ろのまま）
+    expect(moveIdAmongVisible(allIds, visibleIds, "C", 0)).toEqual([
+      "C",
+      "A",
+      "B",
+      "D",
+    ])
+  })
+
+  it("見えている末尾へ動かすと、最後に見えている案件の直後に入れる", () => {
+    expect(moveIdAmongVisible(allIds, visibleIds, "A", 2)).toEqual([
+      "B",
+      "C",
+      "D",
+      "A",
+    ])
+    // 末尾に隠れた案件があるときは、その前（最後に見えている案件の直後）に入る
+    expect(moveIdAmongVisible(["A", "B", "C"], ["A", "B"], "A", 1)).toEqual([
+      "B",
+      "A",
+      "C",
+    ])
+  })
+
+  it("すべて見えているときは moveIdToIndex と同じ並びになる", () => {
+    expect(moveIdAmongVisible(allIds, allIds, "A", 2)).toEqual(
+      moveIdToIndex(allIds, "A", 2),
+    )
+    expect(moveIdAmongVisible(allIds, allIds, "D", 0)).toEqual(
+      moveIdToIndex(allIds, "D", 0),
+    )
+  })
+
+  it("見えている案件が自分だけなら並びを変えない", () => {
+    expect(moveIdAmongVisible(["A", "B"], ["B"], "B", 0)).toEqual(["A", "B"])
+  })
+
+  it("見えていない id・存在しない id は null", () => {
+    expect(moveIdAmongVisible(allIds, visibleIds, "B", 0)).toBeNull()
+    expect(moveIdAmongVisible(allIds, visibleIds, "Z", 0)).toBeNull()
   })
 })

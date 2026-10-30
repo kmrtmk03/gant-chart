@@ -8,16 +8,29 @@ interface IGanttHeaderProps {
   onScrollBackward: () => void
   onScrollForward: () => void
   onScrollToToday: () => void
+  /** 完了済みの案件を表示しているか */
+  isCompletedVisible: boolean
+  /** 完了済みの案件の件数（ボタンに添える） */
+  completedCount: number
+  /** 完了済みの案件の表示 / 非表示を切り替える */
+  onToggleCompletedVisible: () => void
 }
 
-/** 画面上部のバー。タイトル、スクロールのボタン、表示中の年月を出す */
+/**
+ * 画面上部のバー。タイトル、スクロールのボタン、表示中の年月を出し、
+ * 右端に「完了済みを表示」の切り替えボタン（押されている状態を `aria-pressed` で伝える）を置く
+ */
 export function GanttHeader({
   visibleDate,
   onScrollBackward,
   onScrollForward,
   onScrollToToday,
+  isCompletedVisible,
+  completedCount,
+  onToggleCompletedVisible,
 }: IGanttHeaderProps) {
-  const { rangeLabel } = useGanttHeader({ visibleDate })
+  const { rangeLabel, completedToggleLabel, completedToggleClassName } =
+    useGanttHeader({ visibleDate, isCompletedVisible, completedCount })
 
   return (
     <header className={styles.header}>
@@ -34,6 +47,14 @@ export function GanttHeader({
         </button>
       </div>
       <span className={styles.range}>{rangeLabel}</span>
+      <button
+        type="button"
+        className={completedToggleClassName}
+        aria-pressed={isCompletedVisible}
+        onClick={onToggleCompletedVisible}
+      >
+        {completedToggleLabel}
+      </button>
     </header>
   )
 }

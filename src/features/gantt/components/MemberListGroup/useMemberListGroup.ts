@@ -8,8 +8,15 @@ interface IUseMemberListGroupParams {
   memberGroup: IMemberGroup
   /** 開いているか。false の間は案件の行と「案件を追加」を出さない */
   isExpanded: boolean
-  /** 並べ替え後の案件の id の並びを保存する（例外を投げない契約） */
-  onReorderProjects: (memberId: string, orderedIds: string[]) => Promise<void>
+  /**
+   * 並べ替え後の案件の id の並びを保存する（例外を投げない契約）。
+   * `orderedIds` はこのまとまりに見えている案件だけの並び、`movedId` は動かした案件
+   */
+  onReorderProjects: (
+    memberId: string,
+    orderedIds: string[],
+    movedId: string,
+  ) => Promise<void>
 }
 
 /**
@@ -17,6 +24,7 @@ interface IUseMemberListGroupParams {
  * 案件のドラッグによる並び替え（`useDragReorder`）をまとめる。
  * 並べ替えられる範囲はこの担当者の案件だけ（範囲の外へ出ても、先頭・末尾で止まる）。
  * 右のタイムラインは、離して保存するまで並びを変えない（`memberGroups` が変わったときに並び直る）。
+ * 完了済みを隠しているときは、見えている案件だけを並べ替える（全体の並びに戻すのは呼び出し側）。
  */
 export function useMemberListGroup({
   memberGroup,
@@ -32,7 +40,8 @@ export function useMemberListGroup({
   )
 
   const handleReorder = useCallback(
-    (orderedIds: string[]) => onReorderProjects(member.id, orderedIds),
+    (orderedIds: string[], movedId: string) =>
+      onReorderProjects(member.id, orderedIds, movedId),
     [member.id, onReorderProjects],
   )
 

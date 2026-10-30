@@ -32,8 +32,11 @@ export function useMemberListProjectRow({
     [project.id, registerRow],
   )
 
+  const isCompleted = project.completedAt !== null
+
   const rowClassName = [
     styles.row,
+    isCompleted && styles.completed,
     dragState.isDragging && styles.dragging,
     dragState.dropIndicator === "before" && styles.dropBefore,
     dragState.dropIndicator === "after" && styles.dropAfter,
@@ -54,6 +57,8 @@ export function useMemberListProjectRow({
     rowRef,
     rowClassName,
     rowStyle,
+    // 完了済みか（案件名の前に ✓ を出す。案件名を薄くするのは rowClassName）
+    isCompleted,
     // 色の丸に付ける背景色。値が動的なのでインラインスタイルで渡す
     colorDotStyle: {
       background: `var(${BAR_COLORS[project.color].cssVariable})`,

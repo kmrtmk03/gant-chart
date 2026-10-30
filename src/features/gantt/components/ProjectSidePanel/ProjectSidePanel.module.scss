@@ -2,10 +2,11 @@
 
 $panel-width: 360px;
 
-// タイムラインの上に重ねる（タイムラインの幅は変えない）
+// タイムラインの上に重ねる（タイムラインの幅は変えない）。
+// 画面上部のバーの下から出し、バーの右端の「完了済みを表示」を開いたままでも押せるようにする
 .panel {
   position: fixed;
-  top: 0;
+  top: tokens.$header-height;
   right: 0;
   bottom: 0;
   z-index: tokens.$z-index-panel;
@@ -202,6 +203,11 @@ $panel-width: 360px;
 
 .spacer {
   flex: 1;
+}
+
+// 「完了にする / 未完了に戻す」。ボタンが 4 つ並ぶと幅が足りないので、ほかのボタンの上に 1 行で置く
+.completeButton {
+  flex-basis: 100%;
 }
 
 .saveButton {

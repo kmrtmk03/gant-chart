@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   gap: tokens.$space-4;
-  height: 52px;
+  height: tokens.$header-height;
   padding: 0 tokens.$space-4;
   border-bottom: 1px solid tokens.$color-border;
   background: tokens.$color-surface;
@@ -63,4 +63,22 @@
   font-size: tokens.$font-size-md;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+// 右端に寄せる「完了済みを表示」の切り替えボタン。押されている（表示している）ときは主色にする
+.completedToggle {
+  margin-left: auto;
+  font-size: tokens.$font-size-xs;
+  white-space: nowrap;
+}
+
+.pressed {
+  border-color: tokens.$color-primary;
+  background: tokens.$color-primary;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-primary-hover;
+    background: tokens.$color-primary-hover;
+  }
 }

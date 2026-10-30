@@ -15,7 +15,11 @@ interface IMemberListGroupProps {
   /** 案件名をクリックしたとき。編集する案件の ID を渡す */
   onSelectProject: (projectId: string) => void
   /** 案件をドラッグで並べ替えたとき。例外を投げない関数を渡すこと（失敗の表示は呼び出し側） */
-  onReorderProjects: (memberId: string, orderedIds: string[]) => Promise<void>
+  onReorderProjects: (
+    memberId: string,
+    orderedIds: string[],
+    movedId: string,
+  ) => Promise<void>
 }
 
 /**

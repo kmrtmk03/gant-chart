@@ -171,6 +171,16 @@ export function ProjectSidePanel({
           {panel.isEditing && (
             <button
               type="button"
+              className={styles.completeButton}
+              disabled={panel.isSubmitting}
+              onClick={panel.handleToggleCompleted}
+            >
+              {panel.completeButtonLabel}
+            </button>
+          )}
+          {panel.isEditing && (
+            <button
+              type="button"
               className={styles.deleteButton}
               disabled={panel.isSubmitting}
               onClick={panel.openDeleteConfirm}
@@ -182,15 +192,6 @@ export function ProjectSidePanel({
           <button type="button" disabled={panel.isSubmitting} onClick={onClose}>
             キャンセル
           </button>
-          {panel.isEditing && (
-            <button
-              type="button"
-              disabled={panel.isSubmitting}
-              onClick={panel.handleToggleCompleted}
-            >
-              {panel.completeButtonLabel}
-            </button>
-          )}
           <button
             type="submit"
             className={styles.saveButton}
