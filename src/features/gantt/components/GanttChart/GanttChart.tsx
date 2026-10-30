@@ -39,7 +39,7 @@ export function GanttChart() {
 
   // scrollArea（ref を持つ）を先に分割代入する。lint の react-hooks/refs が、
   // ref を渡す関数を持つ戻り値の全体を「ref を含む」と誤検知するのを避けるため
-  const { attachScroller, handleScroll } = chart.scrollArea
+  const { attachScroller, handleScroll, handleClick } = chart.scrollArea
   const { emptyState, sidePanel, memberDialog, barDrag, projectReorder } = chart
 
   return (
@@ -81,6 +81,7 @@ export function GanttChart() {
           ref={attachScroller}
           className={styles.scroller}
           onScroll={handleScroll}
+          onClick={handleClick}
         >
           <div className={styles.grid} style={chart.gridStyle}>
             <div className={styles.corner} style={chart.cornerStyle} />
