@@ -7,8 +7,11 @@ interface IDragHandleProps {
   label: string
   /** この行をドラッグしている間 true（カーソルを grabbing にする） */
   isDragging: boolean
-  /** true の間はつかめない見た目にする（保存中など）。ドラッグを始めない判定は呼び出し側のフックが行う */
-  isDisabled: boolean
+  /**
+   * true の間はつかめない見た目にする（管理ダイアログの保存中など。省略時は false）。
+   * ドラッグを始めない判定は呼び出し側のフックが行う
+   */
+  isDisabled?: boolean
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void
   onLostPointerCapture: () => void
 }
@@ -21,7 +24,7 @@ interface IDragHandleProps {
 export function DragHandle({
   label,
   isDragging,
-  isDisabled,
+  isDisabled = false,
   onPointerDown,
   onLostPointerCapture,
 }: IDragHandleProps) {

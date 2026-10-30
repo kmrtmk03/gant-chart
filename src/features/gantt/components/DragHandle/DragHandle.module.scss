@@ -23,7 +23,8 @@ $handle-height: 28px;
   touch-action: none;
   user-select: none;
 
-  &:hover:not(:disabled) {
+  // 無効は disabled 属性ではなく aria-disabled で表しているので、両方を除く
+  &:hover:not(:disabled, [aria-disabled="true"]) {
     border: 0;
     background: tokens.$color-hover;
     color: tokens.$color-text;
