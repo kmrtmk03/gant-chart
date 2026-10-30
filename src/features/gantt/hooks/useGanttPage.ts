@@ -173,13 +173,15 @@ export function useGanttPage() {
   /**
    * パネルのフォームの保存。追加か編集かはパネルの状態で決め、保存に成功してからパネルを閉じる。
    * 失敗したら例外をそのまま投げる（フォームが受け取ってパネル内に表示し、パネルは開いたままにする）。
+   * `isCompleted` は「完了にする / 未完了に戻す」のときだけ渡され、編集の保存と 1 回にまとめて保存する
+   * （追加した案件は必ず未完了なので、追加のときは使わない）
    */
   const handleSaveProject = useCallback(
-    async (input: TProjectInput) => {
+    async (input: TProjectInput, isCompleted?: boolean) => {
       if (sidePanelState.mode === "create") {
         await createProject(input)
       } else if (sidePanelState.mode === "edit") {
-        await updateProject(sidePanelState.projectId, input)
+        await updateProject(sidePanelState.projectId, { ...input, isCompleted })
       } else {
         return
       }

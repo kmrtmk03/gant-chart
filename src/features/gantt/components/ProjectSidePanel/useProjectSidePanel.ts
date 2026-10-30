@@ -11,6 +11,7 @@ import type {
   TDateString,
   TProjectInput,
 } from "../../gantt.type"
+import { formatCompletedLabel } from "./projectForm.utils"
 import { useProjectForm } from "./useProjectForm"
 
 /** 色の選択肢。BAR_COLORS のキーを型ガードで TBarColor に絞って並べる（型アサーションを避けるため） */
@@ -26,8 +27,11 @@ interface IUseProjectSidePanelParams {
   /** 追加のときの担当者の初期選択 */
   defaultMemberId: string | null
   today: TDateString
-  /** 保存。失敗したら例外を投げること。成功したら呼び出し側がパネルを閉じる */
-  onSubmit: (input: TProjectInput) => Promise<void>
+  /**
+   * 保存。失敗したら例外を投げること。成功したら呼び出し側がパネルを閉じる。
+   * `isCompleted` は完了ボタンから保存するときだけ渡される（省略は完了の状態を変えない）
+   */
+  onSubmit: (input: TProjectInput, isCompleted?: boolean) => Promise<void>
   /** 削除（編集のときだけ使う）。失敗したら例外を投げること */
   onDelete: () => Promise<void>
   onClose: () => void
@@ -75,6 +79,7 @@ export function useProjectSidePanel({
   } = form
   const idPrefix = useId()
   const isEditing = project !== null
+  const completedAt = project?.completedAt ?? null
 
   useEffect(() => {
     if (isConfirmingDelete || isSubmitting) return
@@ -136,6 +141,11 @@ export function useProjectSidePanel({
     // 表示用の値
     isEditing,
     title: isEditing ? "案件を編集" : "案件を追加",
+    // 完了済みの案件を編集しているときだけ、見出しの横に出す（例: "完了済み（10/30）"）
+    completedLabel:
+      completedAt === null ? null : formatCompletedLabel(completedAt),
+    // 完了ボタンの文言（編集のときだけ出す）
+    completeButtonLabel: completedAt === null ? "完了にする" : "未完了に戻す",
     // 削除は編集のときだけ使うので、追加のときは空にする
     deleteConfirmMessage: isEditing
       ? `「${project.name}」を削除します。この操作は元に戻せません。`
@@ -162,6 +172,7 @@ export function useProjectSidePanel({
     isSubmitting,
     submitError,
     handleSubmit: form.handleSubmit,
+    handleToggleCompleted: form.handleToggleCompleted,
     // 削除の確認
     isConfirmingDelete,
     openDeleteConfirm: form.openDeleteConfirm,

@@ -16,8 +16,11 @@ interface IProjectSidePanelProps {
   /** 追加のときの担当者の初期選択 */
   defaultMemberId: string | null
   today: TDateString
-  /** 保存。失敗したら例外を投げること。成功したら呼び出し側がパネルを閉じる */
-  onSubmit: (input: TProjectInput) => Promise<void>
+  /**
+   * 保存。失敗したら例外を投げること。成功したら呼び出し側がパネルを閉じる。
+   * 「完了にする / 未完了に戻す」で保存するときだけ `isCompleted` を渡す（省略は完了の状態を変えない）
+   */
+  onSubmit: (input: TProjectInput, isCompleted?: boolean) => Promise<void>
   /** 削除（編集のときだけ使う）。失敗したら例外を投げること */
   onDelete: () => Promise<void>
   onClose: () => void
@@ -27,6 +30,7 @@ interface IProjectSidePanelProps {
  * 案件を追加・編集する右側のサイドパネル。タイムラインの上に重ねて出し、タイムラインの幅は変えない。
  * 開き直すとき（別の案件・別の担当者）は、呼び出し側で `key` を変えてフォームを作り直すこと。
  * Esc で閉じる（入力途中でも確認しない）。開いた直後は案件名の入力欄にフォーカスする。
+ * 編集のときは「完了にする / 未完了に戻す」も出す（フォームの内容と一緒に保存する）。
  * フォームの状態や Esc の扱いは `useProjectSidePanel` が受け持つ。
  */
 export function ProjectSidePanel({
@@ -52,7 +56,14 @@ export function ProjectSidePanel({
   return (
     <aside className={styles.panel} aria-label={panel.title}>
       <header className={styles.header}>
-        <h2 className={styles.title}>{panel.title}</h2>
+        <div className={styles.heading}>
+          <h2 className={styles.title}>{panel.title}</h2>
+          {panel.completedLabel && (
+            <span className={styles.completedBadge}>
+              {panel.completedLabel}
+            </span>
+          )}
+        </div>
         <button type="button" aria-label="閉じる" onClick={onClose}>
           ✕
         </button>
@@ -171,6 +182,15 @@ export function ProjectSidePanel({
           <button type="button" disabled={panel.isSubmitting} onClick={onClose}>
             キャンセル
           </button>
+          {panel.isEditing && (
+            <button
+              type="button"
+              disabled={panel.isSubmitting}
+              onClick={panel.handleToggleCompleted}
+            >
+              {panel.completeButtonLabel}
+            </button>
+          )}
           <button
             type="submit"
             className={styles.saveButton}

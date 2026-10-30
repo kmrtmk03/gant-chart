@@ -1,3 +1,5 @@
+import { format } from "date-fns"
+
 import {
   DEFAULT_BAR_COLOR,
   PROJECT_NAME_MAX_LENGTH,
@@ -97,4 +99,12 @@ export function toProjectInput(values: IProjectFormValues): TProjectInput {
     color: values.color,
     note: values.note,
   }
+}
+
+/**
+ * 完了済みの案件の見出しに添える表示（例: "完了済み（10/30）"）を作る。
+ * 完了日時（ISO 8601）は UTC で保存しているので、利用者の端末のタイムゾーンの日付で出す
+ */
+export function formatCompletedLabel(completedAt: string): string {
+  return `完了済み（${format(new Date(completedAt), "M/d")}）`
 }

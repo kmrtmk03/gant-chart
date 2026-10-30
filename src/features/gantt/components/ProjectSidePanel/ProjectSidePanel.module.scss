@@ -58,10 +58,28 @@ $panel-width: 360px;
   }
 }
 
+.heading {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-2;
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: tokens.$font-size-lg;
   font-weight: 600;
+}
+
+// 完了済みの案件を編集しているときに、見出しの横に出す小さな札
+.completedBadge {
+  padding: 2px tokens.$space-2;
+  border-radius: 999px;
+  background: tokens.$color-success-soft;
+  color: tokens.$color-success;
+  font-size: tokens.$font-size-xs;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .form {
@@ -175,6 +193,7 @@ $panel-width: 360px;
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: tokens.$space-2;
   margin-top: auto;
   padding-top: tokens.$space-4;
