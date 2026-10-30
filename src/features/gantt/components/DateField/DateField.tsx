@@ -37,6 +37,7 @@ export function DateField({
     isOpen,
     handleToggle,
     handleKeyDown,
+    handleBlur,
     displayLabel,
     popoverClassName,
     selectedDate,
@@ -47,7 +48,12 @@ export function DateField({
   } = useDateField({ value, onChange, align })
 
   return (
-    <div ref={rootRef} className={styles.root} onKeyDown={handleKeyDown}>
+    <div
+      ref={rootRef}
+      className={styles.root}
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
+    >
       <button
         ref={buttonRef}
         id={id}

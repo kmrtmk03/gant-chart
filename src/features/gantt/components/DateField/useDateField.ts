@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { KeyboardEvent } from "react"
+import type { FocusEvent, KeyboardEvent } from "react"
 import { ja } from "react-day-picker/locale"
 import { format } from "date-fns"
 
@@ -66,6 +66,20 @@ export function useDateField({ value, onChange, align }: IUseDateFieldParams) {
     return () => document.removeEventListener("pointerdown", handlePointerDown)
   }, [isOpen])
 
+  // キーボード（Tab）でフォーカスがカレンダーの外へ出たら閉じる。フォーカスはすでに移っているので、
+  // ボタンには戻さない。移り先が分からない（null。ウィンドウの切り替えなど）ときは閉じない。
+  // 外へ出たあとの Esc はパネルの Esc として働くので、未保存の入力が意図せず失われることもない
+  const handleBlur = useCallback(
+    (event: FocusEvent<HTMLDivElement>) => {
+      if (!isOpen) return
+      const next = event.relatedTarget
+      if (next instanceof Node && !event.currentTarget.contains(next)) {
+        setIsOpen(false)
+      }
+    },
+    [isOpen],
+  )
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (!isOpen || event.key !== "Escape") return
@@ -95,6 +109,7 @@ export function useDateField({ value, onChange, align }: IUseDateFieldParams) {
     isOpen,
     handleToggle,
     handleKeyDown,
+    handleBlur,
     // ボタンの表示
     displayLabel:
       selectedDate === undefined
