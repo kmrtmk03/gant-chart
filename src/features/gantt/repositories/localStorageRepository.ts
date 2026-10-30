@@ -15,6 +15,7 @@ import type {
   TProjectUpdate,
 } from "../gantt.type"
 import {
+  GanttCorruptedDataError,
   GanttNotFoundError,
   GanttUnsupportedSchemaError,
   GanttValidationError,
@@ -149,7 +150,8 @@ function validateProject(project: IProject): void {
  * localStorage に担当者・案件を保存する repository（MVP で使う実装）。
  *
  * - `gantt:members` / `gantt:projects` に配列を JSON で保存する（Firestore の 2 コレクションに対応）
- * - 読み込んだ値は型ガードで検証し、壊れていたら捨てて空配列から始める（コンソールに警告を出す）
+ * - 読み込んだ値は型ガードで検証し、壊れていたら GanttCorruptedDataError を投げて読み書きを止める
+ *   （空として扱うと、次の書き込みで正常な分も含めて上書きしてしまうため。元の値はコンソールに残す）
  * - ブラウザ専用。サーバー側のレンダリング中には呼ばないこと（呼ぶとエラーになる）
  */
 export class LocalStorageRepository implements IGanttRepository {
@@ -454,8 +456,9 @@ export class LocalStorageRepository implements IGanttRepository {
 
   /**
    * 指定したキーの配列を読み、型ガードで検証して返す。
-   * 未保存なら空配列。JSON として読めない・形が違うときも空配列にして、警告に元の値を残す
-   * （次に書き込むと上書きされるため、手で復旧したいときはコンソールの値を使う）。
+   * 未保存なら空配列。JSON として読めない・形が違う（不正な要素が 1 件でもある）ときは、
+   * 空として扱わず GanttCorruptedDataError を投げる（空として続けると、次の書き込みで元のデータを上書きするため）。
+   * 手で復旧できるよう、元の値をコンソールに残す。
    */
   private readList<T>(
     key: string,
@@ -468,19 +471,13 @@ export class LocalStorageRepository implements IGanttRepository {
     try {
       parsed = JSON.parse(raw)
     } catch {
-      console.warn(
-        `[gantt] ${key} を JSON として読めないため、空の状態から始めます`,
-        raw,
-      )
-      return []
+      console.warn(`[gantt] ${key} を JSON として読めません`, raw)
+      throw new GanttCorruptedDataError(key, "JSON として読めない")
     }
 
     if (!guard(parsed)) {
-      console.warn(
-        `[gantt] ${key} のデータの形が不正なため、空の状態から始めます`,
-        raw,
-      )
-      return []
+      console.warn(`[gantt] ${key} のデータの形が不正です`, raw)
+      throw new GanttCorruptedDataError(key, "不正な形のデータを含んでいる")
     }
     return parsed
   }
@@ -510,6 +507,7 @@ export class LocalStorageRepository implements IGanttRepository {
   /**
    * 保存データのバージョンが古ければ移行し、現在のバージョンを書き込む。
    * - 未保存（初回）や読めない値: バージョン 1 より前の構造は存在しないので、現在のバージョンとみなす
+   * - 移行できない（保存データが壊れている）: GanttCorruptedDataError を投げ、バージョンも進めない
    * - 新しいバージョン: 新しいアプリで保存されたデータ（古いアプリへのロールバック後など）。
    *   読めば型ガードに合わずに空として扱われ、次の書き込みで上書きしてしまうため、
    *   GanttUnsupportedSchemaError を投げて読み書きの両方を止め、元のデータを保つ
@@ -535,6 +533,9 @@ export class LocalStorageRepository implements IGanttRepository {
           )
         }
         migrate(storage)
+        // 1 ステップ終えるごとにバージョンを進める。途中の移行が失敗しても、
+        // 済んだ分を最初からやり直さない（移行済みのデータに前のバージョンの移行を当てないため）
+        storage.setItem(STORAGE_KEYS.schemaVersion, String(fromVersion + 1))
       }
     }
 

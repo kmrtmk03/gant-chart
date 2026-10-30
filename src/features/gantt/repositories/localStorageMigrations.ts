@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from "../gantt.constants"
+import { GanttCorruptedDataError } from "./ganttRepository.errors"
 
 // MEMO: このファイルの移行処理は、移行元のバージョンの構造を前提に書く。
 // 今の型（IProject）や型ガード（isProject）は、後のバージョンで構造が変わるたびに書き換わるので使わない
@@ -40,8 +41,8 @@ function hasProjectV1SortKeys(
  *   移行の直後に見た目の並びが変わらないようにする
  * - 番号は memberId ごとに 0 から振る。担当者が見つからない案件（memberId が不正）も、
  *   画面には出ないがデータとしては残っているので、同じように番号を振る
- * - 保存データが壊れている（JSON として読めない・配列でない・必要なフィールドがない）ときは何もしない。
- *   その後の読み込みの既存の扱い（警告を出して空から始める）に任せる
+ * - 保存データが壊れている（JSON として読めない・配列でない・必要なフィールドがない）ときは、
+ *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない。空として扱うと次の書き込みで上書きするため）
  */
 export function migrateSchemaV1ToV2(storage: Storage): void {
   const raw = storage.getItem(STORAGE_KEYS.projects)
@@ -51,9 +52,17 @@ export function migrateSchemaV1ToV2(storage: Storage): void {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    return
+    throw new GanttCorruptedDataError(
+      STORAGE_KEYS.projects,
+      "JSON として読めない",
+    )
   }
-  if (!Array.isArray(parsed) || !parsed.every(hasProjectV1SortKeys)) return
+  if (!Array.isArray(parsed) || !parsed.every(hasProjectV1SortKeys)) {
+    throw new GanttCorruptedDataError(
+      STORAGE_KEYS.projects,
+      "移行できない形のデータを含んでいる",
+    )
+  }
   const projects = parsed
 
   // 表示順に並べる。Array.prototype.sort は安定ソートなので、日付が同じなら保存順のまま
@@ -94,8 +103,8 @@ function isProjectV2(value: unknown): value is Record<string, unknown> {
 /**
  * バージョン 2 → 3: 案件に完了日時（completedAt）を足す。既存の案件はすべて未完了（null）にする。
  *
- * - 保存データが壊れている（JSON として読めない・配列でない・sortOrder のない要素がある）ときは何もしない。
- *   その後の読み込みの既存の扱い（警告を出して空から始める）に任せる
+ * - 保存データが壊れている（JSON として読めない・配列でない・sortOrder のない要素がある）ときは、
+ *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない）
  */
 export function migrateSchemaV2ToV3(storage: Storage): void {
   const raw = storage.getItem(STORAGE_KEYS.projects)
@@ -105,9 +114,17 @@ export function migrateSchemaV2ToV3(storage: Storage): void {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    return
+    throw new GanttCorruptedDataError(
+      STORAGE_KEYS.projects,
+      "JSON として読めない",
+    )
   }
-  if (!Array.isArray(parsed) || !parsed.every(isProjectV2)) return
+  if (!Array.isArray(parsed) || !parsed.every(isProjectV2)) {
+    throw new GanttCorruptedDataError(
+      STORAGE_KEYS.projects,
+      "移行できない形のデータを含んでいる",
+    )
+  }
 
   // 保存順（配列の並び）は変えず、各案件に completedAt を足すだけにする
   const migrated = parsed.map((project) => ({ ...project, completedAt: null }))
