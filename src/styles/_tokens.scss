@@ -56,12 +56,9 @@ $space-5: 20px;
 $space-6: 24px;
 
 // ---- フォントサイズ ----
-// 画面の文字は最小 16px にそろえる。xs / sm / md は同じ値だが、段の名前は各コンポーネントが
-// 役割（補足・本文など）を表すために使っているので残し、大きさの差は色（$color-text-muted）と太さで付ける。
+// 画面の文字は最小 16px にそろえる。補足・本文などの大きさの差は、色（$color-text-muted）と太さで付ける。
 // 開閉の三角などの記号は文字ではないので、このトークンを使わず見た目の大きさで決める
-$font-size-xs: 16px;
-$font-size-sm: 16px;
-$font-size-md: 16px;
+$font-size-base: 16px;
 $font-size-lg: 18px;
 
 // ---- 角丸 ----
@@ -144,9 +141,7 @@ $font-family-base:
   --space-4: #{$space-4};
   --space-5: #{$space-5};
   --space-6: #{$space-6};
-  --font-size-xs: #{$font-size-xs};
-  --font-size-sm: #{$font-size-sm};
-  --font-size-md: #{$font-size-md};
+  --font-size-base: #{$font-size-base};
   --font-size-lg: #{$font-size-lg};
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};

@@ -16,7 +16,7 @@
   align-items: center;
   gap: tokens.$space-2;
   margin: 0;
-  font-size: tokens.$font-size-md;
+  font-size: tokens.$font-size-base;
   font-weight: 600;
   letter-spacing: 0.02em;
 
@@ -49,7 +49,7 @@
     border-color: transparent;
     background: none;
     color: tokens.$color-text-muted;
-    font-size: tokens.$font-size-xs;
+    font-size: tokens.$font-size-base;
 
     &:hover:not(:disabled) {
       border-color: transparent;
@@ -62,7 +62,7 @@
 .range {
   color: tokens.$color-text;
   white-space: nowrap;
-  font-size: tokens.$font-size-md;
+  font-size: tokens.$font-size-base;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -70,7 +70,7 @@
 // 右端に寄せる「完了済みを表示」の切り替えボタン。押されている（表示している）ときは主色にする
 .completedToggle {
   margin-left: auto;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   white-space: nowrap;
 }
 
@@ -81,8 +81,14 @@
 
 @media (max-width: tokens.$breakpoint-narrow) {
   // 幅が足りず文字が縦に折り返すので、タイトルを隠して間隔も詰める（ブラウザのタブ・アイコンで何の画面かは分かる）
+  // 文字を 16px にしたぶん幅が足りなくなるので、バーの左右の余白と、◀ 今日 ▶ のボタンの余白も詰める
   .header {
     gap: tokens.$space-2;
+    padding: 0 tokens.$space-2;
+  }
+
+  .controls button {
+    padding: 0 tokens.$space-2;
   }
 
   .title {
@@ -95,6 +101,13 @@
 
   .toggleShortLabel {
     display: inline;
+  }
+}
+
+// 360px 前後の端末では、これでも数 px はみ出すので、◀ 今日 ▶ のボタンの余白をさらに詰める
+@media (max-width: 400px) {
+  .controls button {
+    padding: 0 tokens.$space-1;
   }
 }
 

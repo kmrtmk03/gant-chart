@@ -19,7 +19,7 @@ body {
   background: tokens.$color-bg;
   color: tokens.$color-text;
   font-family: tokens.$font-family-base;
-  font-size: tokens.$font-size-md;
+  font-size: tokens.$font-size-base;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -38,7 +38,7 @@ button {
   background: tokens.$color-elevated;
   color: tokens.$color-text;
   font: inherit;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   font-weight: 500;
   cursor: pointer;
   transition:

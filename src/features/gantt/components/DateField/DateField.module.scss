@@ -51,7 +51,7 @@
   --rdp-today-color: #{tokens.$color-text};
 
   color: tokens.$color-text;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
 }
 
 // globals.scss のボタンの基本スタイル（枠・余白・背景）を、カレンダーの中では打ち消す
@@ -69,7 +69,7 @@
 
 .popover :global(.rdp-weekday) {
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-weight: 500;
 }
 

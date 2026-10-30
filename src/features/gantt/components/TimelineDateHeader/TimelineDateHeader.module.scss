@@ -18,7 +18,7 @@
   overflow: hidden;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   font-weight: 600;
   line-height: 24px;
   white-space: nowrap;
@@ -28,7 +28,7 @@
   flex-shrink: 0;
   border-right: 1px solid tokens.$color-border;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
   line-height: 28px;
   text-align: center;

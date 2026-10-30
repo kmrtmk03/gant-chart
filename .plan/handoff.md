@@ -75,6 +75,11 @@
   - パネルを閉じる: `useGanttChart.handleScrollAreaClick`。`button, a, input, select, textarea` の中なら閉じない（帯のデータ属性は不要だった）
   - サイドパネル: 「状態」の欄をフォーム最上部に置き、見出しの札は廃止。下部は削除／キャンセル・保存の 1 段で、項目の領域（`.body`）だけがスクロールする
   - カレンダー: `react-day-picker` 10.0.2（`@daypicker/react` が新しい名前で、README はこちらを勧めているが API は同じ。ユーザーの承認はこの名前）。`components/DateField/`。既定の `style.css` を読み込み、`--rdp-*` と `button` の既定スタイルを `DateField.module.scss` で上書き。**Esc は `event.nativeEvent.stopImmediatePropagation()` で止める**（Next.js は React のルートを `document` に置くため、`stopPropagation` ではパネルの document リスナーが止まらなかった）。ボタンの検証エラー表示は `aria-invalid` ではなく `data-invalid`（lint の a11y 警告のため）
+- PR #20 のレビュー対応（6 件。セルフレビュー 4 件と追加の 2 件）
+  - 375px・360px 幅でヘッダーがはみ出していた（16px にしたため）: 480px 以下でバーの左右の余白と ◀ 今日 ▶ の余白を詰め、400px 以下でさらに詰めた。375px・360px で `scrollWidth` がビューポートと一致することを確認
+  - Tab でカレンダーの外へ出ても開いたままだった、その後の Esc でパネルが閉じる: `DateField` のルートに `onBlur` を付け、移り先がルートの外のノードのときだけ閉じる（移り先が null のときは閉じない）
+  - 保存・削除の実行中に、空きのクリック・✕・別の案件の帯・「案件を追加」でパネルが閉じる／切り替わる: `useSidePanel` の `runWhileBusy` の中は、開く・閉じる・切り替えをすべて受け付けない（ref で持つ）。成功後の閉じる処理は `runWhileBusy` が終わってから呼ぶ。**遅い保存は再現できないため、実行中の抑止そのものは画面では確かめていない**（失敗時にパネルが開いたままエラーが出ること、その後に閉じられること、通常の保存で閉じることは確認済み）
+  - 文字サイズのトークンを `$font-size-base`（16px）と `$font-size-lg`（18px）にまとめ、`xs` / `sm` / `md` の参照を置き換えた
 - 動作確認のため、ブラウザの localStorage のサンプルを変更した（「Web サイト改修 v2」を 11/3〜11/9 に）。戻すには `gantt:*` を消して「サンプルデータを入れる」
 - 作業中に開発サーバー（`pnpm dev` の HTTPS、Basic 認証あり）をユーザーの許可を得て止めた。再開はユーザーが行う
 

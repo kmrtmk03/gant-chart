@@ -29,7 +29,7 @@
   border: 0;
   background: none;
   color: tokens.$color-text-subtle;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
 
   text-align: left;
 
@@ -68,7 +68,7 @@
   border-radius: 999px;
   background: tokens.$color-hover;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }

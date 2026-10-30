@@ -99,7 +99,7 @@ $panel-width: 360px;
 
 .statusTitle {
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-xs;
+  font-size: tokens.$font-size-base;
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -132,7 +132,7 @@ $panel-width: 360px;
 
   label {
     color: tokens.$color-text-muted;
-    font-size: tokens.$font-size-xs;
+    font-size: tokens.$font-size-base;
     font-weight: 500;
     letter-spacing: 0.04em;
   }
@@ -156,7 +156,7 @@ $panel-width: 360px;
 .error {
   margin: 0;
   color: tokens.$color-danger;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
 }
 
 .colorField {
@@ -167,7 +167,7 @@ $panel-width: 360px;
   legend {
     padding: 0;
     color: tokens.$color-text-muted;
-    font-size: tokens.$font-size-xs;
+    font-size: tokens.$font-size-base;
     font-weight: 500;
     letter-spacing: 0.04em;
   }

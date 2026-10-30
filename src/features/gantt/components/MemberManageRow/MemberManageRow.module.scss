@@ -58,7 +58,7 @@
 .count {
   min-width: 3em;
   color: tokens.$color-text-muted;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -79,7 +79,7 @@
 .warning {
   flex-basis: 100%;
   margin: 0;
-  font-size: tokens.$font-size-sm;
+  font-size: tokens.$font-size-base;
 }
 
 .error {
