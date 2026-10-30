@@ -8,6 +8,7 @@ import type { IMember, IProject } from "../../gantt.type"
 import type { IProjectFormValues } from "./projectForm.type"
 import {
   createInitialFormValues,
+  formatCompletedLabel,
   toProjectInput,
   validateProjectForm,
 } from "./projectForm.utils"
@@ -40,6 +41,7 @@ const PROJECT: IProject = {
   color: "green",
   note: "メモ",
   sortOrder: 0,
+  completedAt: null,
   createdAt: TIMESTAMP,
   updatedAt: TIMESTAMP,
 }
@@ -174,5 +176,14 @@ describe("toProjectInput", () => {
       color: "blue",
       note: " メモ ",
     })
+  })
+})
+
+describe("formatCompletedLabel", () => {
+  it("完了日時を月/日で添える", () => {
+    // テストを動かす端末のタイムゾーンで日付が変わらないよう、日中の時刻にする
+    expect(formatCompletedLabel("2026-10-30T03:00:00.000Z")).toBe(
+      "完了済み（10/30）",
+    )
   })
 })

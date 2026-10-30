@@ -19,6 +19,8 @@ export function useGanttChart() {
   const page = useGanttPage()
   const {
     memberGroups,
+    allMemberGroups,
+    completedVisibility,
     range,
     sidePanel,
     scroll,
@@ -37,6 +39,7 @@ export function useGanttChart() {
 
   if (
     memberGroups === null ||
+    allMemberGroups === null ||
     range.rangeStart === null ||
     range.today === null ||
     range.columns === null
@@ -80,8 +83,9 @@ export function useGanttChart() {
       seedErrorMessage: page.seedError?.message ?? null,
       seedSampleData: page.seedSampleData,
     },
-    // データ・表示期間
+    // データ・表示期間（memberGroups は画面に出すもの。担当者の管理ダイアログには完了済みも含めた allMemberGroups を渡す）
     memberGroups,
+    allMemberGroups,
     columns,
     rangeStart,
     rangeDays,
@@ -92,6 +96,9 @@ export function useGanttChart() {
       scrollBackward: scroll.scrollBackward,
       scrollForward: scroll.scrollForward,
       scrollToToday: scroll.scrollToToday,
+      isCompletedVisible: completedVisibility.isVisible,
+      completedCount: completedVisibility.completedCount,
+      toggleCompletedVisible: completedVisibility.toggle,
     },
     // スクロール領域に渡すもの
     scrollArea: {

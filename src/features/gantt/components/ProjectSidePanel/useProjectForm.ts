@@ -23,8 +23,11 @@ interface IUseProjectFormParams {
   /** 追加のときの担当者の初期選択 */
   defaultMemberId: string | null
   today: TDateString
-  /** 保存する。失敗したら例外を投げること（フォームがパネル内に表示する）。成功したら呼び出し側がパネルを閉じる */
-  onSubmit: (input: TProjectInput) => Promise<void>
+  /**
+   * 保存する。失敗したら例外を投げること（フォームがパネル内に表示する）。成功したら呼び出し側がパネルを閉じる。
+   * `isCompleted` は完了ボタンから保存するときだけ渡す（省略は完了の状態を変えない）
+   */
+  onSubmit: (input: TProjectInput, isCompleted?: boolean) => Promise<void>
   /** 削除する。失敗したら例外を投げること。編集のときだけ使う */
   onDelete: () => Promise<void>
 }
@@ -82,17 +85,37 @@ export function useProjectForm({
     [isSubmitting],
   )
 
-  /** フォームの送信。保存ボタンを押したときにまとめて検証し、エラーがあれば保存しない */
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
+  /**
+   * 入力をまとめて検証し、エラーがなければ保存する（保存ボタン・完了ボタンに共通）。
+   * `isCompleted` を渡すと完了の状態も一緒に保存する。検証で失敗したら完了の状態も変えない
+   */
+  const submitForm = useCallback(
+    async (isCompleted?: boolean) => {
       const nextErrors = validateProjectForm(values, members)
       setErrors(nextErrors)
       if (Object.keys(nextErrors).length > 0) return
-      await runSubmit(() => onSubmit(toProjectInput(values)))
+      await runSubmit(() => onSubmit(toProjectInput(values), isCompleted))
     },
     [values, members, runSubmit, onSubmit],
   )
+
+  /** フォームの送信（保存ボタン）。完了の状態は変えない */
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      await submitForm()
+    },
+    [submitForm],
+  )
+
+  /**
+   * 完了ボタン。編集途中の内容が失われないよう、フォームの内容と一緒に完了・未完了を切り替えて保存する。
+   * 編集のときだけ使う（追加のときは何もしない）
+   */
+  const handleToggleCompleted = useCallback(async () => {
+    if (project === null) return
+    await submitForm(project.completedAt === null)
+  }, [project, submitForm])
 
   /** 削除の確認ダイアログを開く */
   const openDeleteConfirm = useCallback(() => {
@@ -119,6 +142,7 @@ export function useProjectForm({
     isSubmitting,
     submitError,
     handleSubmit,
+    handleToggleCompleted,
     // 削除の確認
     isConfirmingDelete,
     openDeleteConfirm,

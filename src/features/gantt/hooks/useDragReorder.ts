@@ -22,10 +22,11 @@ interface IUseDragReorderParams {
   ids: string[]
   /**
    * 並べ替え後の id の並びを保存する。離して位置が変わったときに 1 回だけ呼ぶ。
+   * `movedId` は動かした id（全体の並びに戻すときに、どれを動かしたかを並びの比較だけでは決められないため渡す）。
    * 失敗の表示は呼び出し側が行うこと（例外を投げない契約）。完了（成功・失敗とも）するまでは並べ替え後の並びで描き、
    * 完了したら `ids` の並びに戻す（成功していれば `ids` が新しい並びになっている）
    */
-  onReorder: (orderedIds: string[]) => Promise<void>
+  onReorder: (orderedIds: string[], movedId: string) => Promise<void>
   /** true の間はドラッグを始めない（保存中など） */
   isDisabled: boolean
 }
@@ -225,7 +226,7 @@ export function useDragReorder({
       if (result.type !== "commit") return
 
       setSavingIds(result.orderedIds)
-      onReorder(result.orderedIds)
+      onReorder(result.orderedIds, state.activeId)
         .catch((caught: unknown) => {
           // MEMO: 失敗の表示は呼び出し側の責務（onReorder は例外を投げない契約）。
           // 契約が崩れて例外が来ても unhandled rejection にしないよう、ここではコンソールに残すだけにする

@@ -29,6 +29,7 @@ const VALID_PROJECT: IProject = {
   color: "blue",
   note: "",
   sortOrder: 0,
+  completedAt: null,
   createdAt: "2026-10-29T00:00:00.000Z",
   updatedAt: "2026-10-29T00:00:00.000Z",
 }
@@ -150,6 +151,17 @@ describe("isProject", () => {
     expect(isProject({ ...VALID_PROJECT, sortOrder: 0.5 })).toBe(false)
     expect(isProject({ ...VALID_PROJECT, sortOrder: "0" })).toBe(false)
     expect(isProject({ ...VALID_PROJECT, sortOrder: Number.NaN })).toBe(false)
+  })
+
+  it("completedAt は null か日時の文字列だけを受け付ける", () => {
+    expect(
+      isProject({ ...VALID_PROJECT, completedAt: "2026-10-30T09:00:00.000Z" }),
+    ).toBe(true)
+    expect(isProject({ ...VALID_PROJECT, completedAt: "" })).toBe(false)
+    expect(isProject({ ...VALID_PROJECT, completedAt: "完了" })).toBe(false)
+    expect(isProject({ ...VALID_PROJECT, completedAt: true })).toBe(false)
+    // バージョン 2 の構造（completedAt がない）は、移行してから読む前提なので弾く
+    expect(isProject(omitKey(VALID_PROJECT, "completedAt"))).toBe(false)
   })
 
   it("実在しない日付を弾く", () => {

@@ -48,6 +48,11 @@ export interface IProject {
    * （Firestore に移したときも、担当者で絞り込んで sortOrder で並べるだけで済むようにするため）
    */
   sortOrder: number
+  /**
+   * 完了にした日時（ISO 8601）。未完了は null。
+   * 真偽値ではなく日時にしているのは、いつ完了したかを後から表示・並べ替えに使えるようにするため
+   */
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -71,12 +76,19 @@ export type TMemberUpdate = Partial<TMemberInput>
 
 /**
  * 案件を作成するときの入力。id・sortOrder・日時は repository が付ける。
- * 並び順を変えるのは `IGanttRepository.reorderProjects` だけにするため、更新の入力（TProjectUpdate）にも含めない
+ * 並び順を変えるのは `IGanttRepository.reorderProjects` だけにするため、更新の入力（TProjectUpdate）にも含めない。
+ * 追加した案件は必ず未完了なので、completedAt も含めない
  */
 export type TProjectInput = Omit<
   IProject,
-  "id" | "sortOrder" | "createdAt" | "updatedAt"
+  "id" | "sortOrder" | "completedAt" | "createdAt" | "updatedAt"
 >
 
-/** 案件を更新するときの入力。指定したフィールドだけを書き換える（対象の id は別の引数で渡す） */
-export type TProjectUpdate = Partial<TProjectInput>
+/**
+ * 案件を更新するときの入力。指定したフィールドだけを書き換える（対象の id は別の引数で渡す）。
+ * 完了の状態は日時ではなく `isCompleted` で指定する（日時を作るのは createdAt / updatedAt と同じく repository の責務）
+ */
+export type TProjectUpdate = Partial<TProjectInput> & {
+  /** true で完了にする（すでに完了なら完了日時を変えない）、false で未完了に戻す。省略すると変えない */
+  isCompleted?: boolean
+}

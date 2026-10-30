@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 9（案件・担当者のドラッグによる並び替え）を完了し、PR #15 を `develop` にマージした。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 10（案件の完了と、完了済みの表示切り替え）を実装し、ブランチ `claude/nice-brown-di5gxi` に push し、PR #17 を作成した。セルフレビューの指摘 4 件を修正済み。ユーザーの確認待ち。更新: Claude Opus 5.5）
 
 ---
 
@@ -33,7 +33,7 @@
 | 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
-| 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5 | ⬜ 未着手（2026-10-30 に追加） |
+| 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | 🟡 実装済み・ユーザーの確認待ち（ブランチ `claude/nice-brown-di5gxi`、PR #17。下記 4-0000 章） |
 | 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9） |
 
 ---
@@ -54,9 +54,39 @@
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
   - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
   - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成。PR #15 で `develop` にマージ済み）
+  - `claude/nice-brown-di5gxi`: フェーズ 10 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-project-complete` ではない。`develop` の 0c752eb から作成。PR #17）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
+
+## 4-0000. フェーズ 10 の状況
+
+フェーズ 10 は実装済み（ブランチ `claude/nice-brown-di5gxi`）。プランの完了条件はすべて確認した。ユーザーの確認と PR の作成がまだ。
+
+### フェーズ 10 の確認結果
+
+- `pnpm lint` / `typecheck` / `test`（279 件）/ `format:check` / `build` が成功
+- ブラウザ（クラウドのセッションの Playwright + `pnpm dev:http`。1280×800、マウス）で確認済み:
+  - スキーマ 2 のデータ（completedAt のない案件 4 件）を読むと、全件が未完了（`completedAt: null`）として表示され、バージョン 3 として保存される
+  - サイドパネルで案件名を変えてから「完了にする」→ 名前の変更と完了が 1 回で保存され、パネルが閉じ、左のリスト・帯から消える。担当者行の件数も表示している件数（3件）になる。ヘッダーのボタンが「完了済みを表示（1）」になる
+  - 完了済みを隠したまま、末尾の D を先頭へドラッグ → 保存された並びは `D, A, B（完了）, C`（プランの例のとおり）
+  - 「完了済みを表示」を押すと `aria-pressed="true"` になり主色の見た目になる。完了済みの案件が ✓ 付き・薄い文字で左のリストに出て、帯は透明度 0.4 になる
+  - 完了済みの案件を開くと見出しの横に「完了済み（10/30）」、フッターに「未完了に戻す」が出る。そのまま「表示しない」に切り替えてもパネルは開いたまま。「未完了に戻す」でパネルが閉じ、表示しない状態でも再び表示される
+  - 再読み込みすると、完了の状態は残り、切り替えボタンは「表示しない」に戻る
+  - 担当者の管理ダイアログの削除の確認は、完了済みを隠していても完了済みを含めた件数（「案件 3 件も一緒に削除されます」）になる
+  - 確認中に見つけた問題を修正済み: サイドパネル（`position: fixed; top: 0`）がヘッダーの右端の切り替えボタンを覆い、パネルを開いたまま切り替えられなかった（パネルをヘッダーの下から出すようにした。`$header-height` を `_tokens.scss` に追加）。フッターにボタンが 4 つ並ぶと「保存」が折り返したため、「完了にする / 未完了に戻す」をほかのボタンの上の 1 行に置いた
+- PR #17 のセルフレビュー対応（4 件。各コメントに返信済み）: 375px でヘッダーがはみ出していた（480px 以下はボタンを「完了済み（N）」に縮め、タイトルを隠す。`$breakpoint-narrow` を追加）/ 完了済みの帯は編集中・ドラッグ中だけ元の濃さに戻す / 完了済みの件数は担当者が見つかる案件だけで数える / 並び替えた案件が手元の一覧に見つからないときは保存せず「案件の一覧が古くなっています。…」を出す
+- **未確認**: タッチ操作、スマホ幅のヘッダー以外の見た目、まとめ帯の完了済みの見た目（透明度 0.15）の目視での調整、完了の保存に失敗したときのパネル内のエラー表示（保存と同じ `runSubmit` を通しているので同じ表示になる想定）
+
+### フェーズ 11 への申し送り（完了）
+
+- データ: `IProject.completedAt`（ISO 8601 か null）。`TProjectInput` に含めず、`TProjectUpdate` の `isCompleted?: boolean` で切り替える（true: 未完了なら今の日時、すでに完了なら変えない / false: null / 省略: 変えない）。日時を付けるのは repository（`resolveCompletedAt`）。`isProject` は completedAt が null か日時の文字列であることを求める
+- 移行: `localStorageMigrations.ts` の `migrateSchemaV2ToV3`（`SCHEMA_MIGRATIONS` の `2:`）。「バージョン 2 の案件」は sortOrder が数値であることだけで確かめる（今の isProject は使わない）。壊れたデータは書き換えない
+- 表示の切り替え: `hooks/useCompletedVisibility.ts`（保存しない）。`useGanttPage` が `allMemberGroups`（完了済みを含む全体）と `memberGroups`（画面に出すもの。隠すときは `excludeCompletedProjects` で 1 か所で取り除く）を返す。**担当者の管理ダイアログには `allMemberGroups` を渡している**（削除の件数・並び替えの全 id のため）。`completedVisibility`（`isVisible` / `completedCount` / `toggle`）を公開し、`GanttHeader` の右端のトグル（`aria-pressed`）に渡す。文言は `GanttHeader/ganttHeader.utils.ts` の `formatCompletedToggleLabel`
+- 並び替え: `useDragReorder` の `onReorder` に、動かした id（`movedId`）を 2 つ目の引数として足した（並びの比較だけでは、隣どうしの入れ替えでどちらを動かしたか決められず、隠れた案件の置き場所が変わるため）。`useGanttPage.handleReorderProjects(memberId, orderedVisibleIds, movedId)` が `moveIdAmongVisible`（`gantt.utils.ts`）で全体の並びに戻してから `reorderProjects` に渡す。管理ダイアログは 2 つ目の引数を使わない
+- サイドパネル: `onSubmit(input, isCompleted?)`。`useProjectForm.handleToggleCompleted` が保存と同じ検証を通し、`isCompleted` を付けて 1 回で保存する。見出しの札は `formatCompletedLabel`（端末のタイムゾーンで M/d）。パネルは `top: $header-height`（ヘッダーの下）から出すようにした
+- 見た目のトークン: `$color-success` / `$color-success-soft`（✓・札）、`$opacity-completed-bar`（0.4）/ `$opacity-completed-summary-bar`（0.15）/ `$opacity-completed-text`（0.55）、`$header-height`（52px）。帯の `title` の末尾に「【完了済み】」を付けた
+- 完了済みの案件も、帯のドラッグ・クリック・並べ替えは未完了と同じようにできる（特別な扱いはしていない）
 
 ## 4-000. フェーズ 9 の完了状況
 
@@ -324,8 +354,9 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 10**（[11-phase10-project-complete.md](11-phase10-project-complete.md)。案件の完了）。フェーズ 9 までは `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-000 章（並び替え。スキーマの移行の置き場所と、`useDragReorder` が渡された id だけを扱うこと）を先に読むこと
-- 担当: フェーズ 9 は Opus 5.5、フェーズ 10 は Sonnet 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
+- 次にやること: **フェーズ 10 のユーザー確認と PR #17 のマージ**（ブランチ `claude/nice-brown-di5gxi` → `develop`。4-0000 章）。OK が出てマージされたら **フェーズ 11**（[12-phase11-polish-review.md](12-phase11-polish-review.md)。仕上げ）。ローカルの `develop` を最新にしてから（AGENTS.md の「コミット・ブランチ」に手順を追記済み）、作業用ブランチを切って始める
+- 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
+- クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
   - フェーズ 9: `IProject.sortOrder`（担当者ごとに 0 から）を足し、スキーマを 1 → 2 に移行（既存データは今と同じ開始日順で番号を振る）。左リストの案件名の左のつかみをドラッグして、同じ担当者の中だけで並べ替える。担当者の管理ダイアログも ↑ / ↓ ボタンをやめ、同じつかみのドラッグで並べ替える（ドラッグの処理は共通のフック `useDragReorder` にまとめる）
   - フェーズ 10: `IProject.completedAt`（未完了は `null`）を足し、スキーマを 2 → 3 に移行。サイドパネルに「完了にする / 未完了に戻す」、ヘッダー右上に「完了済みを表示」の切り替え（保存しない。初期値は表示しない）
@@ -333,5 +364,5 @@
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
   ```
-  .plan/handoff.md を読んで、フェーズ 10 を進めてください。
+  .plan/handoff.md を読んで、フェーズ 11 を進めてください。
   ```

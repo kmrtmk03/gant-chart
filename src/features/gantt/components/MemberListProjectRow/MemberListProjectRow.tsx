@@ -24,6 +24,7 @@ interface IMemberListProjectRowProps {
 
 /**
  * 左のリストの案件 1 行。左端に並び替えのつかみ、その右に色の丸と案件名（クリックで編集用のパネルを開く）を並べる。
+ * 完了済みの案件は、つかみの後ろに ✓ を出し、案件名を薄くする（クリック・並び替えは未完了と同じようにできる）。
  * 行の見た目（高さ・ドラッグ中の追従・挿入位置の線）と、並び替えのフックへの登録は `useMemberListProjectRow` が受け持つ。
  */
 export function MemberListProjectRow({
@@ -36,8 +37,14 @@ export function MemberListProjectRow({
 }: IMemberListProjectRowProps) {
   // 戻り値は分割代入して使う。ref のコールバック（rowRef）を含むオブジェクトのプロパティ参照を、
   // lint の react-hooks/refs が「描画中の ref 参照」と誤検知するため（MemberManageRow と同じ対処）
-  const { rowRef, rowClassName, rowStyle, colorDotStyle, handleLabel } =
-    useMemberListProjectRow({ project, dragState, registerRow })
+  const {
+    rowRef,
+    rowClassName,
+    rowStyle,
+    isCompleted,
+    colorDotStyle,
+    handleLabel,
+  } = useMemberListProjectRow({ project, dragState, registerRow })
 
   return (
     <div ref={rowRef} className={rowClassName} style={rowStyle}>
@@ -52,6 +59,14 @@ export function MemberListProjectRow({
         className={styles.projectButton}
         onClick={() => onSelectProject(project.id)}
       >
+        {isCompleted && (
+          <>
+            <span className={styles.completedMark} aria-hidden="true">
+              ✓
+            </span>
+            <span className={styles.srOnly}>完了済み</span>
+          </>
+        )}
         <span className={styles.colorDot} style={colorDotStyle} />
         <span className={styles.name}>{project.name}</span>
       </button>

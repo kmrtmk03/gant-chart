@@ -276,6 +276,7 @@ describe("案件", () => {
       ...buildProjectInput(tanaka.id),
       id: expect.any(String),
       sortOrder: 0,
+      completedAt: null,
       createdAt: CREATED_AT.toISOString(),
       updatedAt: CREATED_AT.toISOString(),
     })
@@ -446,6 +447,71 @@ describe("案件", () => {
     await expect(repository.deleteProject("missing")).rejects.toThrow(
       GanttNotFoundError,
     )
+  })
+})
+
+describe("案件の完了", () => {
+  it("isCompleted: true で完了日時が付き、ほかのフィールドと一緒に保存できる", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+    vi.setSystemTime(UPDATED_AT)
+
+    const completed = await repository.updateProject(project.id, {
+      name: "案件A（完了）",
+      isCompleted: true,
+    })
+
+    expect(completed).toEqual({
+      ...project,
+      name: "案件A（完了）",
+      completedAt: UPDATED_AT.toISOString(),
+      updatedAt: UPDATED_AT.toISOString(),
+    })
+    await expect(repository.listProjects()).resolves.toEqual([completed])
+  })
+
+  it("完了済みの案件にもう一度 isCompleted: true を渡しても、完了日時は最初のまま", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+    const completed = await repository.updateProject(project.id, {
+      isCompleted: true,
+    })
+    vi.setSystemTime(UPDATED_AT)
+
+    const again = await repository.updateProject(project.id, {
+      isCompleted: true,
+    })
+
+    expect(again.completedAt).toBe(completed.completedAt)
+    expect(again.completedAt).toBe(CREATED_AT.toISOString())
+    expect(again.updatedAt).toBe(UPDATED_AT.toISOString())
+  })
+
+  it("isCompleted: false で未完了（null）に戻る", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+    await repository.updateProject(project.id, { isCompleted: true })
+
+    const reopened = await repository.updateProject(project.id, {
+      isCompleted: false,
+    })
+
+    expect(reopened.completedAt).toBeNull()
+    await expect(repository.listProjects()).resolves.toEqual([reopened])
+  })
+
+  it("isCompleted を省略した更新では、完了の状態を変えない（completedAt が入力に混ざっていても無視する）", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+    const completed = await repository.updateProject(project.id, {
+      isCompleted: true,
+    })
+
+    // 変数に入れてから渡し、型にないキー（completedAt）が混ざった入力を再現する
+    const input = { name: "改名", completedAt: null }
+    const renamed = await repository.updateProject(project.id, input)
+
+    expect(renamed.completedAt).toBe(completed.completedAt)
   })
 })
 
@@ -714,15 +780,16 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
     const projects = await repository.listProjects()
 
     expect(warn).not.toHaveBeenCalled()
-    // 保存順はそのままで、各案件に sortOrder が足されている
+    // 保存順はそのままで、各案件に sortOrder が足されている。
+    // 続けて 2 → 3 の移行も走るので、completedAt（未完了）も足されている
     expect(projects).toEqual([
-      { ...v1Projects[0], sortOrder: 3 },
-      { ...v1Projects[1], sortOrder: 0 },
-      { ...v1Projects[2], sortOrder: 2 },
-      { ...v1Projects[3], sortOrder: 0 },
-      { ...v1Projects[4], sortOrder: 1 },
-      { ...v1Projects[5], sortOrder: 1 },
-      { ...v1Projects[6], sortOrder: 0 },
+      { ...v1Projects[0], sortOrder: 3, completedAt: null },
+      { ...v1Projects[1], sortOrder: 0, completedAt: null },
+      { ...v1Projects[2], sortOrder: 2, completedAt: null },
+      { ...v1Projects[3], sortOrder: 0, completedAt: null },
+      { ...v1Projects[4], sortOrder: 1, completedAt: null },
+      { ...v1Projects[5], sortOrder: 1, completedAt: null },
+      { ...v1Projects[6], sortOrder: 0, completedAt: null },
     ])
     await expect(repository.listMembers()).resolves.toEqual([
       buildMemberV1("a"),
@@ -730,12 +797,14 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
     ])
   })
 
-  it("移行後はバージョン 2 として保存され、再読み込みしても移行し直さない", async () => {
+  it("1 → 2 → 3 と続けて移行して最新のバージョンとして保存され、再読み込みしても移行し直さない", async () => {
     storeV1Data([buildProjectV1("p1", "a", "2026-10-01", "2026-10-02")])
 
     await repository.listProjects()
 
-    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
     const migrated = storage.getItem(STORAGE_KEYS.projects)
     await new LocalStorageRepository(storage).listProjects()
     expect(storage.getItem(STORAGE_KEYS.projects)).toBe(migrated)
@@ -746,7 +815,9 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
 
     await expect(repository.listProjects()).resolves.toEqual([])
     expect(storage.getItem(STORAGE_KEYS.projects)).toBeNull()
-    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
   })
 
   it.each([
@@ -758,6 +829,81 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
     async (_, raw) => {
       vi.spyOn(console, "warn").mockImplementation(() => {})
       storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+      storage.setItem(STORAGE_KEYS.projects, raw)
+
+      await expect(repository.listProjects()).resolves.toEqual([])
+      expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    },
+  )
+})
+
+describe("スキーマの移行（バージョン 2 → 3）", () => {
+  /** バージョン 2 の形の担当者（構造はバージョン 3 と同じ） */
+  const MEMBER_V2 = {
+    id: "a",
+    name: "a",
+    sortOrder: 0,
+    createdAt: CREATED_AT.toISOString(),
+    updatedAt: CREATED_AT.toISOString(),
+  }
+  /** バージョン 2 の形の案件（completedAt がない） */
+  const buildProjectV2 = (id: string, sortOrder: number) => ({
+    id,
+    memberId: "a",
+    name: id,
+    startDate: "2026-10-01",
+    endDate: "2026-10-02",
+    color: "blue",
+    note: "",
+    sortOrder,
+    createdAt: CREATED_AT.toISOString(),
+    updatedAt: CREATED_AT.toISOString(),
+  })
+
+  /** バージョン 2 のデータを保存した状態にする */
+  const storeV2Data = (projects: unknown) => {
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.members, JSON.stringify([MEMBER_V2]))
+    storage.setItem(STORAGE_KEYS.projects, JSON.stringify(projects))
+  }
+
+  it("正しいデータを読むと、案件が 1 件も消えずに未完了として読める（保存順・sortOrder も変えない）", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const v2Projects = [
+      buildProjectV2("p2", 1),
+      buildProjectV2("p1", 0),
+      buildProjectV2("p3", 2),
+    ]
+    storeV2Data(v2Projects)
+
+    const projects = await repository.listProjects()
+
+    expect(warn).not.toHaveBeenCalled()
+    expect(projects).toEqual(
+      v2Projects.map((project) => ({ ...project, completedAt: null })),
+    )
+    await expect(repository.listMembers()).resolves.toEqual([MEMBER_V2])
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("3")
+  })
+
+  it("移行後は完了にでき、再読み込みしても移行し直さない", async () => {
+    storeV2Data([buildProjectV2("p1", 0)])
+    await repository.updateProject("p1", { isCompleted: true })
+
+    const reloaded = await new LocalStorageRepository(storage).listProjects()
+
+    expect(reloaded[0]?.completedAt).toBe(CREATED_AT.toISOString())
+  })
+
+  it.each([
+    ["JSON として読めない", "{壊れた JSON"],
+    ["配列でない", JSON.stringify({ not: "array" })],
+    ["sortOrder のない要素がある", JSON.stringify([{ id: "p1" }])],
+  ])(
+    "壊れたデータ（%s）でも例外にならず、データは書き換えない",
+    async (_, raw) => {
+      vi.spyOn(console, "warn").mockImplementation(() => {})
+      storage.setItem(STORAGE_KEYS.schemaVersion, "2")
       storage.setItem(STORAGE_KEYS.projects, raw)
 
       await expect(repository.listProjects()).resolves.toEqual([])

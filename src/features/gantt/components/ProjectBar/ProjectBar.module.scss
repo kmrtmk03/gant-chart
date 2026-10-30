@@ -46,6 +46,18 @@ $handle-width-coarse: 10px;
   }
 }
 
+// 完了済みの案件の帯（表示しているとき）。薄くして未完了の帯と見分ける。
+// opacity は帯全体（編集中の枠・ドラッグ中の影も含む）にかかるので、編集中・ドラッグ中は元の濃さに戻し、
+// どの帯を操作しているかが分かるようにする
+.completed {
+  opacity: tokens.$opacity-completed-bar;
+
+  &.editing,
+  &.dragging {
+    opacity: 1;
+  }
+}
+
 // 編集中の帯を枠で強調する。編集中はドラッグできないので、つかめる見た目（grab）にしない
 .editing {
   cursor: pointer;

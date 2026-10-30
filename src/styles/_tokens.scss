@@ -28,6 +28,9 @@ $color-row-member: rgb(255 255 255 / 2.5%);
 $color-danger: #f2667a;
 $color-danger-soft: rgb(242 102 122 / 12%);
 $color-warning: #f5b454;
+// 完了済みの案件の印（✓・見出しの札）
+$color-success: #3ccf91;
+$color-success-soft: rgb(60 207 145 / 14%);
 $color-backdrop: rgb(4 6 10 / 60%);
 
 // ---- 帯の色プリセット ----
@@ -69,6 +72,22 @@ $shadow-bar:
   0 1px 2px rgb(0 0 0 / 40%);
 // フォーカスリング（キーボード操作時の枠）
 $focus-ring: 0 0 0 3px rgb(113 130 255 / 35%);
+
+// ---- 大きさ ----
+// 画面上部のバー（GanttHeader）の高さ。サイドパネルはこの下から出す（バーの右端の切り替えボタンを隠さないため）
+$header-height: 52px;
+
+// ---- ブレークポイント ----
+// スマホなど狭い画面。これ以下の幅では、ヘッダーの文言を短くするなどして横にはみ出さないようにする
+$breakpoint-narrow: 480px;
+
+// ---- 透明度 ----
+// 完了済みの案件（表示しているとき）の帯。未完了の帯と見分けられるよう薄くする
+$opacity-completed-bar: 0.4;
+// 完了済みの案件の、担当者行のまとめ帯（未完了のまとめ帯は 0.45）
+$opacity-completed-summary-bar: 0.15;
+// 完了済みの案件の、左のリストの案件名
+$opacity-completed-text: 0.55;
 
 // ---- アニメーション ----
 $transition-fast: 120ms ease;
