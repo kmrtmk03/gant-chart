@@ -40,13 +40,15 @@ $color-backdrop: rgb(4 6 10 / 60%);
 // ---- 帯の色プリセット ----
 // キーは gantt.constants.ts の BAR_COLORS と対応させる（CSS 変数名で参照される）。
 // 帯の上の白い文字（16px）が読めるよう、白とのコントラスト比 4.5 以上（WCAG AA）を確保している。
-// 帯の上辺に重ねる白のグラデーション（ProjectBar.module.scss）で明るくなった分を見込んで、5 前後にしてある
-$color-bar-blue: #3a63e0;
-$color-bar-green: #10755a;
-$color-bar-orange: #a8530a;
-$color-bar-purple: #7444e0;
-$color-bar-red: #bf3450;
-$color-bar-gray: #5a6578;
+// 帯には白を重ねて明るくするので（ProjectBar.module.scss の $bar-gradient と $bar-highlight）、その分を見込んだ値にしている。
+// 文字の上寄り（白 10%）で、通常時 5.1 以上、ホバー・ドラッグ中（白 10% + 6% 重ね）でも 4.6 以上。
+// 色を変えるとき、重ねる白の濃さを変えるときは、この比を計算し直すこと
+$color-bar-blue: #3256c3;
+$color-bar-green: #0f6b52;
+$color-bar-orange: #964a09;
+$color-bar-purple: #6d40d3;
+$color-bar-red: #b3314b;
+$color-bar-gray: #525c6e;
 
 // ---- 余白 ----
 $space-1: 4px;

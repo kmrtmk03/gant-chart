@@ -6,8 +6,15 @@ $handle-width: 6px;
 // 1 日だけの帯でも、移動用の中央部分が 12px 残る（つかみと中央の両方を最低限つかめる幅にとどめる）
 $handle-width-coarse: 10px;
 
-// 位置・幅・色は動的な値なので、インラインスタイルで渡す。
 // 背景色の上に上から下へ薄い白のグラデーションを重ね、立体感を出す
+$bar-gradient: linear-gradient(rgb(255 255 255 / 12%), rgb(255 255 255 / 0%));
+// ホバー中・ドラッグ中に帯全体へ重ねる白。filter: brightness() だと明るくなりすぎて、白文字のコントラストが
+// 4.5 を下回った（青で 3.8）ため、重ねる量を決めて（6%）、色のトークン側でその分のコントラストを確保している。
+// 濃さを変えるときは _tokens.scss の帯の色のコントラストを計算し直すこと
+$bar-highlight: linear-gradient(rgb(255 255 255 / 6%), rgb(255 255 255 / 6%));
+
+// 位置・幅・色は動的な値なので、インラインスタイルで渡す（色は background ではなく backgroundColor。
+// background だと上のグラデーションが消える）
 .bar {
   position: absolute;
   top: 6px;
@@ -19,10 +26,7 @@ $handle-width-coarse: 10px;
   overflow: hidden;
   border: 0;
   border-radius: tokens.$radius-sm;
-  background-image: linear-gradient(
-    rgb(255 255 255 / 12%),
-    rgb(255 255 255 / 0%)
-  );
+  background-image: $bar-gradient;
   box-shadow: tokens.$shadow-bar;
   color: tokens.$color-on-primary;
   font: inherit;
@@ -37,12 +41,13 @@ $handle-width-coarse: 10px;
   // タッチでは横方向のドラッグを帯の移動に使い、縦方向のスワイプは画面のスクロールに残す
   touch-action: pan-y;
   user-select: none;
-  transition:
-    filter tokens.$transition-fast,
-    box-shadow tokens.$transition-fast;
+  // MEMO: background-image（グラデーション）は transition できないので、ホバーの白は一瞬で切り替わる
+  transition: box-shadow tokens.$transition-fast;
 
-  &:hover {
-    filter: brightness(1.12);
+  // globals.scss の button:hover:not(:disabled) は background の一括指定で背景画像（グラデーション）を消すので、
+  // 同じ :not(:disabled) を付けて詳細度で上回る
+  &:hover:not(:disabled) {
+    background-image: $bar-highlight, $bar-gradient;
   }
 }
 
@@ -123,8 +128,13 @@ $handle-width-coarse: 10px;
 // ドラッグ中は他の帯より上に出し、つかんでいることが分かるようにする
 .dragging {
   z-index: tokens.$z-index-bar-dragging;
-  filter: brightness(1.12);
   cursor: grabbing;
+
+  // ドラッグ中はポインターが帯の上にあるので、ホバーの一括指定（上の説明と同じ）にも負けないようにする
+  &,
+  &:hover:not(:disabled) {
+    background-image: $bar-highlight, $bar-gradient;
+  }
 }
 
 // 保存が終わるまでは、もう一度つかめないことを示す
