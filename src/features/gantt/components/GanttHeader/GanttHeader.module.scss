@@ -44,6 +44,7 @@
 
   button {
     min-height: 28px;
+    white-space: nowrap;
     padding: 0 tokens.$space-3;
     border-color: transparent;
     background: none;
@@ -60,6 +61,7 @@
 
 .range {
   color: tokens.$color-text;
+  white-space: nowrap;
   font-size: tokens.$font-size-md;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -70,6 +72,30 @@
   margin-left: auto;
   font-size: tokens.$font-size-xs;
   white-space: nowrap;
+}
+
+// 狭い画面では短い文言（「完了済み（3）」）に切り替え、ヘッダーが横にはみ出さないようにする
+.toggleShortLabel {
+  display: none;
+}
+
+@media (max-width: tokens.$breakpoint-narrow) {
+  // 幅が足りず文字が縦に折り返すので、タイトルを隠して間隔も詰める（ブラウザのタブ・アイコンで何の画面かは分かる）
+  .header {
+    gap: tokens.$space-2;
+  }
+
+  .title {
+    display: none;
+  }
+
+  .toggleLabel {
+    display: none;
+  }
+
+  .toggleShortLabel {
+    display: inline;
+  }
 }
 
 .pressed {

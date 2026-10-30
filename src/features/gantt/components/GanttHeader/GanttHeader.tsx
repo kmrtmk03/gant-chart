@@ -29,8 +29,14 @@ export function GanttHeader({
   completedCount,
   onToggleCompletedVisible,
 }: IGanttHeaderProps) {
-  const { rangeLabel, completedToggleLabel, completedToggleClassName } =
-    useGanttHeader({ visibleDate, isCompletedVisible, completedCount })
+  const {
+    rangeLabel,
+    completedToggleLabel,
+    completedToggleShortLabel,
+    completedToggleClassName,
+    completedToggleLabelClassName,
+    completedToggleShortLabelClassName,
+  } = useGanttHeader({ visibleDate, isCompletedVisible, completedCount })
 
   return (
     <header className={styles.header}>
@@ -53,7 +59,13 @@ export function GanttHeader({
         aria-pressed={isCompletedVisible}
         onClick={onToggleCompletedVisible}
       >
-        {completedToggleLabel}
+        {/* 文言は画面の幅で片方だけを出す（display: none の側は読み上げにも含まれない） */}
+        <span className={completedToggleLabelClassName}>
+          {completedToggleLabel}
+        </span>
+        <span className={completedToggleShortLabelClassName}>
+          {completedToggleShortLabel}
+        </span>
       </button>
     </header>
   )

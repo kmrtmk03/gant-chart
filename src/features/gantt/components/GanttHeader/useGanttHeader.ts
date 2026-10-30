@@ -1,6 +1,9 @@
 import type { TDateString } from "../../gantt.type"
 import { formatYearMonth } from "../../gantt.utils"
-import { formatCompletedToggleLabel } from "./ganttHeader.utils"
+import {
+  formatCompletedToggleLabel,
+  formatCompletedToggleShortLabel,
+} from "./ganttHeader.utils"
 import styles from "./GanttHeader.module.scss"
 
 interface IUseGanttHeaderParams {
@@ -21,8 +24,12 @@ export function useGanttHeader({
   return {
     // 表示中の年月（例: "2026年10月"）
     rangeLabel: formatYearMonth(visibleDate),
-    // 「完了済みを表示」の切り替えボタン（押されているときは主色の見た目にする）
+    // 「完了済みを表示」の切り替えボタン（押されているときは主色の見た目にする）。
+    // 狭い画面では短い文言に切り替える（どちらを出すかは CSS のメディアクエリで決める）
     completedToggleLabel: formatCompletedToggleLabel(completedCount),
+    completedToggleShortLabel: formatCompletedToggleShortLabel(completedCount),
+    completedToggleLabelClassName: styles.toggleLabel,
+    completedToggleShortLabelClassName: styles.toggleShortLabel,
     completedToggleClassName: isCompletedVisible
       ? `${styles.completedToggle} ${styles.pressed}`
       : styles.completedToggle,
