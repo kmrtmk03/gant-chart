@@ -4,7 +4,6 @@ import {
   DATE_HEADER_DAY_ROW_HEIGHT,
   DATE_HEADER_MONTH_ROW_HEIGHT,
   DAY_COLUMN_WIDTH,
-  MEMBER_LIST_WIDTH,
 } from "../../gantt.constants"
 import { useGanttPage } from "../../hooks/useGanttPage"
 
@@ -86,9 +85,10 @@ export function useGanttChart() {
   const cornerStyle: CSSProperties = {
     height: DATE_HEADER_MONTH_ROW_HEIGHT + DATE_HEADER_DAY_ROW_HEIGHT,
   }
-  // 1 列目は左リスト、2 列目はタイムライン。幅は表示期間の日数で決まる
+  // 1 列目は左リスト、2 列目はタイムライン。タイムラインの幅は表示期間の日数で決まる。
+  // 左リストの幅は画面の幅で変わる（狭い画面では縮める）ので、CSS 変数（_tokens.scss / globals.scss）で受ける
   const gridStyle: CSSProperties = {
-    gridTemplateColumns: `${MEMBER_LIST_WIDTH}px ${rangeDays * DAY_COLUMN_WIDTH}px`,
+    gridTemplateColumns: `var(--member-list-width) ${rangeDays * DAY_COLUMN_WIDTH}px`,
   }
 
   return {

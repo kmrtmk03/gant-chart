@@ -8,6 +8,13 @@
   color-scheme: dark;
 }
 
+// 狭い画面では左のリストを縮める（スマホは閲覧できれば可。タイムラインの見える幅を残す）
+@media (max-width: tokens.$breakpoint-narrow) {
+  :root {
+    --member-list-width: #{tokens.$member-list-width-narrow};
+  }
+}
+
 *,
 *::before,
 *::after {

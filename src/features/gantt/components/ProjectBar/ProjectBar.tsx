@@ -47,6 +47,7 @@ export function ProjectBar({
         className={bar.className}
         style={bar.style}
         title={bar.title}
+        aria-label={bar.ariaLabel}
         onClick={handleClick}
         onPointerDown={handleMovePointerDown}
         onLostPointerCapture={handleLostPointerCapture}

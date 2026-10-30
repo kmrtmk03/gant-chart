@@ -34,7 +34,11 @@ export function GanttChart() {
   }
 
   if (chart.status === "loading") {
-    return <p className={styles.message}>読み込み中…</p>
+    return (
+      <p className={styles.message} role="status">
+        読み込み中…
+      </p>
+    )
   }
 
   // scrollArea（ref を持つ）を先に分割代入する。lint の react-hooks/refs が、

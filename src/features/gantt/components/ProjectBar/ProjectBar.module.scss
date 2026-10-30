@@ -46,6 +46,14 @@ $handle-width-coarse: 10px;
   }
 }
 
+// キーボードで帯にフォーカスしたときの枠。globals.scss の button:focus-visible は box-shadow を差し替えるため、
+// 帯の影（と編集中の枠）が消える。枠は outline で描き、影はそのまま残す
+.bar:focus-visible {
+  outline: 2px solid tokens.$color-text;
+  outline-offset: 2px;
+  box-shadow: tokens.$shadow-bar;
+}
+
 // 完了済みの案件の帯（表示しているとき）。薄くして未完了の帯と見分ける。
 // opacity は帯全体（編集中の枠・ドラッグ中の影も含む）にかかるので、編集中・ドラッグ中は元の濃さに戻し、
 // どの帯を操作しているかが分かるようにする
@@ -61,6 +69,15 @@ $handle-width-coarse: 10px;
 // 編集中の帯を枠で強調する。編集中はドラッグできないので、つかめる見た目（grab）にしない
 .editing {
   cursor: pointer;
+  box-shadow:
+    tokens.$shadow-bar,
+    0 0 0 2px tokens.$color-bg,
+    0 0 0 4px tokens.$color-text;
+}
+
+// 編集中は二重の枠（4px）の外側に outline を描く。フォーカス中も枠が消えないよう box-shadow を戻す
+.editing:focus-visible {
+  outline-offset: 5px;
   box-shadow:
     tokens.$shadow-bar,
     0 0 0 2px tokens.$color-bg,
