@@ -19,6 +19,8 @@ const DATE_FORMAT = "yyyy-MM-dd"
 
 /** 日曜（0）と土曜（6）。`getDay` の戻り値に対応する */
 const WEEKEND_DAYS: readonly number[] = [0, 6]
+/** 土曜（`getDay` の戻り値） */
+const SATURDAY = 6
 
 /** 祝日の定義（日付 → 祝日名）。ライブラリの型はキーが日付リテラルの集合なので、文字列で引ける型に広げる */
 const HOLIDAYS: Readonly<Record<string, { name: string } | undefined>> =
@@ -88,6 +90,10 @@ export interface IDayColumn {
   date: TDateString
   /** 土曜・日曜か */
   isWeekend: boolean
+  /** 土曜か（土曜は青、日曜と祝日は赤で色分けするため、土日とは別に持つ） */
+  isSaturday: boolean
+  /** 月の 1 日か（月の区切りの線を引く列） */
+  isMonthStart: boolean
   /** 祝日名。祝日でなければ null */
   holidayName: string | null
 }
@@ -119,6 +125,8 @@ export function getDayColumns(start: TDateString, days: number): IDayColumn[] {
   return getDateRange(start, days).map((date) => ({
     date,
     isWeekend: isWeekend(date),
+    isSaturday: isSaturday(date),
+    isMonthStart: date.endsWith("-01"),
     holidayName: getHolidayName(date),
   }))
 }
@@ -181,6 +189,11 @@ export function countCompletedProjects(projects: IProject[]): number {
 /** 土曜・日曜か */
 export function isWeekend(value: TDateString): boolean {
   return WEEKEND_DAYS.includes(getDay(parseDateString(value)))
+}
+
+/** 土曜か */
+export function isSaturday(value: TDateString): boolean {
+  return getDay(parseDateString(value)) === SATURDAY
 }
 
 /** 祝日（振替休日・国民の休日を含む）なら祝日名、そうでなければ null */

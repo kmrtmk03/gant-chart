@@ -417,8 +417,26 @@ describe("getDayColumns", () => {
       false,
       false,
     ])
+    // 5/2 は土曜、5/3 は日曜
+    expect(columns.map((column) => column.isSaturday)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+    ])
     expect(columns[1]?.holidayName).not.toBeNull()
     expect(columns[4]?.holidayName).not.toBeNull()
+  })
+
+  it("月の 1 日の列だけ isMonthStart が true", () => {
+    const columns = getDayColumns("2026-10-30", 4)
+    expect(columns.map((column) => column.isMonthStart)).toEqual([
+      false,
+      false,
+      true,
+      false,
+    ])
   })
 
   it("日数が 0 なら空配列", () => {
