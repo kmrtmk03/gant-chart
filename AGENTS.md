@@ -203,6 +203,7 @@ src/
 
 - `main` / `develop` で直接コミットしない。作業前に現在のブランチを確認し、作業用ブランチを切ってからコミットする
 - 作業用ブランチは **`develop` から切り**、PR のマージ先も **`develop`** にする（`main` へは、ユーザーの指示があるときだけ `develop` から反映する）
+- **作業を始める前に、ローカルの `develop` がリモートより遅れていないか確認する**。`git fetch origin develop` のあと `git rev-list --left-right --count develop...origin/develop` などで差を見て、遅れていれば `git pull --ff-only origin develop`（`develop` をチェックアウトした状態で）で最新にしてから作業用ブランチを切る。ローカルの `develop` にリモートにないコミットがあって fast-forward できないときは、勝手に解消せずユーザーに報告する
 - フェーズごとにブランチを切り、PR を分ける（ブランチ名は各フェーズのプランに書いてある）
 - ブランチ名は英小文字・数字・`-`・`/` のみのケバブケースで、prefix はコミットの prefix と揃える（例: `feat/gantt-drag`）
 - コミットは意味のある小さな単位に分ける。性質の違う変更（feat と refactor など）は分ける
