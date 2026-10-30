@@ -235,10 +235,12 @@ gant-chart/
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | 帯のドラッグ移動・伸縮 | Opus 5.5 |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | 案件（担当者の中）・担当者のドラッグによる並び替え | Opus 5.5 |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | 案件の完了と、完了済みの表示切り替え | Sonnet 5.5 |
-| 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | 仕上げ、全体の検証、Codex によるコードレビュー | Sonnet 5.5 / Codex |
+| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | 画面の使い勝手の調整（カレンダー、文字の大きさ、土日祝・月の区切り、サイドパネルの操作など） | Sonnet 5.5 |
+| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | 仕上げ、全体の検証、Codex によるコードレビュー | Sonnet 5.5 / Codex |
 
-- 依存関係: 1 → 2、1 → 3 → 4 → 5 → 6 → 7・8 → 9 → 10 → 11（2 と 3 は入れ替え可能、7 と 8 も入れ替え可能）
+- 依存関係: 1 → 2、1 → 3 → 4 → 5 → 6 → 7・8 → 9 → 10 → 11 → 12（2 と 3 は入れ替え可能、7 と 8 も入れ替え可能）
 - フェーズ 9・10 は 2026-10-30 に追加した（MVP の後の機能追加）。もとのフェーズ 9（仕上げ）はフェーズ 11 に繰り下げた
+- フェーズ 11（画面の使い勝手の調整）も 2026-10-30 に追加した（実際に触って気になった点の修正）。仕上げはさらにフェーズ 12 に繰り下げた
 - 各フェーズの終わりに `pnpm lint` / `pnpm typecheck` / `pnpm test` を通し、ユーザーの確認を受けてから次のフェーズへ進む
 - Claude の使用量が 90% を超えた場合は、残りのフェーズを Codex に切り替える（AGENTS.md があるので同じ規約で進められる）
 

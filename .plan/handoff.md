@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 10（案件の完了と、完了済みの表示切り替え）を完了し、PR #17 を `develop` にマージした。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -34,7 +34,8 @@
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
-| 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9） |
+| 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ⬜ 未着手（2026-10-30 に追加。プランのユーザー確認待ち） |
+| 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9 → 11 → 12） |
 
 ---
 
@@ -61,7 +62,7 @@
 
 ## 4-0000. フェーズ 10 の完了状況
 
-フェーズ 10 は完了（ブランチ `claude/nice-brown-di5gxi`、PR #17 を `develop` にマージ済み）。プランの完了条件はすべて満たし、ユーザーの確認も済んでいる。フェーズ 11 は未着手。
+フェーズ 10 は完了（ブランチ `claude/nice-brown-di5gxi`、PR #17 を `develop` にマージ済み）。プランの完了条件はすべて満たし、ユーザーの確認も済んでいる。
 
 ### フェーズ 10 の確認結果
 
@@ -78,7 +79,9 @@
 - PR #17 のセルフレビュー対応（4 件。各コメントに返信済み）: 375px でヘッダーがはみ出していた（480px 以下はボタンを「完了済み（N）」に縮め、タイトルを隠す。`$breakpoint-narrow` を追加）/ 完了済みの帯は編集中・ドラッグ中だけ元の濃さに戻す / 完了済みの件数は担当者が見つかる案件だけで数える / 並び替えた案件が手元の一覧に見つからないときは保存せず「案件の一覧が古くなっています。…」を出す
 - **未確認**: タッチ操作、スマホ幅のヘッダー以外の見た目、まとめ帯の完了済みの見た目（透明度 0.15）の目視での調整、完了の保存に失敗したときのパネル内のエラー表示（保存と同じ `runSubmit` を通しているので同じ表示になる想定）
 
-### フェーズ 11 への申し送り（完了）
+### フェーズ 11 以降への申し送り（完了）
+
+- フェーズ 11 でサイドパネルの「完了にする / 未完了に戻す」の置き場所と、見出しの札を「状態」の欄へ移す予定（[12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) の 7 章）。下の動き（`onSubmit(input, isCompleted?)`・保存と同じ検証）は変えない
 
 - データ: `IProject.completedAt`（ISO 8601 か null）。`TProjectInput` に含めず、`TProjectUpdate` の `isCompleted?: boolean` で切り替える（true: 未完了なら今の日時、すでに完了なら変えない / false: null / 省略: 変えない）。日時を付けるのは repository（`resolveCompletedAt`）。`isProject` は completedAt が null か日時の文字列であることを求める
 - 移行: `localStorageMigrations.ts` の `migrateSchemaV2ToV3`（`SCHEMA_MIGRATIONS` の `2:`）。「バージョン 2 の案件」は sortOrder が数値であることだけで確かめる（今の isProject は使わない）。壊れたデータは書き換えない
@@ -354,8 +357,9 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 11**（[12-phase11-polish-review.md](12-phase11-polish-review.md)。仕上げ）。フェーズ 10 までは `develop` にマージ済み。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること。ローカルの `develop` を最新にしてから（AGENTS.md の「コミット・ブランチ」に手順を追記済み）、作業用ブランチを切って始める
-- 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
+- 次にやること: **フェーズ 11**（[12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md)。画面の使い勝手の調整 8 点）。プランをユーザーが確認してから始める。とくに 1 章（カレンダーに `react-day-picker` を使うか）と 7 章（サイドパネルのボタンの配置）はユーザーの判断を受けてから実装する。ローカルの `develop` を最新にしてから、作業用ブランチ `feat/gantt-ui-adjustments` を切って始める
+- その次: **フェーズ 12**（[13-phase12-polish-review.md](13-phase12-polish-review.md)。仕上げ・全体の検証・Codex のレビュー）。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること
+- 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
   - フェーズ 9: `IProject.sortOrder`（担当者ごとに 0 から）を足し、スキーマを 1 → 2 に移行（既存データは今と同じ開始日順で番号を振る）。左リストの案件名の左のつかみをドラッグして、同じ担当者の中だけで並べ替える。担当者の管理ダイアログも ↑ / ↓ ボタンをやめ、同じつかみのドラッグで並べ替える（ドラッグの処理は共通のフック `useDragReorder` にまとめる）
