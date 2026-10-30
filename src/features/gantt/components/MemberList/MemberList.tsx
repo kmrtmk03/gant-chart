@@ -1,6 +1,7 @@
 import { memo } from "react"
 
 import type { IMemberGroup } from "../../gantt.utils"
+import { MemberListGroup } from "../MemberListGroup"
 import styles from "./MemberList.module.scss"
 import { useMemberList } from "./useMemberList"
 
@@ -13,15 +14,21 @@ interface IMemberListProps {
   onAddProject: (memberId: string) => void
   /** 案件名をクリックしたとき。編集する案件の ID を渡す（React.memo を保つため、参照が変わらない関数を渡すこと） */
   onSelectProject: (projectId: string) => void
+  /**
+   * 案件をドラッグで並べ替えたとき。担当者 ID と、並べ替え後のその担当者の案件の id を渡す。
+   * 例外を投げない関数を渡すこと（失敗の表示は呼び出し側）。React.memo を保つため、参照が変わらない関数を渡すこと
+   */
+  onReorderProjects: (memberId: string, orderedIds: string[]) => Promise<void>
   onManageMembers: () => void
 }
 
 /**
  * 左のリスト。担当者（親）→ 案件（子）の 2 階層で並べる。
  * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
- * 各担当者の案件の下（開いているときだけ）に「案件を追加」、最下部に「担当者を管理」ボタンを置く。
+ * 担当者 1 人ぶん（担当者行・案件の行・「案件を追加」）は `MemberListGroup` が描き、
+ * 最下部に「担当者を管理」ボタンを置く。
  * 案件名をクリックすると、帯のクリックと同じく編集用のサイドパネルを開く。
- * 行の表示用の値は `useMemberList` が求める。
+ * 案件の左端のつかみをドラッグすると、同じ担当者の中で並べ替えられる。
  */
 export const MemberList = memo(function MemberList({
   memberGroups,
@@ -29,66 +36,23 @@ export const MemberList = memo(function MemberList({
   onToggleMember,
   onAddProject,
   onSelectProject,
+  onReorderProjects,
   onManageMembers,
 }: IMemberListProps) {
-  const { memberRowHeight, projectRowHeight, memberRows } = useMemberList({
-    memberGroups,
-    collapsedMemberIds,
-  })
+  const { groups } = useMemberList({ memberGroups, collapsedMemberIds })
 
   return (
     <div className={styles.list}>
-      {memberRows.map((memberRow) => (
-        <div key={memberRow.memberId}>
-          <div className={styles.memberRow} style={{ height: memberRowHeight }}>
-            <button
-              type="button"
-              className={styles.toggle}
-              aria-expanded={memberRow.isExpanded}
-              aria-label={memberRow.toggleAriaLabel}
-              onClick={() => onToggleMember(memberRow.memberId)}
-            >
-              {memberRow.toggleIcon}
-            </button>
-            <span className={styles.name}>{memberRow.name}</span>
-            <span className={styles.count}>{memberRow.countLabel}</span>
-          </div>
-          {memberRow.isExpanded && (
-            <>
-              {memberRow.projects.map((project) => (
-                <div
-                  key={project.id}
-                  className={styles.projectRow}
-                  style={{ height: projectRowHeight }}
-                >
-                  <button
-                    type="button"
-                    className={styles.projectButton}
-                    onClick={() => onSelectProject(project.id)}
-                  >
-                    <span
-                      className={styles.colorDot}
-                      style={project.colorDotStyle}
-                    />
-                    <span className={styles.name}>{project.name}</span>
-                  </button>
-                </div>
-              ))}
-              <div
-                className={styles.addProjectRow}
-                style={{ height: projectRowHeight }}
-              >
-                <button
-                  type="button"
-                  className={styles.addProjectButton}
-                  onClick={() => onAddProject(memberRow.memberId)}
-                >
-                  ＋ 案件を追加
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+      {groups.map((group) => (
+        <MemberListGroup
+          key={group.memberId}
+          memberGroup={group.memberGroup}
+          isExpanded={group.isExpanded}
+          onToggleMember={onToggleMember}
+          onAddProject={onAddProject}
+          onSelectProject={onSelectProject}
+          onReorderProjects={onReorderProjects}
+        />
       ))}
       <div className={styles.footer}>
         <button type="button" onClick={onManageMembers}>

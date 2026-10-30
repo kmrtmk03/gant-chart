@@ -17,7 +17,7 @@ import {
   isHoliday,
   isRangeOverlapping,
   isWeekend,
-  moveId,
+  moveIdToIndex,
   moveProjectDates,
   parseDateString,
   pxToDays,
@@ -458,6 +458,7 @@ describe("groupProjectsByMember", () => {
     memberId: string,
     startDate: string,
     endDate: string,
+    sortOrder = 0,
   ): IProject => ({
     id,
     memberId,
@@ -466,27 +467,44 @@ describe("groupProjectsByMember", () => {
     endDate,
     color: "blue",
     note: "",
+    sortOrder,
     createdAt: "",
     updatedAt: "",
   })
 
-  it("担当者の並びを保ち、案件を開始日順（同じなら終了日順）に並べる", () => {
+  it("担当者の並びを保ち、案件を sortOrder の昇順に並べる（開始日には関係しない）", () => {
     const groups = groupProjectsByMember(
       [createMember("a"), createMember("b")],
       [
-        createProject("p1", "a", "2026-10-10", "2026-10-12"),
-        createProject("p2", "b", "2026-10-01", "2026-10-02"),
-        createProject("p3", "a", "2026-10-05", "2026-10-20"),
-        createProject("p4", "a", "2026-10-05", "2026-10-06"),
+        createProject("p1", "a", "2026-10-10", "2026-10-12", 0),
+        createProject("p2", "b", "2026-10-01", "2026-10-02", 0),
+        createProject("p3", "a", "2026-10-05", "2026-10-20", 2),
+        createProject("p4", "a", "2026-10-01", "2026-10-06", 1),
       ],
     )
     expect(groups.map((group) => group.member.id)).toEqual(["a", "b"])
     expect(groups[0]?.projects.map((project) => project.id)).toEqual([
+      "p1",
       "p4",
       "p3",
-      "p1",
     ])
     expect(groups[1]?.projects.map((project) => project.id)).toEqual(["p2"])
+  })
+
+  it("sortOrder が同じなら開始日順、それも同じなら id 順に並べる", () => {
+    const groups = groupProjectsByMember(
+      [createMember("a")],
+      [
+        createProject("p2", "a", "2026-10-05", "2026-10-06", 1),
+        createProject("p3", "a", "2026-10-01", "2026-10-02", 1),
+        createProject("p1", "a", "2026-10-05", "2026-10-20", 1),
+      ],
+    )
+    expect(groups[0]?.projects.map((project) => project.id)).toEqual([
+      "p3",
+      "p1",
+      "p2",
+    ])
   })
 
   it("案件のない担当者は空配列、担当者のいない案件は無視する", () => {
@@ -500,8 +518,8 @@ describe("groupProjectsByMember", () => {
 
   it("渡した配列を並び替えて壊さない", () => {
     const projects = [
-      createProject("p1", "a", "2026-10-10", "2026-10-12"),
-      createProject("p2", "a", "2026-10-01", "2026-10-02"),
+      createProject("p1", "a", "2026-10-10", "2026-10-12", 1),
+      createProject("p2", "a", "2026-10-01", "2026-10-02", 0),
     ]
     groupProjectsByMember([createMember("a")], projects)
     expect(projects.map((project) => project.id)).toEqual(["p1", "p2"])
@@ -553,25 +571,38 @@ describe("hasSameNameMember", () => {
   })
 })
 
-describe("moveId", () => {
-  it("1 つ上・下へ動かした並びを返す", () => {
-    expect(moveId(["a", "b", "c"], "b", "up")).toEqual(["b", "a", "c"])
-    expect(moveId(["a", "b", "c"], "b", "down")).toEqual(["a", "c", "b"])
+describe("moveIdToIndex", () => {
+  it("指定した位置へ動かした並びを返す（上へ・下へ）", () => {
+    expect(moveIdToIndex(["a", "b", "c", "d"], "a", 2)).toEqual([
+      "b",
+      "c",
+      "a",
+      "d",
+    ])
+    expect(moveIdToIndex(["a", "b", "c", "d"], "d", 1)).toEqual([
+      "a",
+      "d",
+      "b",
+      "c",
+    ])
   })
 
-  it("端でこれ以上動かせないときは null", () => {
-    expect(moveId(["a", "b"], "a", "up")).toBeNull()
-    expect(moveId(["a", "b"], "b", "down")).toBeNull()
+  it("同じ位置なら同じ並び", () => {
+    expect(moveIdToIndex(["a", "b"], "b", 1)).toEqual(["a", "b"])
   })
 
-  it("含まれない id・1 件だけの並びは null", () => {
-    expect(moveId(["a", "b"], "x", "up")).toBeNull()
-    expect(moveId(["a"], "a", "down")).toBeNull()
+  it("位置は 0 〜 件数 - 1 に収める", () => {
+    expect(moveIdToIndex(["a", "b", "c"], "b", -3)).toEqual(["b", "a", "c"])
+    expect(moveIdToIndex(["a", "b", "c"], "b", 10)).toEqual(["a", "c", "b"])
+  })
+
+  it("含まれない id は null", () => {
+    expect(moveIdToIndex(["a", "b"], "x", 0)).toBeNull()
   })
 
   it("元の配列は変更しない", () => {
     const ids = ["a", "b"]
-    moveId(ids, "a", "down")
+    moveIdToIndex(ids, "a", 1)
     expect(ids).toEqual(["a", "b"])
   })
 })

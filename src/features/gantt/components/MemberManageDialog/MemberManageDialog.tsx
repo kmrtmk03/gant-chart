@@ -1,4 +1,3 @@
-import type { TMoveDirection } from "../../gantt.type"
 import type { IMemberGroup } from "../../gantt.utils"
 import { ConfirmDialog } from "../ConfirmDialog"
 import { MemberManageRow } from "../MemberManageRow"
@@ -12,8 +11,8 @@ interface IMemberManageDialogProps {
   onCreate: (name: string) => Promise<void>
   /** 名前変更。名前は検証・trim 済みで渡る。失敗したら例外を投げること */
   onRename: (memberId: string, name: string) => Promise<void>
-  /** 1 つ上 / 下へ動かす。失敗したら例外を投げること */
-  onMove: (memberId: string, direction: TMoveDirection) => Promise<void>
+  /** 並べ替え後の全担当者の id の並びを保存する。失敗したら例外を投げること */
+  onReorder: (orderedIds: string[]) => Promise<void>
   /** 削除（配下の案件も消える）。失敗したら例外を投げること */
   onDelete: (memberId: string) => Promise<void>
   onClose: () => void
@@ -22,6 +21,7 @@ interface IMemberManageDialogProps {
 /**
  * 担当者の追加・名前変更・並び替え・削除を行うダイアログ（`<dialog>` を showModal で開く）。
  * 呼び出し側は、開いている間だけこのコンポーネントを置くこと（外すと閉じ、入力中の値も破棄される）。
+ * 並び替えは、行の左端のつかみのドラッグで行う。
  * 削除は確認ダイアログ（`ConfirmDialog`）を挟み、案件を持つ担当者は一緒に消える件数を出す。
  * 開閉・保存の実行は `useMemberManageDialog` が受け持つ。
  */
@@ -29,7 +29,7 @@ export function MemberManageDialog({
   memberGroups,
   onCreate,
   onRename,
-  onMove,
+  onReorder,
   onDelete,
   onClose,
 }: IMemberManageDialogProps) {
@@ -44,7 +44,9 @@ export function MemberManageDialog({
     isBusy,
     actionErrorMessage,
     handleRename,
-    handleMove,
+    registerRow,
+    handleHandlePointerDown,
+    handleLostPointerCapture,
     newName,
     newNameError,
     newNameWarning,
@@ -59,7 +61,7 @@ export function MemberManageDialog({
     memberGroups,
     onCreate,
     onRename,
-    onMove,
+    onReorder,
     onDelete,
     onClose,
   })
@@ -95,11 +97,12 @@ export function MemberManageDialog({
               member={row.member}
               members={members}
               projectCount={row.projectCount}
-              isFirst={row.isFirst}
-              isLast={row.isLast}
+              dragState={row.dragState}
               isBusy={isBusy}
+              registerRow={registerRow}
               onRename={handleRename}
-              onMove={handleMove}
+              onHandlePointerDown={handleHandlePointerDown}
+              onHandleLostPointerCapture={handleLostPointerCapture}
               onRequestDelete={requestDelete}
             />
           ))}

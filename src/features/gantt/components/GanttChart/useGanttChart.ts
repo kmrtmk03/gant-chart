@@ -17,8 +17,15 @@ import { useGanttPage } from "../../hooks/useGanttPage"
  */
 export function useGanttChart() {
   const page = useGanttPage()
-  const { memberGroups, range, sidePanel, scroll, memberManagement, barDrag } =
-    page
+  const {
+    memberGroups,
+    range,
+    sidePanel,
+    scroll,
+    memberManagement,
+    barDrag,
+    projectReorder,
+  } = page
 
   if (page.loadError) {
     return {
@@ -102,12 +109,18 @@ export function useGanttChart() {
       errorMessage: barDrag.error?.message ?? null,
       dismissError: barDrag.dismissError,
     },
+    // 左のリストでの案件の並び替え（並びの保存と、失敗したときのエラー表示）
+    projectReorder: {
+      reorder: projectReorder.reorder,
+      errorMessage: projectReorder.error?.message ?? null,
+      dismissError: projectReorder.dismissError,
+    },
     // 担当者の管理ダイアログ
     memberDialog: {
       isOpen: memberManagement.isDialogOpen,
       create: memberManagement.createMember,
       rename: memberManagement.renameMember,
-      move: memberManagement.moveMember,
+      reorder: memberManagement.reorderMembers,
       remove: memberManagement.deleteMember,
       close: memberManagement.closeDialog,
     },

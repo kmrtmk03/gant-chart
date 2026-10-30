@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent, SyntheticEvent } from "react"
 
-import type { TMoveDirection } from "../../gantt.type"
 import {
   hasSameNameMember,
   toError,
   validateMemberName,
 } from "../../gantt.utils"
 import type { IMemberGroup } from "../../gantt.utils"
+import { useDragReorder } from "../../hooks/useDragReorder"
 
 interface IUseMemberManageDialogParams {
   /** 担当者（表示順）と配下の案件。案件の数の表示と、削除の確認に使う */
@@ -16,8 +16,8 @@ interface IUseMemberManageDialogParams {
   onCreate: (name: string) => Promise<void>
   /** 名前変更。名前は検証・trim 済みで渡す。失敗したら例外を投げること */
   onRename: (memberId: string, name: string) => Promise<void>
-  /** 1 つ上 / 下へ動かす。失敗したら例外を投げること */
-  onMove: (memberId: string, direction: TMoveDirection) => Promise<void>
+  /** 並べ替え後の全担当者の id の並びを保存する。失敗したら例外を投げること */
+  onReorder: (orderedIds: string[]) => Promise<void>
   /** 削除（配下の案件も消える）。失敗したら例外を投げること */
   onDelete: (memberId: string) => Promise<void>
   onClose: () => void
@@ -28,13 +28,14 @@ interface IUseMemberManageDialogParams {
  * - コンポーネントがマウントされている間が「開いている」。マウント時に showModal し、
  *   外す（アンマウント）と閉じる。開き直すたびに入力中の値やエラーは作り直される
  * - 保存系の操作は 1 つずつ実行し、実行中は `isBusy` で全ボタンを止める。失敗は `actionError` に載せて残す
+ * - 並び替えは行のつかみのドラッグ（`useDragReorder`）。保存中（`isBusy`）はドラッグを始められない
  * - 返す `dialogRef` は必ず `<dialog>` の `ref` に、`titleId` は見出しの `id` と `aria-labelledby` に渡すこと
  */
 export function useMemberManageDialog({
   memberGroups,
   onCreate,
   onRename,
-  onMove,
+  onReorder,
   onDelete,
   onClose,
 }: IUseMemberManageDialogParams) {
@@ -106,13 +107,52 @@ export function useMemberManageDialog({
     [runAction, onRename],
   )
 
-  /** 行から呼ぶ並び替え */
-  const handleMove = useCallback(
-    (memberId: string, direction: TMoveDirection) => {
-      void runAction(() => onMove(memberId, direction))
-    },
-    [runAction, onMove],
+  // ---- 並び替え ----
+
+  // useDragReorder の effect やハンドラーが描画のたびに作り直されないよう、担当者が変わったときだけ作る
+  const memberIds = useMemo(
+    () => memberGroups.map((group) => group.member.id),
+    [memberGroups],
   )
+
+  /**
+   * ドラッグで並べ替えた並びを保存する。ほかの操作と同じく runAction を通す（失敗は `actionError` に出す）。
+   * runAction は例外を投げないので、useDragReorder の「例外を投げない」契約も満たす
+   */
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      await runAction(() => onReorder(orderedIds))
+    },
+    [runAction, onReorder],
+  )
+
+  const {
+    displayIds,
+    getRowState,
+    registerRow,
+    handleHandlePointerDown,
+    handleLostPointerCapture,
+  } = useDragReorder({
+    ids: memberIds,
+    onReorder: handleReorder,
+    isDisabled: isBusy,
+  })
+
+  // 行は displayIds の順（保存中は並べ替え後の順）に並べる
+  const groupById = new Map(
+    memberGroups.map((group) => [group.member.id, group]),
+  )
+  const rows = displayIds.flatMap((id) => {
+    const group = groupById.get(id)
+    if (group === undefined) return []
+    return [
+      {
+        member: group.member,
+        projectCount: group.projects.length,
+        dragState: getRowState(id),
+      },
+    ]
+  })
 
   // ---- 追加 ----
 
@@ -183,16 +223,14 @@ export function useMemberManageDialog({
     handleCancel,
     // 一覧
     members,
-    rows: memberGroups.map((group, index) => ({
-      member: group.member,
-      projectCount: group.projects.length,
-      isFirst: index === 0,
-      isLast: index === memberGroups.length - 1,
-    })),
+    rows,
     isBusy,
     actionErrorMessage: actionError?.message ?? null,
     handleRename,
-    handleMove,
+    // 並び替え（行の要素の登録と、つかみに渡すハンドラー）
+    registerRow,
+    handleHandlePointerDown,
+    handleLostPointerCapture,
     // 追加
     newName,
     newNameError,

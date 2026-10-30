@@ -13,8 +13,10 @@ export const STORAGE_KEYS = {
 /**
  * 保存データの構造の現在のバージョン。
  * IMember / IProject の構造を変えたときは 1 つ上げ、localStorageRepository に移行処理を足す。
+ * - 1: 最初の構造
+ * - 2: 案件に担当者の中での表示順（`IProject.sortOrder`）を追加
  */
-export const CURRENT_SCHEMA_VERSION = 1
+export const CURRENT_SCHEMA_VERSION = 2
 
 /**
  * 帯の色プリセット。キーの一覧は TBarColor と一致させる（Record で漏れを型チェックする）。

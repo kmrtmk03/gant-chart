@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { STORAGE_KEYS } from "../gantt.constants"
+import { CURRENT_SCHEMA_VERSION, STORAGE_KEYS } from "../gantt.constants"
 import type { TProjectInput } from "../gantt.type"
 import {
   GanttNotFoundError,
@@ -275,10 +275,25 @@ describe("案件", () => {
     expect(project).toEqual({
       ...buildProjectInput(tanaka.id),
       id: expect.any(String),
+      sortOrder: 0,
       createdAt: CREATED_AT.toISOString(),
       updatedAt: CREATED_AT.toISOString(),
     })
     await expect(repository.listProjects()).resolves.toEqual([project])
+  })
+
+  it("追加した案件は、その担当者の一番下（担当者ごとの sortOrder の最大値 + 1）に入る", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const sato = await repository.createMember({ name: "佐藤" })
+
+    const first = await repository.createProject(buildProjectInput(tanaka.id))
+    const second = await repository.createProject(buildProjectInput(tanaka.id))
+    const other = await repository.createProject(buildProjectInput(sato.id))
+    await repository.reorderProjects(tanaka.id, [second.id, first.id])
+    const third = await repository.createProject(buildProjectInput(tanaka.id))
+
+    expect(other.sortOrder).toBe(0)
+    expect(third.sortOrder).toBe(2)
   })
 
   it("開始日と終了日が同じ日の案件を追加できる", async () => {
@@ -359,6 +374,39 @@ describe("案件", () => {
     expect(updated.memberId).toBe(sato.id)
   })
 
+  it("担当者を付け替えると付け替え先の一番下に入り、付け替え元の案件の sortOrder は詰め直さない", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const sato = await repository.createMember({ name: "佐藤" })
+    const moving = await repository.createProject(buildProjectInput(tanaka.id))
+    const staying = await repository.createProject(buildProjectInput(tanaka.id))
+    await repository.createProject(buildProjectInput(sato.id))
+    await repository.createProject(buildProjectInput(sato.id))
+
+    const updated = await repository.updateProject(moving.id, {
+      memberId: sato.id,
+    })
+
+    expect(updated.sortOrder).toBe(2)
+    const projects = await repository.listProjects()
+    expect(projects.find((project) => project.id === staying.id)).toEqual(
+      staying,
+    )
+  })
+
+  it("担当者を変えない更新では sortOrder を変えない（入力に混ざっていても無視する）", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    await repository.createProject(buildProjectInput(tanaka.id))
+    const project = await repository.createProject(buildProjectInput(tanaka.id))
+
+    const updated = await repository.updateProject(project.id, {
+      memberId: tanaka.id,
+      name: "改名",
+      ...{ sortOrder: 99 },
+    })
+
+    expect(updated.sortOrder).toBe(1)
+  })
+
   it("存在しない担当者へは付け替えられない（GanttNotFoundError）", async () => {
     const tanaka = await repository.createMember({ name: "田中" })
     const project = await repository.createProject(buildProjectInput(tanaka.id))
@@ -396,6 +444,97 @@ describe("案件", () => {
 
   it("存在しない案件を削除すると GanttNotFoundError", async () => {
     await expect(repository.deleteProject("missing")).rejects.toThrow(
+      GanttNotFoundError,
+    )
+  })
+})
+
+describe("案件の並び替え", () => {
+  it("渡した順に sortOrder を振り直し、順番が変わった案件だけ updatedAt を進める", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const a = await repository.createProject(buildProjectInput(tanaka.id))
+    const b = await repository.createProject(buildProjectInput(tanaka.id))
+    const c = await repository.createProject(buildProjectInput(tanaka.id))
+    vi.setSystemTime(UPDATED_AT)
+
+    const reordered = await repository.reorderProjects(tanaka.id, [
+      a.id,
+      c.id,
+      b.id,
+    ])
+
+    expect(reordered).toEqual([
+      a,
+      { ...c, sortOrder: 1, updatedAt: UPDATED_AT.toISOString() },
+      { ...b, sortOrder: 2, updatedAt: UPDATED_AT.toISOString() },
+    ])
+  })
+
+  it("保存順と、ほかの担当者の案件は変えない", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const sato = await repository.createMember({ name: "佐藤" })
+    const a = await repository.createProject(buildProjectInput(tanaka.id))
+    const other = await repository.createProject(buildProjectInput(sato.id))
+    const b = await repository.createProject(buildProjectInput(tanaka.id))
+
+    await repository.reorderProjects(tanaka.id, [b.id, a.id])
+
+    const projects = await repository.listProjects()
+    expect(projects.map((project) => project.id)).toEqual([
+      a.id,
+      other.id,
+      b.id,
+    ])
+    expect(projects.map((project) => project.sortOrder)).toEqual([1, 0, 0])
+    // 別のインスタンスから読んでも残っている（再読み込み後も残る）
+    await expect(
+      new LocalStorageRepository(storage).listProjects(),
+    ).resolves.toEqual(projects)
+  })
+
+  it("案件のない担当者は空配列で並び替えられる", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+
+    await expect(repository.reorderProjects(tanaka.id, [])).resolves.toEqual([])
+  })
+
+  it("id が重複していると GanttValidationError で、保存内容は変わらない", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const a = await repository.createProject(buildProjectInput(tanaka.id))
+    const b = await repository.createProject(buildProjectInput(tanaka.id))
+
+    await expect(
+      repository.reorderProjects(tanaka.id, [a.id, a.id, b.id]),
+    ).rejects.toThrow(GanttValidationError)
+    await expect(repository.listProjects()).resolves.toEqual([a, b])
+  })
+
+  it("足りない id があると GanttValidationError", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const a = await repository.createProject(buildProjectInput(tanaka.id))
+    await repository.createProject(buildProjectInput(tanaka.id))
+
+    await expect(repository.reorderProjects(tanaka.id, [a.id])).rejects.toThrow(
+      GanttValidationError,
+    )
+  })
+
+  it("ほかの担当者の案件・存在しない id があると GanttValidationError", async () => {
+    const tanaka = await repository.createMember({ name: "田中" })
+    const sato = await repository.createMember({ name: "佐藤" })
+    const a = await repository.createProject(buildProjectInput(tanaka.id))
+    const other = await repository.createProject(buildProjectInput(sato.id))
+
+    await expect(
+      repository.reorderProjects(tanaka.id, [a.id, other.id]),
+    ).rejects.toThrow(GanttValidationError)
+    await expect(
+      repository.reorderProjects(tanaka.id, [a.id, "missing"]),
+    ).rejects.toThrow(GanttValidationError)
+  })
+
+  it("存在しない担当者を指定すると GanttNotFoundError", async () => {
+    await expect(repository.reorderProjects("missing", [])).rejects.toThrow(
       GanttNotFoundError,
     )
   })
@@ -453,7 +592,9 @@ describe("スキーマのバージョン", () => {
   it("初回の読み書きで現在のバージョンを保存する", async () => {
     await repository.listMembers()
 
-    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
   })
 
   it("読めないバージョンは現在のバージョンで上書きする", async () => {
@@ -461,7 +602,9 @@ describe("スキーマのバージョン", () => {
 
     await repository.listMembers()
 
-    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
   })
 
   it("アプリより新しいバージョンなら読み書きを拒否し、保存データをそのまま残す", async () => {
@@ -486,11 +629,12 @@ describe("スキーマのバージョン", () => {
   })
 
   it("拒否したエラーに保存データと対応のバージョンが入っている", async () => {
-    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    const newerVersion = CURRENT_SCHEMA_VERSION + 1
+    storage.setItem(STORAGE_KEYS.schemaVersion, String(newerVersion))
 
     await expect(repository.listMembers()).rejects.toMatchObject({
-      storedVersion: 2,
-      supportedVersion: 1,
+      storedVersion: newerVersion,
+      supportedVersion: CURRENT_SCHEMA_VERSION,
     })
   })
 
@@ -501,7 +645,8 @@ describe("スキーマのバージョン", () => {
 
     // 新しいアプリの別タブが、同じ Storage のデータを新しい構造に移行した
     const migratedMembers = JSON.stringify({ items: [{ id: tanaka.id }] })
-    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    const newerVersion = String(CURRENT_SCHEMA_VERSION + 1)
+    storage.setItem(STORAGE_KEYS.schemaVersion, newerVersion)
     storage.setItem(STORAGE_KEYS.members, migratedMembers)
 
     await expect(repository.listMembers()).rejects.toThrow(
@@ -510,9 +655,115 @@ describe("スキーマのバージョン", () => {
     await expect(repository.createMember({ name: "佐藤" })).rejects.toThrow(
       GanttUnsupportedSchemaError,
     )
-    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(newerVersion)
     expect(storage.getItem(STORAGE_KEYS.members)).toBe(migratedMembers)
   })
+})
+
+describe("スキーマの移行（バージョン 1 → 2）", () => {
+  /** バージョン 1 の形の担当者（構造はバージョン 2 と同じ） */
+  const buildMemberV1 = (id: string) => ({
+    id,
+    name: id,
+    sortOrder: 0,
+    createdAt: CREATED_AT.toISOString(),
+    updatedAt: CREATED_AT.toISOString(),
+  })
+  /** バージョン 1 の形の案件（sortOrder がない） */
+  const buildProjectV1 = (
+    id: string,
+    memberId: string,
+    startDate: string,
+    endDate: string,
+  ) => ({
+    id,
+    memberId,
+    name: id,
+    startDate,
+    endDate,
+    color: "blue",
+    note: "",
+    createdAt: CREATED_AT.toISOString(),
+    updatedAt: CREATED_AT.toISOString(),
+  })
+
+  /** バージョン 1 のデータを保存した状態にする */
+  const storeV1Data = (projects: unknown) => {
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(
+      STORAGE_KEYS.members,
+      JSON.stringify([buildMemberV1("a"), buildMemberV1("b")]),
+    )
+    storage.setItem(STORAGE_KEYS.projects, JSON.stringify(projects))
+  }
+
+  it("案件が 1 件も消えず、担当者ごとに開始日順（同じなら終了日順・保存順）で 0 から sortOrder が付く", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const v1Projects = [
+      buildProjectV1("a-late", "a", "2026-10-20", "2026-10-25"),
+      buildProjectV1("b-only", "b", "2026-10-01", "2026-10-02"),
+      buildProjectV1("a-early-long", "a", "2026-10-05", "2026-10-30"),
+      buildProjectV1("a-early-short", "a", "2026-10-05", "2026-10-06"),
+      buildProjectV1("a-early-short-2", "a", "2026-10-05", "2026-10-06"),
+      // 担当者が見つからない案件も残し、memberId ごとに番号を振る
+      buildProjectV1("ghost-2", "ghost", "2026-11-01", "2026-11-02"),
+      buildProjectV1("ghost-1", "ghost", "2026-10-01", "2026-10-02"),
+    ]
+    storeV1Data(v1Projects)
+
+    const projects = await repository.listProjects()
+
+    expect(warn).not.toHaveBeenCalled()
+    // 保存順はそのままで、各案件に sortOrder が足されている
+    expect(projects).toEqual([
+      { ...v1Projects[0], sortOrder: 3 },
+      { ...v1Projects[1], sortOrder: 0 },
+      { ...v1Projects[2], sortOrder: 2 },
+      { ...v1Projects[3], sortOrder: 0 },
+      { ...v1Projects[4], sortOrder: 1 },
+      { ...v1Projects[5], sortOrder: 1 },
+      { ...v1Projects[6], sortOrder: 0 },
+    ])
+    await expect(repository.listMembers()).resolves.toEqual([
+      buildMemberV1("a"),
+      buildMemberV1("b"),
+    ])
+  })
+
+  it("移行後はバージョン 2 として保存され、再読み込みしても移行し直さない", async () => {
+    storeV1Data([buildProjectV1("p1", "a", "2026-10-01", "2026-10-02")])
+
+    await repository.listProjects()
+
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+    const migrated = storage.getItem(STORAGE_KEYS.projects)
+    await new LocalStorageRepository(storage).listProjects()
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(migrated)
+  })
+
+  it("案件が未保存なら何もせず、バージョンだけを上げる", async () => {
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+
+    await expect(repository.listProjects()).resolves.toEqual([])
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBeNull()
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+  })
+
+  it.each([
+    ["JSON として読めない", "{壊れた JSON"],
+    ["配列でない", JSON.stringify({ not: "array" })],
+    ["日付のない要素がある", JSON.stringify([{ id: "p1", memberId: "a" }])],
+  ])(
+    "壊れたデータ（%s）でも例外にならず、データは書き換えない",
+    async (_, raw) => {
+      vi.spyOn(console, "warn").mockImplementation(() => {})
+      storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+      storage.setItem(STORAGE_KEYS.projects, raw)
+
+      await expect(repository.listProjects()).resolves.toEqual([])
+      expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    },
+  )
 })
 
 describe("実行環境", () => {

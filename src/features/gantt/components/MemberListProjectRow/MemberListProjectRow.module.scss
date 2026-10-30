@@ -1,0 +1,89 @@
+@use "tokens";
+
+// 左端に並び替えのつかみ、その右に色の丸と案件名を置く。行の形は担当者行・「案件を追加」の行
+// （MemberListGroup.module.scss）とそろえる。挿入位置の線（::before / ::after）の基準にするため position: relative にする
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-2;
+  padding: 0 tokens.$space-3 0 tokens.$space-1;
+  border-bottom: 1px solid tokens.$color-border;
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-sm;
+  transition: background-color tokens.$transition-fast;
+
+  &:hover {
+    background: tokens.$color-hover;
+    color: tokens.$color-text;
+  }
+}
+
+// ドラッグ中の行。影を付けて浮かせ、ほかの行より上に描く（位置は transform のインラインスタイルで動かす）。
+// 下の行の文字が透けて読みにくくならないよう、透明にはしない
+.dragging {
+  z-index: 1;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-text;
+
+  &:hover {
+    background: tokens.$color-elevated;
+  }
+}
+
+// 挿入位置の目印。落とす先の行の上（before）か下（after）に横線を引く
+.dropBefore::before,
+.dropAfter::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: tokens.$color-primary;
+  content: "";
+  pointer-events: none;
+}
+
+.dropBefore::before {
+  top: -1px;
+}
+
+.dropAfter::after {
+  bottom: -1px;
+}
+
+// 案件行いっぱいに広げ、色の丸と案件名をまとめてクリックできるようにする
+.projectButton {
+  display: flex;
+  flex: 1;
+  justify-content: flex-start;
+  gap: tokens.$space-2;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: inherit;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background: none;
+  }
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 色は動的な値なので、背景色だけインラインスタイルで渡す
+.colorDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px tokens.$color-hover;
+}

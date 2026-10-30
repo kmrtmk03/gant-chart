@@ -19,6 +19,14 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 /**
+ * 案件の表示順（0 以上の整数）かを確かめる。
+ * 担当者ごとに 0 から振る値なので、負の数・小数・NaN は並び替えの計算（id の並びの添字）と合わなくなるため弾く
+ */
+function isProjectSortOrder(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+}
+
+/**
  * 日時（ISO 8601 の文字列）として読めるかを確かめる。
  * 並び替えや表示で Date に変換することがあるため、変換できない文字列は弾く。
  */
@@ -90,6 +98,7 @@ export function isProject(value: unknown): value is IProject {
     value.startDate <= value.endDate &&
     isBarColor(value.color) &&
     typeof value.note === "string" &&
+    isProjectSortOrder(value.sortOrder) &&
     isDateTimeString(value.createdAt) &&
     isDateTimeString(value.updatedAt)
   )

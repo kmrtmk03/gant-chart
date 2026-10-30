@@ -49,19 +49,29 @@
   background: tokens.$color-surface;
 }
 
-// 帯のドラッグの保存に失敗したときのお知らせ。画面の左下に浮かせる
-// （右側はサイドパネルが開くと隠れるため。パネルより上の z-index にもしておく）
+// 保存（帯のドラッグ・案件の並び替え）に失敗したときのお知らせ。画面の左下に浮かせる
+// （右側はサイドパネルが開くと隠れるため。パネルより上の z-index にもしておく）。
+// 複数出ても重ならないよう、まとめて縦に積む
 $notice-max-width: 480px;
 
-.notice {
+.notices {
   position: fixed;
   bottom: tokens.$space-6;
   left: tokens.$space-6;
   z-index: tokens.$z-index-notice;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: tokens.$space-2;
+  max-width: min($notice-max-width, calc(100% - #{tokens.$space-6 * 2}));
+  // お知らせのない部分で、下の画面の操作を妨げない
+  pointer-events: none;
+}
+
+.notice {
+  display: flex;
   align-items: center;
   gap: tokens.$space-3;
-  max-width: min($notice-max-width, calc(100% - #{tokens.$space-6 * 2}));
   padding: tokens.$space-3 tokens.$space-4;
   border: 1px solid tokens.$color-danger;
   border-radius: tokens.$radius-md;
@@ -69,4 +79,5 @@ $notice-max-width: 480px;
   box-shadow: tokens.$shadow-panel;
   color: tokens.$color-danger;
   font-size: tokens.$font-size-md;
+  pointer-events: auto;
 }

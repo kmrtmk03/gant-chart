@@ -44,12 +44,12 @@ export function useGanttPage() {
     createProject,
     updateProject,
     deleteProject,
+    reorderProjects,
     removeProjectsOfMember,
   } = useProjects(repository)
   const { sidePanelState, openCreatePanel, openEditPanel, closePanel } =
     useSidePanel()
   const memberManagement = useMemberManagement({
-    members,
     createMember,
     renameMember,
     reorderMembers,
@@ -136,6 +136,32 @@ export function useGanttPage() {
     setPeriodChangeError(null)
   }, [])
 
+  // 左のリストで案件を並べ替えたときの保存に失敗したときのエラー。画面の下に出し、閉じるか次の保存で消す
+  const [projectReorderError, setProjectReorderError] = useState<Error | null>(
+    null,
+  )
+
+  /**
+   * 左のリストのドラッグで並べ替えた案件の並びを保存する。失敗は例外にせず `projectReorderError` に載せる
+   * （リストは保存が終わると元の並びに戻るので、失敗したことを画面で知らせる）。
+   * `MemberList` の React.memo を保つため、参照は `reorderProjects` が変わらない限り同じ。
+   */
+  const handleReorderProjects = useCallback(
+    async (memberId: string, orderedIds: string[]) => {
+      setProjectReorderError(null)
+      try {
+        await reorderProjects(memberId, orderedIds)
+      } catch (caught) {
+        setProjectReorderError(toError(caught))
+      }
+    },
+    [reorderProjects],
+  )
+
+  const handleDismissProjectReorderError = useCallback(() => {
+    setProjectReorderError(null)
+  }, [])
+
   // 編集中の案件は state に持たず、projectId から一覧を引いて求める（データと表示をずらさない）。
   // 他のタブで削除されるなどして見つからないときは null になり、パネルは出さない
   const editingProject =
@@ -203,6 +229,12 @@ export function useGanttPage() {
       changePeriod: handleChangeProjectPeriod,
       error: periodChangeError,
       dismissError: handleDismissPeriodChangeError,
+    },
+    // 左のリストでの案件の並び替え（並びの保存と、失敗したときのエラー）
+    projectReorder: {
+      reorder: handleReorderProjects,
+      error: projectReorderError,
+      dismissError: handleDismissProjectReorderError,
     },
     // 担当者の管理ダイアログ（開閉と、追加・名前変更・並び替え・削除の操作）
     memberManagement,

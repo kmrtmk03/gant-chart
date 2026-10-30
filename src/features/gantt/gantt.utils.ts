@@ -8,12 +8,7 @@ import {
 } from "date-fns"
 
 import { DAY_COLUMN_WIDTH, MEMBER_NAME_MAX_LENGTH } from "./gantt.constants"
-import type {
-  IMember,
-  IProject,
-  TDateString,
-  TMoveDirection,
-} from "./gantt.type"
+import type { IMember, IProject, TDateString } from "./gantt.type"
 
 // MEMO: 日付は "YYYY-MM-DD" の文字列で受け渡し、Date はこのファイルの関数の内側でだけ扱う。
 // Date はローカル時刻で組み立てる（UTC だと日本時間の早朝に日付がずれるため）。
@@ -110,7 +105,7 @@ export interface IMonthSegment {
 /** 担当者と、その配下の案件のまとまり。左リストとタイムラインが同じ並びで描くために使う */
 export interface IMemberGroup {
   member: IMember
-  /** 開始日の昇順（同じなら終了日の昇順）に並んだ案件 */
+  /** 表示順（sortOrder の昇順。同じなら開始日順 → id 順）に並んだ案件 */
   projects: IProject[]
 }
 
@@ -144,7 +139,8 @@ export function getMonthSegments(columns: IDayColumn[]): IMonthSegment[] {
 }
 
 /**
- * 担当者ごとに案件をまとめる。担当者の並びは渡した順のまま、案件は開始日順に並べる。
+ * 担当者ごとに案件をまとめる。担当者の並びは渡した順のまま、案件は表示順（sortOrder の昇順）に並べる。
+ * sortOrder が同じ案件（別のタブで同時に追加したときなど）は、開始日順 → id 順にして並びを 1 つに決める。
  * 担当者が見つからない案件（memberId が不正）は、どの担当者にも属さないので含めない。
  */
 export function groupProjectsByMember(
@@ -157,8 +153,9 @@ export function groupProjectsByMember(
       .filter((project) => project.memberId === member.id)
       .sort(
         (a, b) =>
+          a.sortOrder - b.sortOrder ||
           a.startDate.localeCompare(b.startDate) ||
-          a.endDate.localeCompare(b.endDate),
+          a.id.localeCompare(b.id),
       ),
   }))
 }
@@ -319,23 +316,18 @@ export function hasSameNameMember(
 }
 
 /**
- * id の並びのうち `id` を 1 つ上 / 下へ動かした新しい並びを返す。
- * `id` が含まれない、または端でこれ以上動かせないときは null（元の配列は変更しない）。
+ * id の並びのうち `id` を `toIndex` 番目へ動かした新しい並びを返す（ドラッグによる並び替え用）。
+ * `toIndex` は 0 〜 件数 - 1 に収める。`id` が含まれないときは null（元の配列は変更しない）。
  */
-export function moveId(
+export function moveIdToIndex(
   ids: string[],
   id: string,
-  direction: TMoveDirection,
+  toIndex: number,
 ): string[] | null {
-  const index = ids.indexOf(id)
-  if (index === -1) return null
-  const targetIndex = direction === "up" ? index - 1 : index + 1
-  if (targetIndex < 0 || targetIndex >= ids.length) return null
-  const moved = [...ids]
-  const target = moved[targetIndex]
-  const current = moved[index]
-  if (target === undefined || current === undefined) return null
-  moved[index] = target
-  moved[targetIndex] = current
+  const fromIndex = ids.indexOf(id)
+  if (fromIndex === -1) return null
+  const clampedIndex = Math.min(Math.max(toIndex, 0), ids.length - 1)
+  const moved = ids.filter((_, index) => index !== fromIndex)
+  moved.splice(clampedIndex, 0, id)
   return moved
 }

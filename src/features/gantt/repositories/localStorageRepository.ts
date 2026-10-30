@@ -20,6 +20,7 @@ import {
   GanttValidationError,
 } from "./ganttRepository.errors"
 import type { IGanttRepository } from "./ganttRepository.type"
+import { migrateSchemaV1ToV2 } from "./localStorageMigrations"
 
 /** Storage に書き込む 1 件分（キーと、書き込む文字列） */
 interface IStorageEntry {
@@ -35,11 +36,12 @@ interface IPreviousStorageEntry {
 
 /**
  * スキーマの移行処理。キーは「移行元のバージョン」で、その 1 つ上のバージョンへ書き換える。
- * MEMO: 構造を変えて CURRENT_SCHEMA_VERSION を 2 にしたら、ここに `1: (storage) => { ... }` を足す。
- * 今はバージョン 1 しかないので空。
+ * MEMO: 構造を変えて CURRENT_SCHEMA_VERSION を上げたら、ここに `{移行元}: (storage) => { ... }` を足す。
+ * 移行処理の書き方の注意は localStorageMigrations.ts の先頭を参照
  */
-const SCHEMA_MIGRATIONS: Partial<Record<number, (storage: Storage) => void>> =
-  {}
+const SCHEMA_MIGRATIONS: Partial<Record<number, (storage: Storage) => void>> = {
+  1: migrateSchemaV1ToV2,
+}
 
 /**
  * 新しいデータの ID を作る。
@@ -70,9 +72,20 @@ function getCurrentDateTime(): string {
   return new Date().toISOString()
 }
 
-/** 次に追加する担当者の sortOrder（今いる担当者の最大値 + 1。いなければ 0）を返す */
-function getNextSortOrder(members: IMember[]): number {
-  return members.reduce((max, member) => Math.max(max, member.sortOrder + 1), 0)
+/**
+ * 一番下に足すときの sortOrder（渡した一覧の最大値 + 1。空なら 0）を返す。
+ * 担当者は全員を、案件は追加先の担当者の案件だけを渡す
+ */
+function getNextSortOrder(items: { sortOrder: number }[]): number {
+  return items.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0)
+}
+
+/** 指定した担当者の案件だけを取り出す */
+function filterProjectsOfMember(
+  projects: IProject[],
+  memberId: string,
+): IProject[] {
+  return projects.filter((project) => project.memberId === memberId)
 }
 
 /**
@@ -243,6 +256,10 @@ export class LocalStorageRepository implements IGanttRepository {
       endDate: input.endDate,
       color: input.color,
       note: input.note,
+      // 追加先の担当者の一番下に入れる
+      sortOrder: getNextSortOrder(
+        filterProjectsOfMember(projects, input.memberId),
+      ),
       createdAt: timestamp,
       updatedAt: timestamp,
     }
@@ -258,20 +275,25 @@ export class LocalStorageRepository implements IGanttRepository {
     if (current === undefined) throw new GanttNotFoundError("project", id)
 
     // 指定されたフィールドだけを差し替える（undefined は「変更しない」として扱う）。
-    // id と createdAt は input に混ざっていても変えない
+    // id・sortOrder・createdAt は input に混ざっていても変えない
+    const memberId = input.memberId ?? current.memberId
+    const isMemberChanged = memberId !== current.memberId
+    if (isMemberChanged) this.assertMemberExists(memberId)
     const updated: IProject = {
       id: current.id,
-      memberId: input.memberId ?? current.memberId,
+      memberId,
       name: input.name ?? current.name,
       startDate: input.startDate ?? current.startDate,
       endDate: input.endDate ?? current.endDate,
       color: input.color ?? current.color,
       note: input.note ?? current.note,
+      // 担当者を付け替えたときは、付け替え先の一番下に入れる。
+      // 付け替え元に残った案件の sortOrder は詰め直さない（飛び番があっても並びは変わらないため）
+      sortOrder: isMemberChanged
+        ? getNextSortOrder(filterProjectsOfMember(projects, memberId))
+        : current.sortOrder,
       createdAt: current.createdAt,
       updatedAt: getCurrentDateTime(),
-    }
-    if (updated.memberId !== current.memberId) {
-      this.assertMemberExists(updated.memberId)
     }
     validateProject(updated)
 
@@ -279,6 +301,54 @@ export class LocalStorageRepository implements IGanttRepository {
       projects.map((project) => (project.id === id ? updated : project)),
     )
     return updated
+  }
+
+  async reorderProjects(
+    memberId: string,
+    orderedIds: string[],
+  ): Promise<IProject[]> {
+    this.assertMemberExists(memberId)
+    const projects = this.readProjects()
+    // 並び替えの対象は指定した担当者の案件だけ。別の担当者の案件の id は「存在しない」として扱う
+    const projectById = new Map(
+      filterProjectsOfMember(projects, memberId).map((project) => [
+        project.id,
+        project,
+      ]),
+    )
+
+    if (new Set(orderedIds).size !== orderedIds.length) {
+      throw new GanttValidationError("並び替えの id が重複しています")
+    }
+
+    // 渡された順に sortOrder を 0 から振り直す。順番が変わらない案件は updatedAt も変えない
+    const timestamp = getCurrentDateTime()
+    const reordered = orderedIds.map((id, index) => {
+      const project = projectById.get(id)
+      if (project === undefined) {
+        throw new GanttValidationError(
+          `並び替えの id に、この担当者の案件ではない id が含まれています（${id}）`,
+        )
+      }
+      if (project.sortOrder === index) return project
+      return { ...project, sortOrder: index, updatedAt: timestamp }
+    })
+
+    // 重複も余計な id もないので、件数が同じならその担当者の案件がちょうど 1 回ずつ含まれている
+    if (reordered.length !== projectById.size) {
+      throw new GanttValidationError(
+        "並び替えには、その担当者のすべての案件の id を指定してください",
+      )
+    }
+
+    // 保存順（配列の並び）は変えず、並び替えた案件だけを差し替える
+    const reorderedById = new Map(
+      reordered.map((project) => [project.id, project]),
+    )
+    this.writeProjects(
+      projects.map((project) => reorderedById.get(project.id) ?? project),
+    )
+    return reordered
   }
 
   async deleteProject(id: string): Promise<void> {

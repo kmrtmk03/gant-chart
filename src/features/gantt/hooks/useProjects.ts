@@ -5,9 +5,9 @@ import { toError } from "../gantt.utils"
 import type { IGanttRepository } from "../repositories/ganttRepository.type"
 
 /**
- * 案件の一覧を repository から読み込んで保持し、追加・編集・削除の操作を提供する。
+ * 案件の一覧を repository から読み込んで保持し、追加・編集・削除・並び替えの操作を提供する。
  * 読み込みはクライアント側の useEffect で行う（localStorage はサーバー側で読めないため）。
- * 追加・編集・削除は repository への保存が成功してから state を更新する。
+ * 操作は repository への保存が成功してから state を更新する。
  * 失敗したときは state を変えずにエラーをそのまま投げるので、呼び出し側（フォーム）で表示すること。
  *
  * @param repository コンポーネントの外で 1 回だけ作ったものを渡すこと（毎回変わると再読み込みが走る）
@@ -44,7 +44,7 @@ export function useProjects(repository: IGanttRepository) {
     }
   }, [repository])
 
-  /** 案件を追加する。保存に成功したら一覧の末尾に足す（表示順は画面側で開始日順に並べる） */
+  /** 案件を追加する。保存に成功したら一覧の末尾に足す（表示順は画面側で sortOrder の順に並べる） */
   const createProject = useCallback(
     async (input: TProjectInput) => {
       const created = await repository.createProject(input)
@@ -81,6 +81,25 @@ export function useProjects(repository: IGanttRepository) {
   )
 
   /**
+   * 担当者の中の案件を並び替える。`orderedIds` はその担当者の案件の id を過不足なく 1 回ずつ含めること。
+   * 保存に成功したら、repository が返した並び替え後の案件で、一覧のその担当者の案件を差し替える
+   */
+  const reorderProjects = useCallback(
+    async (memberId: string, orderedIds: string[]) => {
+      const reordered = await repository.reorderProjects(memberId, orderedIds)
+      const reorderedById = new Map(
+        reordered.map((project) => [project.id, project]),
+      )
+      setProjects((prev) =>
+        prev === null
+          ? prev
+          : prev.map((project) => reorderedById.get(project.id) ?? project),
+      )
+    },
+    [repository],
+  )
+
+  /**
    * 指定した担当者の案件を、読み込み直さずに一覧から取り除く。
    * 担当者の削除で repository が配下の案件も消したあとに呼ぶ（再読み込みの失敗を挟まないため）
    */
@@ -101,6 +120,7 @@ export function useProjects(repository: IGanttRepository) {
     createProject,
     updateProject,
     deleteProject,
+    reorderProjects,
     removeProjectsOfMember,
   }
 }
