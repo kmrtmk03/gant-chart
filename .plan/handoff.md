@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 10（案件の完了と、完了済みの表示切り替え）を実装し、ブランチ `claude/nice-brown-di5gxi` に push し、PR #17 を作成した。セルフレビューの指摘 4 件を修正済み。ユーザーの確認待ち。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 10（案件の完了と、完了済みの表示切り替え）を完了し、PR #17 を `develop` にマージした。更新: Claude Opus 5.5）
 
 ---
 
@@ -33,7 +33,7 @@
 | 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
 | 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-drag-reorder.md](10-phase9-drag-reorder.md) | Opus 5.5 | ✅ 完了（PR #15 を `develop` にマージ済み。下記 4-000 章） |
-| 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | 🟡 実装済み・ユーザーの確認待ち（ブランチ `claude/nice-brown-di5gxi`、PR #17。下記 4-0000 章） |
+| 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
 | 11 | [12-phase11-polish-review.md](12-phase11-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手（旧フェーズ 9） |
 
 ---
@@ -54,14 +54,14 @@
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
   - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
   - `claude/wonderful-newton-0x0jvh`: フェーズ 9 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-drag-reorder` ではない。`develop` の d9620d1 から作成。PR #15 で `develop` にマージ済み）
-  - `claude/nice-brown-di5gxi`: フェーズ 10 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-project-complete` ではない。`develop` の 0c752eb から作成。PR #17）
+  - `claude/nice-brown-di5gxi`: フェーズ 10 の作業ブランチ（クラウドのセッションで指定されたブランチ名のため、プランの `feat/gantt-project-complete` ではない。`develop` の 0c752eb から作成。PR #17 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
-## 4-0000. フェーズ 10 の状況
+## 4-0000. フェーズ 10 の完了状況
 
-フェーズ 10 は実装済み（ブランチ `claude/nice-brown-di5gxi`）。プランの完了条件はすべて確認した。ユーザーの確認と PR の作成がまだ。
+フェーズ 10 は完了（ブランチ `claude/nice-brown-di5gxi`、PR #17 を `develop` にマージ済み）。プランの完了条件はすべて満たし、ユーザーの確認も済んでいる。フェーズ 11 は未着手。
 
 ### フェーズ 10 の確認結果
 
@@ -354,7 +354,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 10 のユーザー確認と PR #17 のマージ**（ブランチ `claude/nice-brown-di5gxi` → `develop`。4-0000 章）。OK が出てマージされたら **フェーズ 11**（[12-phase11-polish-review.md](12-phase11-polish-review.md)。仕上げ）。ローカルの `develop` を最新にしてから（AGENTS.md の「コミット・ブランチ」に手順を追記済み）、作業用ブランチを切って始める
+- 次にやること: **フェーズ 11**（[12-phase11-polish-review.md](12-phase11-polish-review.md)。仕上げ）。フェーズ 10 までは `develop` にマージ済み。4-0000 章の「未確認」（タッチ操作・スマホ幅のヘッダー以外の見た目など）も仕上げで見ること。ローカルの `develop` を最新にしてから（AGENTS.md の「コミット・ブランチ」に手順を追記済み）、作業用ブランチを切って始める
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
 - 追加した 2 フェーズの要点（ユーザーの依頼。2026-10-30）
