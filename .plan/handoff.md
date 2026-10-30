@@ -64,7 +64,7 @@
 
 ### フェーズ 9 の確認結果
 
-- `pnpm lint` / `typecheck` / `test`（253 件。うち `dragReorder.utils.test.ts` が 20 件、`localStorageRepository.test.ts` に並び替え・移行のテストを追加）/ `format:check` / `build` が成功
+- `pnpm lint` / `typecheck` / `test`（255 件。うち `dragReorder.utils.test.ts` が 22 件、`localStorageRepository.test.ts` に並び替え・移行のテストを追加）/ `format:check` / `build` が成功
 - ブラウザ（クラウドのセッションの Playwright + `pnpm dev:http`。1280×800、マウス）で確認済み:
   - 案件のつかみをドラッグすると同じ担当者の中で並べ替えられ、localStorage の `sortOrder` が更新され、再読み込みしても残る。右のタイムラインの帯（まとめ帯を含む）も同じ順になる
   - 担当者の範囲の外（下の担当者の行まで）へ引っぱっても、その担当者の末尾で止まる
@@ -73,7 +73,8 @@
   - 管理ダイアログで名前を編集中につかんでドラッグすると、名前の保存と並び替えの両方が 1 回の操作で反映される（プランでは「一度離してつかみ直す」想定だったが、下の preventDefault の扱いで不要になった）
   - スキーマ 1 のデータ（`sortOrder` のない案件 3 件、保存順は開始日順でない）を読むと、開始日順の `sortOrder` が付き、バージョン 2 として保存される
   - 保存に失敗させる（`Storage.prototype.setItem` を例外にする）と、元の並びに戻り、左下に「並び順を保存できませんでした。…」が出る。「閉じる」で消える
-- **未確認**: タッチ操作（スマホ・タブレット実機）、ドラッグ中にスクロールしたときの補正（実装はしたが、操作では確かめていない）、スマホ幅の見た目、管理ダイアログに担当者が多くダイアログ内がスクロールする場合
+  - PR #15 のセルフレビュー対応の後: ドラッグ中に名前の検証エラーが出て行が高くなっても、見た目どおりの位置に落ちる（修正前は 1 つずれることを同じ操作で確認済み）。ポインターを止めたままスクロール領域をスクロールしても、つかんだ行はポインターの下に残り、落とす先もスクロールした分だけ変わる
+- **未確認**: タッチ操作（スマホ・タブレット実機）、スマホ幅の見た目、管理ダイアログに担当者が多くダイアログ内がスクロールする場合（ダイアログ自体のスクロール量も差し引く実装にはしてある）
 
 ### フェーズ 10 以降への申し送り（並び替え）
 
@@ -81,13 +82,13 @@
 - スキーマの移行は `repositories/localStorageMigrations.ts` に置いた（`migrateSchemaV1ToV2`）。**今の型・型ガードを使わず、移行元の構造で確かめる**こと、repository のメソッドを呼ばないことをファイルの先頭に書いてある。フェーズ 10 の 2 → 3 も同じファイルに足し、`localStorageRepository.ts` の `SCHEMA_MIGRATIONS` に `2:` を登録する。移行の確かめ方は「並び順を決めるのに使うフィールド（memberId・startDate・endDate）が文字列か」だけにした（ほかのフィールドは触らないので、不正なら移行後の読み込みで既存の扱いになる）
 - 画面の並び: `groupProjectsByMember` が `sortOrder` の昇順（同じなら開始日順 → id 順）に並べる。左のリスト・タイムライン・まとめ帯はどれも `memberGroups` を使うので順がそろう
 - 共通のフック `hooks/useDragReorder.ts`（計算は `hooks/dragReorder.utils.ts`）。渡された `ids` だけを扱い、`onReorder` にもそれを並べ替えたものを渡す（**フェーズ 10 で完了済みの案件を隠すときは、呼び出し側で全体の並びに戻すこと**）。`ids` は `useMemo` などで参照を保って渡す（effect が作り直されないように）。`onReorder` は例外を投げない契約
-  - 使い方: 行の要素を `registerRow(id, element)` で登録し、つかみに `handleHandlePointerDown(id, event)` / `handleLostPointerCapture` をつなぎ、行は `displayIds` の順に描いて `getRowState(id)` で見た目を決める
+  - 使い方: 行の要素を `registerRow(id, element)` で登録し（ref のコールバックは `useCallback` で参照を保つ。変わると描画のたびに登録し直しになる）、つかみに `handleHandlePointerDown(id, event)` / `handleLostPointerCapture` をつなぎ、行は `displayIds` の順に描いて `getRowState(id)` で見た目を決める
   - プランとの違い: **ドラッグ中は並びを変えず**、つかんだ行を `translateY` で浮かせて追従させ、落とす先に横線（`dropBefore` / `dropAfter`）を出す。並びが変わるのは保存中（`displayIds` = 変更後）と保存後
-  - 落とす先は、つかんだ時点で測った各行の中央とポインターの位置から求める（高さの違う行でもよい）。つかんだ行は先頭の行の上端〜末尾の行の下端より外へは動かさない（`clampDragOffset`。ダイアログの外に出て見えなくなったため）
-  - スクロールの補正: 行の親要素の位置のずれを差し引く（親はドラッグ中も動かない）。ポインターを止めたままのスクロールも、window の scroll（キャプチャ段階）で受けて更新する。端に近づいたときの自動スクロールはない
+  - 落とす先は、各行の中央とポインターの位置から求める（高さの違う行でもよい）。つかんだ行は先頭の行の上端〜末尾の行の下端より外へは動かさない（`clampDragOffset`。ダイアログの外に出て見えなくなったため）
+  - 行の位置は、つかんだときだけでなく **pointermove とスクロールのたびに測り直す**（PR #15 のセルフレビュー対応。ドラッグ中に検証エラーで行が高くなると、落とす先が 1 つずれたため）。`getBoundingClientRect` ではなく `offsetTop` / `offsetHeight` で測り、offsetParent の画面上の位置を足してスクロール量を引く（つかんだ行の `transform` の影響を受けずに、動かす前の位置を測るため）。そのため、スクロールの補正も特別な処理なしで効く。ポインターを止めたままのスクロールは、window の scroll（キャプチャ段階）で受けて更新する。端に近づいたときの自動スクロールはない
   - つかみの `pointerdown` では **`preventDefault` しない**。すると入力欄の blur が起きず、管理ダイアログで編集中の名前が保存されないまま残った（保存中に入力欄が無効になり、フォーカスだけ外れる）。選択はつかみの `user-select: none`、タッチのスクロールは `touch-action: none` で防いでいる
   - Esc は帯のドラッグと同じく window のキャプチャ段階で受けて `preventDefault` / `stopPropagation`（`<dialog>` の Esc で閉じるのも止まることを確認済み）
-- コンポーネント: `components/DragHandle/`（つかみ。`button` だがキーボードでは並び替えられないので `tabIndex=-1`）、`components/MemberListGroup/`（左のリストの担当者 1 人ぶん。`React.memo`。行のスタイルは `MemberList.module.scss` からこちらへ移した）。`MemberList` は担当者ごとに `MemberListGroup` を置くだけになった。左のリストの開閉の判定（`isExpanded`）は引き続き `useMemberList` にある（`useTimeline` と同じにすること）
+- コンポーネント: `components/DragHandle/`（つかみ。`button` だがキーボードでは並び替えられないので `tabIndex=-1`。キーボードでの並び替えは不要とユーザーが判断した（PR #15）。`isDisabled` は省略可で、管理ダイアログの保存中だけ使う。無効は `aria-disabled` で表す）、`components/MemberListGroup/`（左のリストの担当者 1 人ぶん。`React.memo`。行のスタイルは `MemberList.module.scss` からこちらへ移した）、`components/MemberListProjectRow/`（左のリストの案件 1 行。ref のコールバックを安定させるために切り出した）。`MemberList` は担当者ごとに `MemberListGroup` を置くだけになった。左のリストの開閉の判定（`isExpanded`）は引き続き `useMemberList` にある（`useTimeline` と同じにすること）
 - 案件の並びの保存は `useProjects.reorderProjects` → `useGanttPage` の `projectReorder`（`reorder` / `error` / `dismissError`）。失敗は帯のドラッグと同じく左下のお知らせに出す。お知らせは `.notices` に縦に積むようにした（2 つ出ても重ならない）
 - 担当者: `useMemberManagement.moveMember` は `reorderMembers(orderedIds)` に置き換え、`moveId` / `TMoveDirection` は削除した。ダイアログの保存は `runAction` を通す（保存中はドラッグを始められない）
 - サンプルデータ（`devSeed.ts`）は変更なし。案件は追加した順に一番下へ入るので、投入直後の並びは開始日順ではなく追加順になる
