@@ -18,6 +18,7 @@ import {
   isRangeOverlapping,
   isWeekend,
   moveId,
+  moveIdToIndex,
   moveProjectDates,
   parseDateString,
   pxToDays,
@@ -590,6 +591,42 @@ describe("moveId", () => {
   it("元の配列は変更しない", () => {
     const ids = ["a", "b"]
     moveId(ids, "a", "down")
+    expect(ids).toEqual(["a", "b"])
+  })
+})
+
+describe("moveIdToIndex", () => {
+  it("指定した位置へ動かした並びを返す（上へ・下へ）", () => {
+    expect(moveIdToIndex(["a", "b", "c", "d"], "a", 2)).toEqual([
+      "b",
+      "c",
+      "a",
+      "d",
+    ])
+    expect(moveIdToIndex(["a", "b", "c", "d"], "d", 1)).toEqual([
+      "a",
+      "d",
+      "b",
+      "c",
+    ])
+  })
+
+  it("同じ位置なら同じ並び", () => {
+    expect(moveIdToIndex(["a", "b"], "b", 1)).toEqual(["a", "b"])
+  })
+
+  it("位置は 0 〜 件数 - 1 に収める", () => {
+    expect(moveIdToIndex(["a", "b", "c"], "b", -3)).toEqual(["b", "a", "c"])
+    expect(moveIdToIndex(["a", "b", "c"], "b", 10)).toEqual(["a", "c", "b"])
+  })
+
+  it("含まれない id は null", () => {
+    expect(moveIdToIndex(["a", "b"], "x", 0)).toBeNull()
+  })
+
+  it("元の配列は変更しない", () => {
+    const ids = ["a", "b"]
+    moveIdToIndex(ids, "a", 1)
     expect(ids).toEqual(["a", "b"])
   })
 })

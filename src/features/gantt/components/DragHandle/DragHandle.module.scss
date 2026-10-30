@@ -1,0 +1,41 @@
+@use "tokens";
+
+// つかみのボタンの大きさ。行の高さ（36px）の中に収まり、指でもつかめる幅にする
+$handle-width: 20px;
+$handle-height: 28px;
+
+// 共通のボタンの見た目（globals.scss）を打ち消し、控えめなアイコンにする
+.handle {
+  flex-shrink: 0;
+  width: $handle-width;
+  min-width: $handle-width;
+  height: $handle-height;
+  min-height: $handle-height;
+  padding: 0;
+  border: 0;
+  border-radius: tokens.$radius-sm;
+  background: none;
+  color: tokens.$color-text-subtle;
+  font-size: tokens.$font-size-sm;
+  letter-spacing: -0.3em;
+  cursor: grab;
+  // タッチでもスクロールではなくドラッグにする
+  touch-action: none;
+  user-select: none;
+
+  &:hover:not(:disabled) {
+    border: 0;
+    background: tokens.$color-hover;
+    color: tokens.$color-text;
+  }
+}
+
+.dragging {
+  color: tokens.$color-text;
+  cursor: grabbing;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

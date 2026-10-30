@@ -341,3 +341,20 @@ export function moveId(
   moved[targetIndex] = current
   return moved
 }
+
+/**
+ * id の並びのうち `id` を `toIndex` 番目へ動かした新しい並びを返す（ドラッグによる並び替え用）。
+ * `toIndex` は 0 〜 件数 - 1 に収める。`id` が含まれないときは null（元の配列は変更しない）。
+ */
+export function moveIdToIndex(
+  ids: string[],
+  id: string,
+  toIndex: number,
+): string[] | null {
+  const fromIndex = ids.indexOf(id)
+  if (fromIndex === -1) return null
+  const clampedIndex = Math.min(Math.max(toIndex, 0), ids.length - 1)
+  const moved = ids.filter((_, index) => index !== fromIndex)
+  moved.splice(clampedIndex, 0, id)
+  return moved
+}

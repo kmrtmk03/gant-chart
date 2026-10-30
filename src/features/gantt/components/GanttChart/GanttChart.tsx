@@ -40,7 +40,7 @@ export function GanttChart() {
   // scrollArea（ref を持つ）を先に分割代入する。lint の react-hooks/refs が、
   // ref を渡す関数を持つ戻り値の全体を「ref を含む」と誤検知するのを避けるため
   const { attachScroller, handleScroll } = chart.scrollArea
-  const { emptyState, sidePanel, memberDialog, barDrag } = chart
+  const { emptyState, sidePanel, memberDialog, barDrag, projectReorder } = chart
 
   return (
     <div className={styles.root}>
@@ -88,6 +88,7 @@ export function GanttChart() {
               onToggleMember={chart.toggleMember}
               onAddProject={chart.addProject}
               onSelectProject={sidePanel.selectProject}
+              onReorderProjects={projectReorder.reorder}
               onManageMembers={chart.manageMembers}
             />
             <Timeline
@@ -105,14 +106,24 @@ export function GanttChart() {
         </div>
       )}
 
-      {barDrag.errorMessage && (
-        <div className={styles.notice} role="alert">
-          <p>期間を保存できませんでした。{barDrag.errorMessage}</p>
-          <button type="button" onClick={barDrag.dismissError}>
-            閉じる
-          </button>
-        </div>
-      )}
+      <div className={styles.notices}>
+        {barDrag.errorMessage && (
+          <div className={styles.notice} role="alert">
+            <p>期間を保存できませんでした。{barDrag.errorMessage}</p>
+            <button type="button" onClick={barDrag.dismissError}>
+              閉じる
+            </button>
+          </div>
+        )}
+        {projectReorder.errorMessage && (
+          <div className={styles.notice} role="alert">
+            <p>並び順を保存できませんでした。{projectReorder.errorMessage}</p>
+            <button type="button" onClick={projectReorder.dismissError}>
+              閉じる
+            </button>
+          </div>
+        )}
+      </div>
 
       {memberDialog.isOpen && (
         <MemberManageDialog
