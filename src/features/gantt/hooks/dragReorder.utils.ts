@@ -28,7 +28,10 @@ export interface IDragReorderState {
   fromIndex: number
   /** 今のポインターの位置から求めた、落とす先の位置（0 〜 件数 - 1） */
   toIndex: number
-  /** 開始時からのポインターの縦の移動量（px）。つかんだ行をポインターに追従させるのに使う */
+  /**
+   * つかんだ行をポインターに追従させる縦の移動量（px）。
+   * 並べ替えられる範囲（先頭の行の上端〜末尾の行の下端）の外へは出さない
+   */
   offsetY: number
   /** 移動量がしきい値（`DRAG_THRESHOLD_PX`）を一度でも超えたか。超えたら戻しても true のまま */
   isDragging: boolean
@@ -87,6 +90,31 @@ export function getDropIndex(
 }
 
 /**
+ * つかんだ行の移動量を、並べ替えられる範囲（先頭の行の上端〜末尾の行の下端）に収める。
+ * 範囲の外へ出しても落とす先は先頭・末尾で止まるので、行もそこで止めて見た目をそろえる
+ * （管理ダイアログの外へ出て見えなくなったり、別の担当者の行に重なったりしないようにする）
+ */
+export function clampDragOffset(
+  rowRects: IRowRect[],
+  fromIndex: number,
+  offsetY: number,
+): number {
+  const activeRect = rowRects[fromIndex]
+  const firstRect = rowRects[0]
+  const lastRect = rowRects.at(-1)
+  if (
+    activeRect === undefined ||
+    firstRect === undefined ||
+    lastRect === undefined
+  ) {
+    return offsetY
+  }
+  const minOffset = firstRect.top - activeRect.top
+  const maxOffset = lastRect.bottom - activeRect.bottom
+  return Math.min(Math.max(offsetY, minOffset), maxOffset)
+}
+
+/**
  * ポインターが動いたときの状態を返す。
  * ドラッグしていない（null）ときや、別のポインターの動きのときは、受け取った状態をそのまま返す。
  * しきい値を超えるまでは、落とす先を元の位置のままにする（つかみをクリックしただけで並びを変えないため）。
@@ -100,11 +128,12 @@ export function updateDragReorder(
 ): IDragReorderState | null {
   if (state === null || state.pointerId !== pointerId) return state
 
-  const offsetY = pointerY - state.startClientY
-  const isDragging = state.isDragging || Math.abs(offsetY) >= DRAG_THRESHOLD_PX
+  const deltaY = pointerY - state.startClientY
+  const isDragging = state.isDragging || Math.abs(deltaY) >= DRAG_THRESHOLD_PX
   const toIndex = isDragging
     ? getDropIndex(state.rowRects, state.fromIndex, pointerY)
     : state.fromIndex
+  const offsetY = clampDragOffset(state.rowRects, state.fromIndex, deltaY)
   return { ...state, offsetY, isDragging, toIndex }
 }
 

@@ -152,8 +152,9 @@ export function useDragReorder({
       const parentElement = rowElementsRef.current.get(id)?.parentElement
       if (fromIndex === -1 || parentElement == null) return
 
-      // テキストの選択や、タッチでのスクロールが始まらないようにする
-      event.preventDefault()
+      // MEMO: preventDefault はしない。すると入力欄からフォーカスが外れず（blur が来ない）、
+      // 管理ダイアログで編集中の名前が保存されないまま残るため。タッチのスクロールはつかみの
+      // touch-action: none で、テキストの選択はつかみの user-select: none で防いでいる
       // 行の外にポインターが出ても、このあとのイベントがこの要素に届くようにする
       event.currentTarget.setPointerCapture(event.pointerId)
       capturedElementRef.current = event.currentTarget

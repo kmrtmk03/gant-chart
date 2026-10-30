@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { DRAG_THRESHOLD_PX } from "../gantt.constants"
 import {
+  clampDragOffset,
   getDragReorderResult,
   getDropIndex,
   getDropIndicator,
@@ -87,6 +88,12 @@ describe("updateDragReorder", () => {
     expect(state).toMatchObject({ isDragging: true, offsetY: 82, toIndex: 2 })
   })
 
+  it("範囲の外へ出しても、つかんだ行は先頭の行の上端・末尾の行の下端で止まる", () => {
+    // 行は 100〜244px。2 行目（136〜172px）は上へ 36px、下へ 72px まで
+    expect(dragThrough(1, [-500])).toMatchObject({ offsetY: -36, toIndex: 0 })
+    expect(dragThrough(1, [5000])).toMatchObject({ offsetY: 72, toIndex: 3 })
+  })
+
   it("一度しきい値を超えたら、元の位置に戻しても isDragging のまま", () => {
     const state = dragThrough(1, [300, 154])
     expect(state).toMatchObject({ isDragging: true, offsetY: 0, toIndex: 1 })
@@ -96,6 +103,25 @@ describe("updateDragReorder", () => {
     const state = dragThrough(0, [])
     expect(updateDragReorder(state, POINTER_ID + 1, 500)).toBe(state)
     expect(updateDragReorder(null, POINTER_ID, 500)).toBeNull()
+  })
+})
+
+describe("clampDragOffset", () => {
+  const rects = buildRowRects(3) // 100〜208px
+
+  it("範囲の中ならそのまま返す", () => {
+    expect(clampDragOffset(rects, 1, 20)).toBe(20)
+    expect(clampDragOffset(rects, 1, -20)).toBe(-20)
+  })
+
+  it("先頭の行の上端・末尾の行の下端を越えないようにする", () => {
+    expect(clampDragOffset(rects, 0, -10)).toBe(0)
+    expect(clampDragOffset(rects, 0, 100)).toBe(72)
+    expect(clampDragOffset(rects, 2, -100)).toBe(-72)
+  })
+
+  it("1 行だけなら動かさない", () => {
+    expect(clampDragOffset(buildRowRects(1), 0, 50)).toBe(0)
   })
 })
 
