@@ -982,6 +982,46 @@ describe("スキーマの移行（バージョン 2 → 3）", () => {
     expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
   })
 
+  it("案件の書き込みの後でバージョンの書き込みだけ失敗したら、案件も元に戻り、再試行で移行できる", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        id: "p1",
+        memberId: "a",
+        name: "p1",
+        startDate: "2026-10-01",
+        endDate: "2026-10-02",
+        color: "blue",
+        note: "",
+        createdAt: CREATED_AT.toISOString(),
+        updatedAt: CREATED_AT.toISOString(),
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+    // 容量不足などで、バージョンの書き込みだけが 1 回失敗する
+    let isVersionWriteFailed = false
+    storage.shouldFailWrite = (key) => {
+      if (key !== STORAGE_KEYS.schemaVersion || isVersionWriteFailed) {
+        return false
+      }
+      isVersionWriteFailed = true
+      return true
+    }
+
+    await expect(repository.listProjects()).rejects.toThrow()
+    // 案件は移行前の値に戻り、バージョンも変わっていない
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+
+    // 容量を確保した想定で再試行すると、GanttCorruptedDataError にならず最後まで移行できる
+    const projects = await new LocalStorageRepository(storage).listProjects()
+    expect(projects).toHaveLength(1)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
+  })
+
   it("1 → 2 は成功して 2 → 3 で失敗したら、バージョンは 2 で止まり、再試行で 1 → 2 をやり直さない", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {})
     // 正しいバージョン 1 のデータ。2 → 3 の案件の書き込み（案件への 2 回目の書き込み）だけを失敗させる

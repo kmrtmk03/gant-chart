@@ -8,6 +8,11 @@ import { GanttCorruptedDataError } from "./ganttRepository.errors"
 // また、移行処理は repository のメソッドを呼ばず、渡された Storage を直接読み書きすること
 // （repository のメソッドは読み書きの前に移行を確かめるので、移行の中から呼ぶと無限に再帰する）。
 //
+// 移行処理は Storage に書き込まず、「書き込む内容」（IStorageEntry の配列）を返す。書き込みは呼び出し側が、
+// バージョンの更新と一緒に 1 回で行い、途中で失敗したら操作前に戻す（localStorageRepository.ts の
+// writeEntriesOrRestore）。案件だけ移行済みでバージョンが古いまま残ると、次回の検証で移行済みの案件を
+// 「移行元の形ではない」として拒否し、自動で復旧できなくなるため。
+//
 // 移行の前に、案件の全件を「移行元のバージョンの形」として検証する。1 件でも外れていれば、案件もバージョンも
 // 変えずに GanttCorruptedDataError を投げる。次の 2 つを防ぐため:
 // - 不正なデータにも移行の結果（sortOrder・completedAt）を書き足してバージョンを進め、後の読み込みで初めて不正と分かる
@@ -15,6 +20,12 @@ import { GanttCorruptedDataError } from "./ganttRepository.errors"
 // そのため、移行で足すフィールドを持つ案件も「移行元の形ではない」として止める。
 // 検証に使う日付の判定（isDateString。実在する "YYYY-MM-DD" か）は、今後も変わらない概念なので共通のものを使う。
 // 色や並び順の値の範囲は、バージョンごとに変わりうるので、ここでは型だけを確かめる。
+
+/** Storage に書き込む 1 件分（キーと、書き込む文字列） */
+export interface IStorageEntry {
+  key: string
+  value: string
+}
 
 /** プロパティを読める「null でないオブジェクト」かを確かめる（配列も除く） */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -77,9 +88,9 @@ function isProjectV1(
  * - 保存データが壊れている（JSON として読めない・配列でない・バージョン 1 の形でない案件がある）ときは、
  *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない。空として扱うと次の書き込みで上書きするため）
  */
-export function migrateSchemaV1ToV2(storage: Storage): void {
+export function migrateSchemaV1ToV2(storage: Storage): IStorageEntry[] {
   const raw = storage.getItem(STORAGE_KEYS.projects)
-  if (raw === null) return
+  if (raw === null) return []
 
   let parsed: unknown
   try {
@@ -121,7 +132,7 @@ export function migrateSchemaV1ToV2(storage: Storage): void {
     ...project,
     sortOrder: sortOrderByIndex.get(index) ?? 0,
   }))
-  storage.setItem(STORAGE_KEYS.projects, JSON.stringify(migrated))
+  return [{ key: STORAGE_KEYS.projects, value: JSON.stringify(migrated) }]
 }
 
 /**
@@ -144,9 +155,9 @@ function isProjectV2(value: unknown): value is Record<string, unknown> {
  * - 保存データが壊れている（JSON として読めない・配列でない・バージョン 2 の形でない案件がある）ときは、
  *   書き換えずに GanttCorruptedDataError を投げる（バージョンも進まない）
  */
-export function migrateSchemaV2ToV3(storage: Storage): void {
+export function migrateSchemaV2ToV3(storage: Storage): IStorageEntry[] {
   const raw = storage.getItem(STORAGE_KEYS.projects)
-  if (raw === null) return
+  if (raw === null) return []
 
   let parsed: unknown
   try {
@@ -166,5 +177,5 @@ export function migrateSchemaV2ToV3(storage: Storage): void {
 
   // 保存順（配列の並び）は変えず、各案件に completedAt を足すだけにする
   const migrated = parsed.map((project) => ({ ...project, completedAt: null }))
-  storage.setItem(STORAGE_KEYS.projects, JSON.stringify(migrated))
+  return [{ key: STORAGE_KEYS.projects, value: JSON.stringify(migrated) }]
 }
