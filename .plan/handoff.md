@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-10-30（フェーズ 8 の実装を完了。更新: Claude Opus 5.5）
+- 最終更新: 2026-10-30（フェーズ 8 の PR #13 のマージを反映。更新: Claude Opus 5.5）
 
 ---
 
@@ -23,7 +23,7 @@
 | フェーズ | プラン | 担当 | 状態 |
 | --- | --- | --- | --- |
 | 準備 | 全体プラン・AGENTS.md・CLAUDE.md | Opus 5.5 | ✅ 完了 |
-| 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 実装完了（ユーザーの確認待ち。下記 4 章） |
+| 1 | [2-phase1-project-setup.md](2-phase1-project-setup.md) | Sonnet 5.5 | ✅ 完了（PR #1 を `main` にマージ済み） |
 | 2 | [3-phase2-https-pwa-basic-auth.md](3-phase2-https-pwa-basic-auth.md) | Sonnet 5.5 | ✅ 完了（PR #3 を `develop` にマージ済み） |
 | 3 | [4-phase3-data-layer.md](4-phase3-data-layer.md) | Opus 5.5 | ✅ 完了（PR #4 を `develop` にマージ済み） |
 | 4 | [5-phase4-date-layout-utils.md](5-phase4-date-layout-utils.md) | Sonnet 5.5 | ✅ 完了（PR #5 を `develop` にマージ済み） |
@@ -31,7 +31,7 @@
 | 6 | [7-phase6-project-side-panel.md](7-phase6-project-side-panel.md) | Sonnet 5.5 | ✅ 完了（PR #7 を `develop` にマージ済み。下記 4 章） |
 | 7 | [8-phase7-member-management.md](8-phase7-member-management.md) | Sonnet 5.5 | ✅ 完了（PR #11 を `develop` にマージ済み。下記 4 章） |
 | 7.5 | デザイン調整（プランなし。下記 4-0 章） | Opus 5.5 | ✅ 完了（PR #12 を `develop` にマージ済み） |
-| 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 実装完了（ブランチ `feat/gantt-bar-drag`。PR 未作成・push 前。ユーザーの確認待ち。下記 4-00 章） |
+| 8 | [9-phase8-bar-drag.md](9-phase8-bar-drag.md) | Opus 5.5 | ✅ 完了（PR #13 を `develop` にマージ済み。下記 4-00 章） |
 | 9 | [10-phase9-polish-review.md](10-phase9-polish-review.md) | Sonnet 5.5 / Codex | ⬜ 未着手 |
 
 ---
@@ -50,14 +50,14 @@
   - `feat/gantt-side-panel`: フェーズ 6 の作業ブランチ（PR #7 で `develop` にマージ済み）
   - `feat/gantt-member-management`: フェーズ 7 の作業ブランチ（PR #11 で `develop` にマージ済み）
   - `style/dark-modern-theme`: デザイン調整（ダークテーマ化）の作業ブランチ（PR #12 で `develop` にマージ済み）
-  - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（`develop` から作成。PR は未作成・push 前）
+  - `feat/gantt-bar-drag`: フェーズ 8 の作業ブランチ（PR #13 で `develop` にマージ済み）
 - フェーズごとの扱い: フェーズごとに `develop` から作業用ブランチを切り（ブランチ名は各フェーズのプラン）、PR は `develop` 宛てにフェーズごとに出す
 
 ---
 
 ## 4-00. フェーズ 8 の完了状況
 
-フェーズ 8 は実装完了（ブランチ `feat/gantt-bar-drag`。PR は未作成・push 前）。フェーズ 9 は未着手。
+フェーズ 8 は完了（ブランチ `feat/gantt-bar-drag`、PR #13 を `develop` にマージ済み）。フェーズ 9 は未着手。
 
 ### フェーズ 8 の確認結果
 
@@ -105,7 +105,7 @@
 
 ## 4. フェーズ 7 の完了状況
 
-フェーズ 7 は実装完了（ブランチ `feat/gantt-member-management`。PR は未作成・push 前）。フェーズ 8 は未着手。
+フェーズ 7 は完了（ブランチ `feat/gantt-member-management`、PR #11 を `develop` にマージ済み）。
 
 ### フェーズ 7 の確認結果
 
@@ -284,7 +284,7 @@
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **フェーズ 8（`feat/gantt-bar-drag`）の push・PR とユーザーの確認**。`develop` にマージされたら **フェーズ 9**（[10-phase9-polish-review.md](10-phase9-polish-review.md)）へ。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-00 章（帯のドラッグ。未確認のタッチ操作など）と、各章の「未確認」「残課題」を先に読むこと
+- 次にやること: **フェーズ 9**（[10-phase9-polish-review.md](10-phase9-polish-review.md)）。フェーズ 8 までは `develop` にマージ済み。ローカルの `develop` を最新にしてから、作業用ブランチを切って始める。4-00 章（帯のドラッグ。未確認のタッチ操作など）と、各章の「未確認」「残課題」を先に読むこと
 - 担当: フェーズ 9 は Sonnet 5.5 / Codex
 - 始め方: 新しいセッションで、次のように依頼すれば再開できる
 
