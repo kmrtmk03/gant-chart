@@ -75,12 +75,12 @@
 
 // 選んでいる日は主色で塗る。今日は太字にして区別する
 .popover :global(.rdp-selected) button {
-  border-color: tokens.$color-primary;
-  background: tokens.$color-primary;
+  border-color: tokens.$color-primary-solid;
+  background: tokens.$color-primary-solid;
   color: tokens.$color-on-primary;
 
   &:hover:not(:disabled) {
-    background: tokens.$color-primary-hover;
+    background: tokens.$color-primary-solid-hover;
   }
 }
 

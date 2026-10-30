@@ -112,12 +112,12 @@
 }
 
 .pressed {
-  border-color: tokens.$color-primary;
-  background: tokens.$color-primary;
+  border-color: tokens.$color-primary-solid;
+  background: tokens.$color-primary-solid;
   color: tokens.$color-on-primary;
 
   &:hover:not(:disabled) {
-    border-color: tokens.$color-primary-hover;
-    background: tokens.$color-primary-hover;
+    border-color: tokens.$color-primary-solid-hover;
+    background: tokens.$color-primary-solid-hover;
   }
 }
