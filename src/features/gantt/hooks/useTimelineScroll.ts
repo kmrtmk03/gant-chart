@@ -1,4 +1,4 @@
-import { type UIEvent, useCallback, useState } from "react"
+import { type UIEvent, useCallback, useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
 
 import {
@@ -44,15 +44,31 @@ export function useTimelineScroll({
   )
   const [visibleDate, setVisibleDate] = useState<TDateString | null>(null)
 
+  // attachScroller は参照を保つため deps を持たせられない。要素が付く時点の最新の範囲・今日はここから読む
+  const latestRangeRef = useRef({ rangeStart, today })
+  useEffect(() => {
+    latestRangeRef.current = { rangeStart, today }
+  }, [rangeStart, today])
+
   /**
-   * スクロール領域の ref。要素が現れた時点（読み込み完了後の最初の描画）で、今日が見える位置にそろえる。
-   * 初期位置は範囲の取り方（今日の何日前から始めるか）だけで決まり、日付に依存しない。
+   * スクロール領域の ref。要素が現れた時点で、今日が見える位置にそろえる。
+   * 初回は範囲が「今日の DEFAULT_RANGE_DAYS_BEFORE 日前」から始まるので固定の位置になるが、
+   * 空の画面から担当者を追加し直した場合など、範囲が広がった後に要素が作り直されることがある。
+   * その場合は広がった範囲と今日から位置を求める（固定の位置だと過去の日付が表示されるため）。
    */
   const attachScroller = useCallback((element: HTMLDivElement | null) => {
     setScrollerElement(element)
     if (element === null) return
-    element.scrollLeft =
-      (DEFAULT_RANGE_DAYS_BEFORE - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH
+    const { rangeStart: latestRangeStart, today: latestToday } =
+      latestRangeRef.current
+    const todayIndex =
+      latestRangeStart === null || latestToday === null
+        ? DEFAULT_RANGE_DAYS_BEFORE
+        : diffInDays(latestRangeStart, latestToday)
+    element.scrollLeft = Math.max(
+      0,
+      (todayIndex - TODAY_SCROLL_MARGIN_DAYS) * DAY_COLUMN_WIDTH,
+    )
   }, [])
 
   /**
