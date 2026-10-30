@@ -180,10 +180,18 @@ describe("toProjectInput", () => {
 })
 
 describe("formatCompletedLabel", () => {
+  // 端末のタイムゾーンに依らないよう、ローカル時刻で日時を作ってから ISO 文字列にする
   it("完了日時を月/日で添える", () => {
-    // テストを動かす端末のタイムゾーンで日付が変わらないよう、日中の時刻にする
-    expect(formatCompletedLabel("2026-10-30T03:00:00.000Z")).toBe(
-      "完了済み（10/30）",
-    )
+    const completedAt = new Date(2026, 9, 30, 12, 0, 0).toISOString()
+    expect(formatCompletedLabel(completedAt)).toBe("完了済み（10/30）")
+  })
+
+  it("日付の境界（ローカルの 0 時直後・23 時台）でも、ローカルの日付で表示する", () => {
+    expect(
+      formatCompletedLabel(new Date(2026, 9, 30, 0, 5, 0).toISOString()),
+    ).toBe("完了済み（10/30）")
+    expect(
+      formatCompletedLabel(new Date(2026, 9, 30, 23, 55, 0).toISOString()),
+    ).toBe("完了済み（10/30）")
   })
 })

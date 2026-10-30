@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { CURRENT_SCHEMA_VERSION, STORAGE_KEYS } from "../gantt.constants"
 import type { TProjectInput } from "../gantt.type"
 import {
+  GanttCorruptedDataError,
   GanttNotFoundError,
   GanttUnsupportedSchemaError,
   GanttValidationError,
@@ -617,40 +618,52 @@ describe("保存と読み込み", () => {
     await expect(reloaded.listProjects()).resolves.toEqual([project])
   })
 
-  it("JSON として読めないデータは捨てて空配列から始め、警告を出す", async () => {
+  it("JSON として読めないデータは空として扱わず GanttCorruptedDataError を投げ、元の値を残す", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
     storage.setItem(STORAGE_KEYS.members, "{壊れた JSON")
 
-    await expect(repository.listMembers()).resolves.toEqual([])
+    await expect(repository.listMembers()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
     expect(warn).toHaveBeenCalledOnce()
+    expect(storage.getItem(STORAGE_KEYS.members)).toBe("{壊れた JSON")
   })
 
-  it("形が違うデータは捨てて空配列から始め、警告を出す", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+  it("形が違うデータは空として扱わず GanttCorruptedDataError を投げる", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
     storage.setItem(STORAGE_KEYS.projects, JSON.stringify({ not: "array" }))
 
-    await expect(repository.listProjects()).resolves.toEqual([])
-    expect(warn).toHaveBeenCalledOnce()
-  })
-
-  it("不正な要素が 1 つでも混ざっていれば、その配列ごと捨てる", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {})
-    const tanaka = await repository.createMember({ name: "田中" })
-    storage.setItem(
-      STORAGE_KEYS.members,
-      JSON.stringify([tanaka, { id: "broken" }]),
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
     )
-
-    await expect(repository.listMembers()).resolves.toEqual([])
   })
 
-  it("壊れたデータがあっても、その後の追加はできる", async () => {
+  it("不正な要素が 1 つでも混ざっていれば読み書きを止め、正常な要素も含めて保存データを残す", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {})
-    storage.setItem(STORAGE_KEYS.members, "null")
-
     const tanaka = await repository.createMember({ name: "田中" })
+    const mixed = JSON.stringify([tanaka, { id: "broken" }])
+    storage.setItem(STORAGE_KEYS.members, mixed)
 
-    await expect(repository.listMembers()).resolves.toEqual([tanaka])
+    await expect(repository.listMembers()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    // 追加で上書きされないこと（元のデータが失われないこと）
+    await expect(repository.createMember({ name: "佐藤" })).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.members)).toBe(mixed)
+  })
+
+  it("案件の保存データが壊れているときは、案件の追加も止めて保存データを残す", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const tanaka = await repository.createMember({ name: "田中" })
+    const mixed = JSON.stringify([{ id: "broken" }])
+    storage.setItem(STORAGE_KEYS.projects, mixed)
+
+    await expect(
+      repository.createProject(buildProjectInput(tanaka.id)),
+    ).rejects.toThrow(GanttCorruptedDataError)
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(mixed)
   })
 })
 
@@ -820,19 +833,40 @@ describe("スキーマの移行（バージョン 1 → 2）", () => {
     )
   })
 
+  it("バージョンの値だけが古く、案件がすでに sortOrder を持っているときは、振り直さずに止める", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        ...buildProjectV1("p1", "a", "2026-10-01", "2026-10-02"),
+        sortOrder: 5,
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+  })
+
   it.each([
     ["JSON として読めない", "{壊れた JSON"],
     ["配列でない", JSON.stringify({ not: "array" })],
     ["日付のない要素がある", JSON.stringify([{ id: "p1", memberId: "a" }])],
   ])(
-    "壊れたデータ（%s）でも例外にならず、データは書き換えない",
+    "壊れたデータ（%s）は書き換えず GanttCorruptedDataError を投げ、バージョンも進めない",
     async (_, raw) => {
       vi.spyOn(console, "warn").mockImplementation(() => {})
       storage.setItem(STORAGE_KEYS.schemaVersion, "1")
       storage.setItem(STORAGE_KEYS.projects, raw)
 
-      await expect(repository.listProjects()).resolves.toEqual([])
+      await expect(repository.listProjects()).rejects.toThrow(
+        GanttCorruptedDataError,
+      )
       expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+      expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
     },
   )
 })
@@ -900,16 +934,126 @@ describe("スキーマの移行（バージョン 2 → 3）", () => {
     ["配列でない", JSON.stringify({ not: "array" })],
     ["sortOrder のない要素がある", JSON.stringify([{ id: "p1" }])],
   ])(
-    "壊れたデータ（%s）でも例外にならず、データは書き換えない",
+    "壊れたデータ（%s）は書き換えず GanttCorruptedDataError を投げ、バージョンも進めない",
     async (_, raw) => {
       vi.spyOn(console, "warn").mockImplementation(() => {})
       storage.setItem(STORAGE_KEYS.schemaVersion, "2")
       storage.setItem(STORAGE_KEYS.projects, raw)
 
-      await expect(repository.listProjects()).resolves.toEqual([])
+      await expect(repository.listProjects()).rejects.toThrow(
+        GanttCorruptedDataError,
+      )
       expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+      expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
     },
   )
+
+  it("sortOrder はあるが name など他のフィールドが欠けた案件があれば、completedAt を足さず、バージョンも進めない", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      buildProjectV2("p1", 0),
+      { ...buildProjectV2("p2", 1), name: undefined },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+  })
+
+  it("バージョンの値だけが古く、案件がすでに completedAt を持っているときは、上書きせずに止める", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        ...buildProjectV2("p1", 0),
+        completedAt: "2026-10-30T03:00:00.000Z",
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "2")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+
+    await expect(repository.listProjects()).rejects.toThrow(
+      GanttCorruptedDataError,
+    )
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+  })
+
+  it("案件の書き込みの後でバージョンの書き込みだけ失敗したら、案件も元に戻り、再試行で移行できる", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    const raw = JSON.stringify([
+      {
+        id: "p1",
+        memberId: "a",
+        name: "p1",
+        startDate: "2026-10-01",
+        endDate: "2026-10-02",
+        color: "blue",
+        note: "",
+        createdAt: CREATED_AT.toISOString(),
+        updatedAt: CREATED_AT.toISOString(),
+      },
+    ])
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(STORAGE_KEYS.projects, raw)
+    // 容量不足などで、バージョンの書き込みだけが 1 回失敗する
+    let isVersionWriteFailed = false
+    storage.shouldFailWrite = (key) => {
+      if (key !== STORAGE_KEYS.schemaVersion || isVersionWriteFailed) {
+        return false
+      }
+      isVersionWriteFailed = true
+      return true
+    }
+
+    await expect(repository.listProjects()).rejects.toThrow()
+    // 案件は移行前の値に戻り、バージョンも変わっていない
+    expect(storage.getItem(STORAGE_KEYS.projects)).toBe(raw)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("1")
+
+    // 容量を確保した想定で再試行すると、GanttCorruptedDataError にならず最後まで移行できる
+    const projects = await new LocalStorageRepository(storage).listProjects()
+    expect(projects).toHaveLength(1)
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(CURRENT_SCHEMA_VERSION),
+    )
+  })
+
+  it("1 → 2 は成功して 2 → 3 で失敗したら、バージョンは 2 で止まり、再試行で 1 → 2 をやり直さない", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    // 正しいバージョン 1 のデータ。2 → 3 の案件の書き込み（案件への 2 回目の書き込み）だけを失敗させる
+    storage.setItem(STORAGE_KEYS.schemaVersion, "1")
+    storage.setItem(
+      STORAGE_KEYS.projects,
+      JSON.stringify([
+        {
+          id: "p1",
+          memberId: "a",
+          name: "p1",
+          startDate: "2026-10-01",
+          endDate: "2026-10-02",
+          color: "blue",
+          note: "",
+          createdAt: CREATED_AT.toISOString(),
+          updatedAt: CREATED_AT.toISOString(),
+        },
+      ]),
+    )
+    let projectWriteCount = 0
+    storage.shouldFailWrite = (key) =>
+      key === STORAGE_KEYS.projects && ++projectWriteCount === 2
+
+    await expect(repository.listProjects()).rejects.toThrow()
+    expect(storage.getItem(STORAGE_KEYS.schemaVersion)).toBe("2")
+
+    // 再試行すると 2 → 3 だけが走り、案件が 1 件も消えない
+    const projects = await new LocalStorageRepository(storage).listProjects()
+    expect(projects).toHaveLength(1)
+    expect(projects[0]).toMatchObject({ sortOrder: 0, completedAt: null })
+  })
 })
 
 describe("実行環境", () => {

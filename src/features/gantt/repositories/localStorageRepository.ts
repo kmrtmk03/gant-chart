@@ -15,21 +15,17 @@ import type {
   TProjectUpdate,
 } from "../gantt.type"
 import {
+  GanttCorruptedDataError,
   GanttNotFoundError,
   GanttUnsupportedSchemaError,
   GanttValidationError,
 } from "./ganttRepository.errors"
 import type { IGanttRepository } from "./ganttRepository.type"
 import {
+  type IStorageEntry,
   migrateSchemaV1ToV2,
   migrateSchemaV2ToV3,
 } from "./localStorageMigrations"
-
-/** Storage に書き込む 1 件分（キーと、書き込む文字列） */
-interface IStorageEntry {
-  key: string
-  value: string
-}
 
 /** 操作前の Storage の値 1 件分。null は「そのキーは未保存だった」ことを表す */
 interface IPreviousStorageEntry {
@@ -39,10 +35,13 @@ interface IPreviousStorageEntry {
 
 /**
  * スキーマの移行処理。キーは「移行元のバージョン」で、その 1 つ上のバージョンへ書き換える。
- * MEMO: 構造を変えて CURRENT_SCHEMA_VERSION を上げたら、ここに `{移行元}: (storage) => { ... }` を足す。
+ * 移行処理は書き込まず、書き込む内容を返す（バージョンの更新と一緒に 1 回で書くため）。
+ * MEMO: 構造を変えて CURRENT_SCHEMA_VERSION を上げたら、ここに `{移行元}: (storage) => [...]` を足す。
  * 移行処理の書き方の注意は localStorageMigrations.ts の先頭を参照
  */
-const SCHEMA_MIGRATIONS: Partial<Record<number, (storage: Storage) => void>> = {
+const SCHEMA_MIGRATIONS: Partial<
+  Record<number, (storage: Storage) => IStorageEntry[]>
+> = {
   1: migrateSchemaV1ToV2,
   2: migrateSchemaV2ToV3,
 }
@@ -68,6 +67,42 @@ function restoreEntries(
     } else {
       storage.setItem(entry.key, entry.value)
     }
+  }
+}
+
+/**
+ * 複数のキーを順に書き込む。途中で失敗したら、書き込み済みのキーを操作前の値に戻してからエラーを投げ直す。
+ * localStorage には複数のキーをまとめて書くトランザクションがないため、
+ * 「一部だけ書き換わって、再試行しても元に戻せない」状態を作らないようにする。
+ * Storage を引数に取るのは、移行の途中（getPreparedStorage を通せない場面）でも使うため。
+ */
+function writeEntriesOrRestore(
+  storage: Storage,
+  entries: IStorageEntry[],
+): void {
+  // 戻すときのために、操作前の値を先に控えておく（未保存だったキーは null）
+  const previousEntries = entries.map((entry) => ({
+    key: entry.key,
+    value: storage.getItem(entry.key),
+  }))
+
+  let writtenCount = 0
+  try {
+    for (const entry of entries) {
+      storage.setItem(entry.key, entry.value)
+      writtenCount++
+    }
+  } catch (error) {
+    // setItem は失敗したキーを書き換えないので、戻すのは書き込みに成功したキーだけでよい
+    try {
+      restoreEntries(storage, previousEntries.slice(0, writtenCount))
+    } catch (restoreError) {
+      throw new AggregateError(
+        [error, restoreError],
+        "[gantt] 書き込みに失敗し、操作前の値への復元にも失敗しました",
+      )
+    }
+    throw error
   }
 }
 
@@ -149,7 +184,8 @@ function validateProject(project: IProject): void {
  * localStorage に担当者・案件を保存する repository（MVP で使う実装）。
  *
  * - `gantt:members` / `gantt:projects` に配列を JSON で保存する（Firestore の 2 コレクションに対応）
- * - 読み込んだ値は型ガードで検証し、壊れていたら捨てて空配列から始める（コンソールに警告を出す）
+ * - 読み込んだ値は型ガードで検証し、壊れていたら GanttCorruptedDataError を投げて読み書きを止める
+ *   （空として扱うと、次の書き込みで正常な分も含めて上書きしてしまうため。元の値はコンソールに残す）
  * - ブラウザ専用。サーバー側のレンダリング中には呼ばないこと（呼ぶとエラーになる）
  */
 export class LocalStorageRepository implements IGanttRepository {
@@ -419,43 +455,16 @@ export class LocalStorageRepository implements IGanttRepository {
     )
   }
 
-  /**
-   * 複数のキーを順に書き込む。途中で失敗したら、書き込み済みのキーを操作前の値に戻してからエラーを投げ直す。
-   * localStorage には複数のキーをまとめて書くトランザクションがないため、
-   * 「一部だけ書き換わって、再試行しても元に戻せない」状態を作らないようにする。
-   */
+  /** 複数のキーを書き込む。途中で失敗したら操作前に戻す（writeEntriesOrRestore を参照） */
   private writeAllOrRestore(entries: IStorageEntry[]): void {
-    const storage = this.getPreparedStorage()
-    // 戻すときのために、操作前の値を先に控えておく（未保存だったキーは null）
-    const previousEntries = entries.map((entry) => ({
-      key: entry.key,
-      value: storage.getItem(entry.key),
-    }))
-
-    let writtenCount = 0
-    try {
-      for (const entry of entries) {
-        storage.setItem(entry.key, entry.value)
-        writtenCount++
-      }
-    } catch (error) {
-      // setItem は失敗したキーを書き換えないので、戻すのは書き込みに成功したキーだけでよい
-      try {
-        restoreEntries(storage, previousEntries.slice(0, writtenCount))
-      } catch (restoreError) {
-        throw new AggregateError(
-          [error, restoreError],
-          "[gantt] 書き込みに失敗し、操作前の値への復元にも失敗しました",
-        )
-      }
-      throw error
-    }
+    writeEntriesOrRestore(this.getPreparedStorage(), entries)
   }
 
   /**
    * 指定したキーの配列を読み、型ガードで検証して返す。
-   * 未保存なら空配列。JSON として読めない・形が違うときも空配列にして、警告に元の値を残す
-   * （次に書き込むと上書きされるため、手で復旧したいときはコンソールの値を使う）。
+   * 未保存なら空配列。JSON として読めない・形が違う（不正な要素が 1 件でもある）ときは、
+   * 空として扱わず GanttCorruptedDataError を投げる（空として続けると、次の書き込みで元のデータを上書きするため）。
+   * 手で復旧できるよう、元の値をコンソールに残す。
    */
   private readList<T>(
     key: string,
@@ -468,19 +477,13 @@ export class LocalStorageRepository implements IGanttRepository {
     try {
       parsed = JSON.parse(raw)
     } catch {
-      console.warn(
-        `[gantt] ${key} を JSON として読めないため、空の状態から始めます`,
-        raw,
-      )
-      return []
+      console.warn(`[gantt] ${key} を JSON として読めません`, raw)
+      throw new GanttCorruptedDataError(key, "JSON として読めない")
     }
 
     if (!guard(parsed)) {
-      console.warn(
-        `[gantt] ${key} のデータの形が不正なため、空の状態から始めます`,
-        raw,
-      )
-      return []
+      console.warn(`[gantt] ${key} のデータの形が不正です`, raw)
+      throw new GanttCorruptedDataError(key, "不正な形のデータを含んでいる")
     }
     return parsed
   }
@@ -510,6 +513,7 @@ export class LocalStorageRepository implements IGanttRepository {
   /**
    * 保存データのバージョンが古ければ移行し、現在のバージョンを書き込む。
    * - 未保存（初回）や読めない値: バージョン 1 より前の構造は存在しないので、現在のバージョンとみなす
+   * - 移行できない（保存データが壊れている）: GanttCorruptedDataError を投げ、バージョンも進めない
    * - 新しいバージョン: 新しいアプリで保存されたデータ（古いアプリへのロールバック後など）。
    *   読めば型ガードに合わずに空として扱われ、次の書き込みで上書きしてしまうため、
    *   GanttUnsupportedSchemaError を投げて読み書きの両方を止め、元のデータを保つ
@@ -534,10 +538,21 @@ export class LocalStorageRepository implements IGanttRepository {
             `[gantt] バージョン ${fromVersion} からの移行処理がありません（SCHEMA_MIGRATIONS に追加してください）`,
           )
         }
-        migrate(storage)
+        // 移行後のデータとバージョンの更新を 1 回で書く。途中で失敗したら操作前に戻る
+        // （案件だけ移行済みでバージョンが古いまま残ると、再試行で移行済みの案件を拒否して止まるため）。
+        // 1 ステップ終えるごとにバージョンも進めるので、後の段階の失敗でも済んだ分をやり直さない
+        writeEntriesOrRestore(storage, [
+          ...migrate(storage),
+          {
+            key: STORAGE_KEYS.schemaVersion,
+            value: String(fromVersion + 1),
+          },
+        ])
       }
+      return
     }
 
+    // 未保存（初回）や読めない値のときは、現在のバージョンを書く
     storage.setItem(STORAGE_KEYS.schemaVersion, String(CURRENT_SCHEMA_VERSION))
   }
 }

@@ -19,6 +19,10 @@ $color-primary: #7182ff;
 $color-primary-hover: #8794ff;
 $color-primary-soft: rgb(113 130 255 / 16%);
 $color-on-primary: #ffffff;
+// 白文字（$color-on-primary）を載せる塗りつぶし用の主色。$color-primary は白との比が 3.31 で 4.5 に届かないため分ける
+// （比は 4.64 / ホバー 5.81）。文字・枠線・線の色には $color-primary を使い、白文字を載せるときだけこちらを使う
+$color-primary-solid: #5566ee;
+$color-primary-solid-hover: #4656db;
 $color-hover: rgb(255 255 255 / 5%);
 // 日本のカレンダーの慣習に合わせ、土曜は青、日曜と祝日は赤で色分けする（背景と日付ヘッダーの文字）
 $color-saturday: rgb(79 125 255 / 12%);

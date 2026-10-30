@@ -57,3 +57,21 @@ export class GanttUnsupportedSchemaError extends Error {
     this.supportedVersion = supportedVersion
   }
 }
+
+/**
+ * 保存データが壊れていて読めないとき（JSON として読めない・形が不正・移行できない）に repository が投げるエラー。
+ * 空として扱って続けると、次の書き込みで元のデータを上書きして失われるため、読み書きの両方を止める。
+ * 画面側では読み込み失敗として知らせ、元のデータは保存先に残したままにする。
+ */
+export class GanttCorruptedDataError extends Error {
+  /** 壊れていた保存先のキー */
+  readonly key: string
+
+  constructor(key: string, reason: string) {
+    super(
+      `保存データ（${key}）が${reason}ため、読み書きを止めました。元のデータは消していません。ブラウザの開発者ツールで localStorage の値を確認して復旧してください`,
+    )
+    this.name = "GanttCorruptedDataError"
+    this.key = key
+  }
+}
