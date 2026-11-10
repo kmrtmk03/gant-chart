@@ -54,8 +54,8 @@ date-fns を使い、すべて `TDateString` を受け取って `TDateString` �
 
 ## 完了条件
 
-- [ ] 上のテストがすべて通る
-- [ ] `pnpm lint` / `pnpm typecheck` / `pnpm test` が成功する
+- [x] 上のテストがすべて通る
+- [x] `pnpm lint` / `pnpm typecheck` / `pnpm test` が成功する
 
 ## コミットの単位（目安）
 

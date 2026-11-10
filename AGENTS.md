@@ -93,17 +93,19 @@ src/
 ├── styles/               # デザイントークン（_tokens.scss）とグローバル CSS のみ
 └── features/
     └── gantt/            # ガントチャート機能。UI・ロジック・型・定数はこの中で完結させる
-        ├── components/
+        ├── components/       # コンポーネントごとにディレクトリを作る（下記）
         ├── hooks/
         ├── repositories/
+        ├── utils/            # 機能共通の純粋関数を責務ごとに分けたもの（date / layout / member / reorder / error。テストは隣）
         ├── gantt.type.ts
         ├── gantt.constants.ts
-        ├── gantt.guards.ts
-        └── gantt.utils.ts
+        └── gantt.guards.ts
 ```
 
 - 機能に固有の実装は `features/<機能名>/` に置く。共有ディレクトリ（`src/components` / `src/hooks` / `src/utils` など）は、複数の機能で実際に再利用されるまで作らない
 - テストは対象ファイルと同じ場所に `*.test.ts` として置く
+- **コンポーネントは 1 つにつき 1 ディレクトリ**にまとめる。例: `components/MemberList/` に `MemberList.tsx` / `MemberList.module.scss` / `useMemberList.ts` / `index.ts`（バレル）。そのコンポーネント専用の型・utils・テスト（`useProjectForm.ts` / `projectForm.utils.ts` / `projectForm.utils.test.ts` など）も同じディレクトリに置く。他のコンポーネントからは `../MemberList` のようにバレル経由で import する。`utils/` の関数は、責務ごとのファイル（`utils/date.utils` など）を直接 import する（バレルは作らない）
+- **コンポーネントは受け取った値を描画するだけ**にする。値の計算・整形・条件の組み立て・クラス名の組み立て・`useId` / `useEffect` などは、そのコンポーネント専用のフック（`useXxx.ts`）で行い、描画用の値を返す。見た目に関わる `className` もフックで組み立てるため、フックが同じディレクトリの `*.module.scss` に依存してよい（現状フックの単体テストはなく、必要になったら Vitest の CSS Modules の扱いを確認する）。tsx に残してよいのは、props を JSX に渡すこと、`map` による繰り返し、`props` のコールバックを呼ぶだけのイベント結線まで
 
 ## データ設計のルール
 
@@ -194,12 +196,16 @@ src/
 - コンポーネントのスタイルは同じ場所の `Xxx.module.scss` に書く
 - 色・余白・フォントサイズなどは `src/styles/_tokens.scss` のトークンを使い、生の値を直接書かない
 - グローバル CSS（`globals.scss`）にはリセットとベーススタイルだけを置き、機能固有の調整を書かない
+- ボタンの標準の見た目（枠・背景・余白・ホバー）は `button` 要素には適用しない。標準の見た目は `Button` コンポーネント（`components/Button/`）を使い、色だけ変えたいボタン（保存・削除など）は個別のクラスで `styles/_button.scss` の `button.appearance` を取り込んでから上書きする。帯・つかみ・行いっぱいのボタンなど専用の見た目のものは `button.base` だけ取り込む
 - インラインスタイル（`style` 属性）は、帯の位置や幅など動的な値が必要な場合に限る
 - 同じ見た目が複数箇所に現れたら、クラスの共通化より先にコンポーネント化を検討する
 
 ## コミット・ブランチ
 
-- `main` で直接コミットしない。作業前に現在のブランチを確認し、作業用ブランチを切ってからコミットする
+- `main` / `develop` で直接コミットしない。作業前に現在のブランチを確認し、作業用ブランチを切ってからコミットする
+- 作業用ブランチは **`develop` から切り**、PR のマージ先も **`develop`** にする（`main` へは、ユーザーの指示があるときだけ `develop` から反映する）
+- **作業を始める前に、ローカルの `develop` がリモートより遅れていないか確認する**。`git fetch origin develop` のあと `git rev-list --left-right --count develop...origin/develop` などで差を見て、遅れていれば `git pull --ff-only origin develop`（`develop` をチェックアウトした状態で）で最新にしてから作業用ブランチを切る。ローカルの `develop` にリモートにないコミットがあって fast-forward できないときは、勝手に解消せずユーザーに報告する
+- フェーズごとにブランチを切り、PR を分ける（ブランチ名は各フェーズのプランに書いてある）
 - ブランチ名は英小文字・数字・`-`・`/` のみのケバブケースで、prefix はコミットの prefix と揃える（例: `feat/gantt-drag`）
 - コミットは意味のある小さな単位に分ける。性質の違う変更（feat と refactor など）は分ける
 - コミットメッセージは日本語で `<prefix>: <修正内容の要約>`。prefix は `feat` / `fix` / `docs` / `style` / `refactor`
@@ -222,6 +228,12 @@ src/
 
 - 実施していない検証をチェック済みにしない
 - 対応する issue がある場合は末尾に `Closes #番号` を付ける
+
+## セルフレビュー
+
+- セルフレビューを頼まれたら、指摘点は会話の中だけで済ませず、**PR のレビューコメント（該当する行へのインラインコメント）として GitHub に投稿する**。PR がまだなければ、先に `develop` 宛ての PR を作ってから投稿する
+- 指摘ごとに 1 コメントにし、重要度（高・中・低）、何が問題か、再現の手順や根拠、直し方の案を書く。実際に確かめたこと（ブラウザでの再現など）と推測を分けて書く
+- レビューは承認（Approve）や変更要求（Request changes）ではなくコメント（Comment）として出す。修正は、ユーザーの指示を受けてから行う
 
 ## 安全確認
 

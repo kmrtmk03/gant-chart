@@ -1,0 +1,278 @@
+@use "tokens";
+@use "button";
+
+$panel-width: 360px;
+
+// タイムラインの上に重ねる（タイムラインの幅は変えない）。
+// 画面上部のバーの下から出し、バーの右端の「完了済みを表示」を開いたままでも押せるようにする
+.panel {
+  position: fixed;
+  top: tokens.$header-height;
+  right: 0;
+  bottom: 0;
+  z-index: tokens.$z-index-panel;
+  display: flex;
+  flex-direction: column;
+  width: min(#{$panel-width}, 100vw);
+  border-left: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+  animation: slide-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+// 狭い画面（スマホ）では画面の幅いっぱいに出す。固定幅のままだと、幅が 360px を少し超える端末で左に隙間が残る
+@media (max-width: tokens.$breakpoint-narrow) {
+  .panel {
+    width: 100%;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+// 閉じるボタンは枠を消して、見出しの右に控えめに置く
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 tokens.$space-3 0 tokens.$space-6;
+  border-bottom: 1px solid tokens.$color-border;
+
+  button {
+    min-width: 32px;
+    padding: 0;
+    border-color: transparent;
+    background: none;
+    color: tokens.$color-text-muted;
+
+    &:hover:not(:disabled) {
+      border-color: transparent;
+      background: tokens.$color-hover;
+      color: tokens.$color-text;
+    }
+  }
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-2;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: tokens.$font-size-lg;
+  font-weight: 600;
+}
+
+// フォーム全体。項目の領域（.body）だけがスクロールし、下部のボタン（.actions）は下に固定する
+.form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: tokens.$space-5;
+  min-height: 0;
+  padding: tokens.$space-6;
+  overflow-y: auto;
+}
+
+// 編集のときだけ出す「状態」の欄。案件の状態（未完了 / 完了済み）と、それを切り替えるボタン
+.status {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-3;
+}
+
+.statusTitle {
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-base;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.statusOpen,
+.statusDone {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.statusOpen {
+  color: tokens.$color-text;
+}
+
+.statusDone {
+  color: tokens.$color-success;
+
+  &::before {
+    content: "✓ ";
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$space-2;
+  min-width: 0;
+
+  label {
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-base;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  input[aria-invalid="true"],
+  select[aria-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+// 開始日と終了日を横に半分ずつ並べる
+.dateRow {
+  display: flex;
+  gap: tokens.$space-3;
+
+  .field {
+    flex: 1;
+  }
+}
+
+.error {
+  margin: 0;
+  color: tokens.$color-danger;
+  font-size: tokens.$font-size-base;
+}
+
+.colorField {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0;
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-base;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+}
+
+.colors {
+  display: flex;
+  gap: tokens.$space-3;
+  margin-top: tokens.$space-2;
+}
+
+.colorOption {
+  position: relative;
+  cursor: pointer;
+}
+
+// ラジオ本体は見えなくして、色の丸で選択を表す（キーボード操作は残す）
+.colorInput {
+  position: absolute;
+  opacity: 0;
+}
+
+.colorSwatch {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 20%);
+  transition: transform tokens.$transition-fast;
+}
+
+.colorOption:hover .colorSwatch {
+  transform: scale(1.1);
+}
+
+// 選んだ色は、パネルの背景色の隙間を挟んだ白い輪で示す
+.colorInput:checked + .colorSwatch {
+  box-shadow:
+    0 0 0 2px tokens.$color-elevated,
+    0 0 0 4px tokens.$color-text;
+}
+
+.colorInput:focus-visible + .colorSwatch {
+  outline: 2px solid tokens.$color-primary;
+  outline-offset: 2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// 下部のボタン。削除（左）／キャンセル・保存（右）の 1 段で、フォームの項目が長くなっても押し出されない
+.actions {
+  display: flex;
+  gap: tokens.$space-2;
+  padding: tokens.$space-4 tokens.$space-6;
+  border-top: 1px solid tokens.$color-border;
+}
+
+.spacer {
+  flex: 1;
+}
+
+// 「完了にする / 未完了に戻す」。状態の欄の右端に置く
+.completeButton {
+  @include button.appearance;
+
+  flex-shrink: 0;
+}
+
+.saveButton {
+  @include button.appearance;
+
+  border-color: tokens.$color-primary-solid;
+  background: tokens.$color-primary-solid;
+  color: tokens.$color-on-primary;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-primary-solid-hover;
+    background: tokens.$color-primary-solid-hover;
+  }
+}
+
+.deleteButton {
+  @include button.appearance;
+
+  border-color: transparent;
+  background: none;
+  color: tokens.$color-danger;
+
+  &:hover:not(:disabled) {
+    border-color: transparent;
+    background: tokens.$color-danger-soft;
+  }
+}

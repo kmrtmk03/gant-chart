@@ -1,0 +1,83 @@
+@use "tokens";
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.message {
+  padding: tokens.$space-6;
+  color: tokens.$color-text-muted;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$space-3;
+  color: tokens.$color-text-muted;
+}
+
+// 縦横のスクロールをこの 1 か所で受ける
+.scroller {
+  flex: 1;
+  overflow: auto;
+  background: tokens.$color-bg;
+}
+
+// 幅を中身に合わせる。スクロール領域の幅のままだと、sticky の左リストが領域の幅までしか追従しない。
+// 担当者や案件が少なくても、リストの区切り線やタイムラインの背景が画面の下端まで続くように、
+// 高さは最低でもスクロール領域いっぱいにし、余った高さは 2 行目（リストと本体）に配る。
+// 列幅は動的な値なので、grid-template-columns はインラインスタイルで渡す
+.grid {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: max-content;
+  min-height: 100%;
+}
+
+.corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: tokens.$z-index-sticky + 2;
+  border-right: 1px solid tokens.$color-border-strong;
+  border-bottom: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-surface;
+}
+
+// 保存（帯のドラッグ・案件の並び替え）に失敗したときのお知らせ。画面の左下に浮かせる
+// （右側はサイドパネルが開くと隠れるため。パネルより上の z-index にもしておく）。
+// 複数出ても重ならないよう、まとめて縦に積む
+$notice-max-width: 480px;
+
+.notices {
+  position: fixed;
+  bottom: tokens.$space-6;
+  left: tokens.$space-6;
+  z-index: tokens.$z-index-notice;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: tokens.$space-2;
+  max-width: min($notice-max-width, calc(100% - #{tokens.$space-6 * 2}));
+  // お知らせのない部分で、下の画面の操作を妨げない
+  pointer-events: none;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-3;
+  padding: tokens.$space-3 tokens.$space-4;
+  border: 1px solid tokens.$color-danger;
+  border-radius: tokens.$radius-md;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-danger;
+  font-size: tokens.$font-size-base;
+  pointer-events: auto;
+}

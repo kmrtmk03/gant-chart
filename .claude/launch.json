@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev-http",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "BASIC_AUTH_USER=",
+        "BASIC_AUTH_PASSWORD=",
+        "pnpm",
+        "dev:http"
+      ],
+      "port": 3000
+    }
+  ]
+}

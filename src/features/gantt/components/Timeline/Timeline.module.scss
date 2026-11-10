@@ -1,0 +1,18 @@
+@use "tokens";
+
+// 幅は日数で決まる動的な値なので、インラインスタイルで渡す。
+// 子の絶対配置（背景・今日の線・帯）の基準にする
+.body {
+  position: relative;
+}
+
+// 行の下線は左リストの行と同じ位置に引く
+.memberRow,
+.projectRow {
+  position: relative;
+  border-bottom: 1px solid tokens.$color-border;
+}
+
+.memberRow {
+  background: tokens.$color-row-member;
+}

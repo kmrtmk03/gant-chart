@@ -1,0 +1,70 @@
+@use "tokens";
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: tokens.$z-index-sticky + 1;
+  border-bottom: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-surface;
+}
+
+.row {
+  display: flex;
+}
+
+// 文字の縦位置は行の高さ（gantt.constants.ts の DATE_HEADER_*_ROW_HEIGHT を style で指定）に合わせて中央にそろえる。
+// line-height に行の高さと同じ数値を書くと、高さだけ変えたときに文字がずれるため使わない
+.month {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0 tokens.$space-2;
+  overflow: hidden;
+  border-right: 1px solid tokens.$color-border;
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-base;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.day {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid tokens.$color-border;
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-base;
+  font-variant-numeric: tabular-nums;
+}
+
+// 土曜は青、日曜と祝日は赤の文字色にする
+.saturday {
+  color: tokens.$color-saturday-text;
+}
+
+.holiday {
+  color: tokens.$color-holiday-text;
+}
+
+// 月の 1 日の列（と月の区間）の左に区切り線を引く。タイムライン本体（TimelineGrid）と同じ位置・太さで、
+// 上から下まで 1 本につなげる。border だと幅が変わるので内側の影で描く
+.monthStart {
+  box-shadow: inset 2px 0 0 tokens.$color-month-divider;
+}
+
+// 今日は丸いバッジで目立たせる
+.today {
+  position: relative;
+  color: tokens.$color-on-primary;
+  font-weight: 700;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 3px 2px;
+    z-index: -1;
+    border-radius: tokens.$radius-sm;
+    background: tokens.$color-primary-solid;
+  }
+}

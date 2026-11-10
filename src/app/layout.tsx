@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 
 import "@/styles/globals.scss"
 
+import { ServiceWorkerRegister } from "./ServiceWorkerRegister"
+
 export const metadata: Metadata = {
   title: "ガントチャート",
 }
@@ -13,7 +15,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   )
 }

@@ -3,6 +3,16 @@
 
 :root {
   @include tokens.export-css-variables;
+
+  // フォームの部品（日付ピッカーなど）やスクロールバーをブラウザ標準のダーク表示にする
+  color-scheme: dark;
+}
+
+// 狭い画面では左のリストを縮める（スマホは閲覧できれば可。タイムラインの見える幅を残す）
+@media (max-width: tokens.$breakpoint-narrow) {
+  :root {
+    --member-list-width: #{tokens.$member-list-width-narrow};
+  }
 }
 
 *,
@@ -16,5 +26,63 @@ body {
   background: tokens.$color-bg;
   color: tokens.$color-text;
   font-family: tokens.$font-family-base;
-  font-size: tokens.$font-size-md;
+  font-size: tokens.$font-size-base;
+  -webkit-font-smoothing: antialiased;
+}
+
+// ---- ボタンのリセット ----
+// 全ボタンに共通する最低限だけを置く（フォント・カーソル・無効のとき）。
+// 枠・背景・余白などの標準の見た目は、`Button` コンポーネントか `styles/_button.scss` の mixin で明示的に付ける
+button {
+  font: inherit;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ---- 入力欄の基本形 ----
+input:not([type="radio"], [type="checkbox"]),
+select,
+textarea {
+  min-height: 36px;
+  padding: tokens.$space-2 tokens.$space-3;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-bg;
+  color: tokens.$color-text;
+  font: inherit;
+  transition:
+    border-color tokens.$transition-fast,
+    box-shadow tokens.$transition-fast;
+
+  &::placeholder {
+    color: tokens.$color-text-subtle;
+  }
+
+  &:focus {
+    border-color: tokens.$color-primary;
+    outline: none;
+    box-shadow: tokens.$focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+textarea {
+  resize: vertical;
+}
+
+// キーボード操作のときだけフォーカスリングを出す
+button:focus-visible {
+  outline: none;
+  box-shadow: tokens.$focus-ring;
+}
+
+::selection {
+  background: tokens.$color-primary-soft;
 }

@@ -1,0 +1,17 @@
+@use "tokens";
+
+// 位置・幅・色は動的な値なので、インラインスタイルで渡す
+.bar {
+  position: absolute;
+  top: 17px;
+  z-index: tokens.$z-index-bar;
+  height: 6px;
+  border-radius: 999px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+// 完了済みの案件の帯（表示しているとき）。未完了の帯より薄くする
+.completed {
+  opacity: tokens.$opacity-completed-summary-bar;
+}

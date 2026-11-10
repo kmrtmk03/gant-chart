@@ -1,0 +1,162 @@
+@use "tokens";
+@use "button";
+
+// 伸縮用のつかみの幅。1 日だけの帯（32px）でも、移動用の中央部分が 20px 残る
+$handle-width: 6px;
+// タッチなど指で操作する端末でのつかみの幅。指では 6px を狙いにくいので広げる。
+// 1 日だけの帯でも、移動用の中央部分が 12px 残る（つかみと中央の両方を最低限つかめる幅にとどめる）
+$handle-width-coarse: 10px;
+
+// 背景色の上に上から下へ薄い白のグラデーションを重ね、立体感を出す
+$bar-gradient: linear-gradient(rgb(255 255 255 / 12%), rgb(255 255 255 / 0%));
+// ホバー中・ドラッグ中に帯全体へ重ねる白。filter: brightness() だと明るくなりすぎて、白文字のコントラストが
+// 4.5 を下回った（青で 3.8）ため、重ねる量を決めて（6%）、色のトークン側でその分のコントラストを確保している。
+// 濃さを変えるときは _tokens.scss の帯の色のコントラストを計算し直すこと
+$bar-highlight: linear-gradient(rgb(255 255 255 / 6%), rgb(255 255 255 / 6%));
+
+// 位置・幅・色は動的な値なので、インラインスタイルで渡す（色は background ではなく backgroundColor。
+// background だと上のグラデーションが消える）
+.bar {
+  @include button.base;
+
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  z-index: tokens.$z-index-bar;
+  display: block;
+  min-height: 0;
+  padding: 0 tokens.$space-2;
+  overflow: hidden;
+  border: 0;
+  border-radius: tokens.$radius-sm;
+  background-image: $bar-gradient;
+  box-shadow: tokens.$shadow-bar;
+  color: tokens.$color-on-primary;
+  font: inherit;
+  font-size: tokens.$font-size-base;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  // 中央はつかんで移動できることを示す。クリックでパネルも開く
+  cursor: grab;
+  // タッチでは横方向のドラッグを帯の移動に使い、縦方向のスワイプは画面のスクロールに残す
+  touch-action: pan-y;
+  user-select: none;
+  // MEMO: background-image（グラデーション）は transition できないので、ホバーの白は一瞬で切り替わる
+  transition: box-shadow tokens.$transition-fast;
+
+  // ホバー中は、グラデーションの上に白を重ねる（背景色はインラインスタイルの backgroundColor のまま）
+  &:hover:not(:disabled) {
+    background-image: $bar-highlight, $bar-gradient;
+  }
+}
+
+// キーボードで帯にフォーカスしたときの枠。globals.scss の button:focus-visible は box-shadow を差し替えるため、
+// 帯の影（と編集中の枠）が消える。枠は outline で描き、影はそのまま残す
+.bar:focus-visible {
+  outline: 2px solid tokens.$color-text;
+  outline-offset: 2px;
+  box-shadow: tokens.$shadow-bar;
+}
+
+// 完了済みの案件の帯（表示しているとき）。薄くして未完了の帯と見分ける。
+// opacity は帯全体（編集中の枠・ドラッグ中の影も含む）にかかるので、編集中・ドラッグ中は元の濃さに戻し、
+// どの帯を操作しているかが分かるようにする
+.completed {
+  opacity: tokens.$opacity-completed-bar;
+
+  &.editing,
+  &.dragging {
+    opacity: 1;
+  }
+}
+
+// 編集中の帯を枠で強調する。編集中はドラッグできないので、つかめる見た目（grab）にしない
+.editing {
+  cursor: pointer;
+  box-shadow:
+    tokens.$shadow-bar,
+    0 0 0 2px tokens.$color-bg,
+    0 0 0 4px tokens.$color-text;
+}
+
+// 編集中は二重の枠（4px）の外側に outline を描く。フォーカス中も枠が消えないよう box-shadow を戻す
+.editing:focus-visible {
+  outline-offset: 5px;
+  box-shadow:
+    tokens.$shadow-bar,
+    0 0 0 2px tokens.$color-bg,
+    0 0 0 4px tokens.$color-text;
+}
+
+.clippedStart {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.clippedEnd {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+// 左右の端の伸縮用のつかみ。帯の中に重ね、触れたときだけ薄く浮かび上がらせる
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: $handle-width;
+  cursor: ew-resize;
+  transition: background-color tokens.$transition-fast;
+
+  @media (pointer: coarse) {
+    width: $handle-width-coarse;
+  }
+
+  &:hover {
+    background-color: tokens.$color-border-hover;
+  }
+}
+
+.handleStart {
+  left: 0;
+}
+
+.handleEnd {
+  right: 0;
+}
+
+// ドラッグ中は他の帯より上に出し、つかんでいることが分かるようにする
+.dragging {
+  z-index: tokens.$z-index-bar-dragging;
+  cursor: grabbing;
+
+  // ドラッグ中はポインターが帯の上にあるので、ホバーの一括指定（上の説明と同じ）にも負けないようにする
+  &,
+  &:hover:not(:disabled) {
+    background-image: $bar-highlight, $bar-gradient;
+  }
+}
+
+// 保存が終わるまでは、もう一度つかめないことを示す
+.saving {
+  cursor: progress;
+}
+
+// ドラッグ中に帯の上に出す、変更後の期間（例: 10/3 〜 10/12）。位置（left）はインラインスタイルで渡す
+.periodLabel {
+  position: absolute;
+  top: -10px;
+  z-index: tokens.$z-index-bar-dragging;
+  padding: 0 tokens.$space-1;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-bar;
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-base;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+}

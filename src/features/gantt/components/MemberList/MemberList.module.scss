@@ -1,0 +1,17 @@
+@use "tokens";
+
+// 横スクロールしても左に残す。背景を塗らないと後ろのタイムラインが透けて見える
+.list {
+  position: sticky;
+  left: 0;
+  z-index: tokens.$z-index-sticky;
+  border-right: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-surface;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$space-2;
+  padding: tokens.$space-3;
+}

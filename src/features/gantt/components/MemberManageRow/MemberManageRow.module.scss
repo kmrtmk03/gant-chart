@@ -1,0 +1,94 @@
+@use "tokens";
+@use "button";
+
+// 挿入位置の線（::before / ::after）の基準にするため position: relative にする
+.row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: tokens.$space-2;
+  padding: tokens.$space-2 0;
+  border-bottom: 1px solid tokens.$color-border;
+}
+
+// ドラッグ中の行。影を付けて浮かせ、ほかの行より上に描く（位置は transform のインラインスタイルで動かす）。
+// 左のリストの案件の行（MemberListGroup.module.scss）と同じ見た目にする
+.dragging {
+  z-index: 1;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-elevated-hover;
+  box-shadow: tokens.$shadow-panel;
+}
+
+// 挿入位置の目印。落とす先の行の上（before）か下（after）に横線を引く
+.dropBefore::before,
+.dropAfter::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: tokens.$color-primary;
+  content: "";
+  pointer-events: none;
+}
+
+.dropBefore::before {
+  top: -1px;
+}
+
+.dropAfter::after {
+  bottom: -1px;
+}
+
+.nameForm {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+
+  &[aria-invalid="true"] {
+    border-color: tokens.$color-danger;
+  }
+}
+
+.count {
+  min-width: 3em;
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-base;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.deleteButton {
+  @include button.appearance;
+
+  border-color: transparent;
+  background: none;
+  color: tokens.$color-danger;
+
+  &:hover:not(:disabled) {
+    border-color: transparent;
+    background: tokens.$color-danger-soft;
+  }
+}
+
+// 入力欄の下に、行の幅いっぱいで出す
+.error,
+.warning {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: tokens.$font-size-base;
+}
+
+.error {
+  color: tokens.$color-danger;
+}
+
+.warning {
+  color: tokens.$color-warning;
+}

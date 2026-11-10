@@ -1,0 +1,49 @@
+@use "tokens";
+@use "button";
+
+.dialog {
+  width: min(380px, calc(100vw - #{tokens.$space-6} * 2));
+  padding: tokens.$space-6;
+  border: 1px solid tokens.$color-border-strong;
+  border-radius: tokens.$radius-lg;
+  background: tokens.$color-elevated;
+  box-shadow: tokens.$shadow-panel;
+  color: tokens.$color-text;
+
+  &::backdrop {
+    background: tokens.$color-backdrop;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.title {
+  margin: 0 0 tokens.$space-2;
+  font-size: tokens.$font-size-lg;
+  font-weight: 600;
+}
+
+.message {
+  margin: 0 0 tokens.$space-6;
+  color: tokens.$color-text-muted;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: tokens.$space-2;
+}
+
+.confirm {
+  @include button.appearance;
+
+  border-color: tokens.$color-danger-solid;
+  background: tokens.$color-danger-solid;
+  color: tokens.$color-on-primary;
+
+  // ホバーは明るくすると白文字との比が下がるため、暗くする
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-danger-solid-hover;
+    background: tokens.$color-danger-solid-hover;
+  }
+}
