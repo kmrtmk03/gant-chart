@@ -35,6 +35,10 @@ $color-today: rgb(113 130 255 / 18%);
 $color-row-member: rgb(255 255 255 / 2.5%);
 $color-danger: #f2667a;
 $color-danger-soft: rgb(242 102 122 / 12%);
+// 白文字（$color-on-primary）を載せる塗りつぶし用の危険色（削除の確認ボタン）。$color-danger は白との比が 3.02 で 4.5 に届かないため分ける
+// （比は 4.57 / ホバー 5.45）。文字・枠線には $color-danger を使い、白文字を載せるときだけこちらを使う
+$color-danger-solid: #d63a54;
+$color-danger-solid-hover: #c42f4b;
 $color-warning: #f5b454;
 // 完了済みの案件の印（✓・見出しの札）
 $color-success: #3ccf91;
