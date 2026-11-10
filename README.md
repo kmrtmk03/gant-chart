@@ -119,4 +119,6 @@ Next.js 16（App Router、`src/` 構成）/ TypeScript（strict）/ Sass + CSS M
 
 ## 開発のルール
 
+実装がどう作られているか（構造・処理の流れ・設計の理由）は [docs/](docs/README.md) にまとめている（全体構成と、機能ごとの資料）。
+
 AI エージェントを含む開発者向けの規約は [AGENTS.md](AGENTS.md)（Claude Code は [CLAUDE.md](CLAUDE.md) 経由）に、要件と実装プランは `.plan/` にある。`.plan/handoff.md` に現在の進捗と調査済みの事実をまとめている。
