@@ -1,68 +1,59 @@
-import {
-  DAY_COLUMN_WIDTH,
-  MEMBER_ROW_HEIGHT,
-  PROJECT_ROW_HEIGHT,
-} from "../../gantt.constants"
-import type { IProject } from "../../gantt.type"
-import type { IMemberGroup } from "../../utils/member.utils"
+import { useCallback } from "react"
+import type { CSSProperties } from "react"
+
+import { DAY_COLUMN_WIDTH } from "../../gantt.constants"
+import { getRowHeight } from "../../ganttRows.utils"
+import type { TGanttRowKind } from "../../ganttRows.utils"
+import styles from "./Timeline.module.scss"
 
 interface IUseTimelineParams {
-  memberGroups: IMemberGroup[]
-  /** 折りたたみ中の担当者 ID */
-  collapsedMemberIds: ReadonlySet<string>
   rangeDays: number
   /** サイドパネルで編集中の案件 ID（なければ null） */
   editingProjectId: string | null
 }
 
-/** 案件の帯 1 本ぶんの表示用の値 */
-interface ITimelineProjectView {
-  project: IProject
-  /** サイドパネルで編集中か */
-  isEditing: boolean
-}
-
-/** 担当者ごとの行のまとまりの表示用の値 */
-interface ITimelineMemberRowView {
-  memberId: string
-  /** 担当者行のまとめ帯に使う、この担当者の案件（表示順）。折りたたみ中でも使う */
-  projects: IProject[]
-  /** 担当者行の配下（案件の行と「案件を追加」行の空行）を出すか。折りたたみ中は false */
-  isExpanded: boolean
-  /** 案件行に出す帯 */
-  projectViews: ITimelineProjectView[]
+/** 行の種別ごとの className。担当者行だけ別、案件行と「案件を追加」行の空行は同じ */
+const ROW_CLASS_NAME: Record<TGanttRowKind, string | undefined> = {
+  member: styles.memberRow,
+  project: styles.projectRow,
+  addProject: styles.projectRow,
 }
 
 /**
- * `Timeline` 専用のフック。本体の幅と、担当者ごとの行の表示用の値を求める。
- * 行の並びと高さは `MemberList` と同じにして左右をそろえること（高さは `gantt.constants.ts` の定数）。
- * 特に担当者が開いているか（`isExpanded`）の判定は `useMemberList` と同じにすること。
- * どちらかだけ直すと左右の行がずれるので、変更するときは両方のフックを見ること。
+ * 行の種別から、行の className と高さを求める。
+ * 高さは左リストと同じ `getRowHeight` を使い、左右の行をそろえる。
+ * 描画の状態に依存しないので、モジュールの関数として参照を保つ（`useTimeline` が返す）。
+ */
+function getRowProps(kind: TGanttRowKind): {
+  className: string | undefined
+  style: CSSProperties
+} {
+  return {
+    className: ROW_CLASS_NAME[kind],
+    style: { height: getRowHeight(kind) },
+  }
+}
+
+/**
+ * `Timeline` 専用のフック。本体の幅と、行・帯の表示用の値を求める。
+ * 行の種別・順序・開閉は `ganttRows.utils.ts` の行モデル（呼び出し側から受け取る `rowGroups`）に従い、
+ * ここでは独自に決めない。左リスト（`MemberList`）と同じモデルを描くので、左右の行がずれない。
  */
 export function useTimeline({
-  memberGroups,
-  collapsedMemberIds,
   rangeDays,
   editingProjectId,
 }: IUseTimelineParams) {
-  const memberRows: ITimelineMemberRowView[] = memberGroups.map(
-    ({ member, projects }) => ({
-      memberId: member.id,
-      projects,
-      isExpanded: !collapsedMemberIds.has(member.id),
-      projectViews: projects.map((project) => ({
-        project,
-        isEditing: project.id === editingProjectId,
-      })),
-    }),
+  /** 案件がサイドパネルで編集中か（帯の強調に使う） */
+  const isEditingProject = useCallback(
+    (projectId: string) => projectId === editingProjectId,
+    [editingProjectId],
   )
 
   return {
     // 本体の大きさ
     bodyWidth: rangeDays * DAY_COLUMN_WIDTH,
-    memberRowHeight: MEMBER_ROW_HEIGHT,
-    projectRowHeight: PROJECT_ROW_HEIGHT,
-    // 担当者ごとの行
-    memberRows,
+    // 行の見た目と、帯の強調
+    getRowProps,
+    isEditingProject,
   }
 }

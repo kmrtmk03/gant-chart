@@ -1,8 +1,9 @@
 import { useCallback } from "react"
 import type { CSSProperties } from "react"
 
-import { BAR_COLORS, PROJECT_ROW_HEIGHT } from "../../gantt.constants"
+import { BAR_COLORS } from "../../gantt.constants"
 import type { IProject } from "../../gantt.type"
+import { getRowHeight } from "../../ganttRows.utils"
 import type { IDragReorderRowState } from "../../hooks/useDragReorder"
 import styles from "./MemberListProjectRow.module.scss"
 
@@ -16,7 +17,7 @@ interface IUseMemberListProjectRowParams {
 
 /**
  * `MemberListProjectRow` 専用のフック。行の見た目の値と、並び替えのフックへ要素を登録する ref を返す。
- * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
+ * 行の高さは `Timeline` と同じ `getRowHeight` を使い、左右の行をそろえる。
  */
 export function useMemberListProjectRow({
   project,
@@ -46,7 +47,7 @@ export function useMemberListProjectRow({
 
   // 行の高さと、ドラッグ中の追従（transform）。値が動的なのでインラインスタイルで渡す
   const rowStyle: CSSProperties = {
-    height: PROJECT_ROW_HEIGHT,
+    height: getRowHeight("project"),
     transform: dragState.isDragging
       ? `translateY(${dragState.offsetY}px)`
       : undefined,

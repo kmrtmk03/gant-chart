@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import type { CSSProperties, MouseEvent } from "react"
 
 import {
@@ -5,6 +6,7 @@ import {
   DATE_HEADER_MONTH_ROW_HEIGHT,
   DAY_COLUMN_WIDTH,
 } from "../../gantt.constants"
+import { buildMemberRowGroups } from "../../ganttRows.utils"
 import { useGanttPage } from "../../hooks/useGanttPage"
 
 /**
@@ -35,6 +37,18 @@ export function useGanttChart() {
     projectReorder,
   } = page
 
+  // 左リストとタイムラインに渡す行のまとまり。担当者の開閉と行の並びをここ 1 か所で決め、左右の行をそろえる。
+  // どちらも React.memo のコンポーネントなので、memberGroups と開閉が変わったときだけ作り直して参照を保つ。
+  // 読み込み前（memberGroups が null）は作らない（早期 return より前に呼ぶ必要があるため、ここで呼ぶ）
+  const { collapsedMemberIds } = page
+  const rowGroups = useMemo(
+    () =>
+      memberGroups === null
+        ? null
+        : buildMemberRowGroups(memberGroups, collapsedMemberIds),
+    [memberGroups, collapsedMemberIds],
+  )
+
   if (page.loadError) {
     return {
       status: "error" as const,
@@ -45,6 +59,7 @@ export function useGanttChart() {
 
   if (
     memberGroups === null ||
+    rowGroups === null ||
     allMemberGroups === null ||
     range.rangeStart === null ||
     range.today === null ||
@@ -104,8 +119,8 @@ export function useGanttChart() {
       seedErrorMessage: page.seedError?.message ?? null,
       seedSampleData: page.seedSampleData,
     },
-    // データ・表示期間（memberGroups は画面に出すもの。担当者の管理ダイアログには完了済みも含めた allMemberGroups を渡す）
-    memberGroups,
+    // データ・表示期間（rowGroups は画面に出す担当者・案件の行。担当者の管理ダイアログには完了済みも含めた allMemberGroups を渡す）
+    rowGroups,
     allMemberGroups,
     columns,
     rangeStart,
@@ -128,7 +143,6 @@ export function useGanttChart() {
       handleClick: handleScrollAreaClick,
     },
     // 折りたたみ・ボタンの操作
-    collapsedMemberIds: page.collapsedMemberIds,
     toggleMember: page.toggleMember,
     addProject: page.addProject,
     manageMembers: page.manageMembers,

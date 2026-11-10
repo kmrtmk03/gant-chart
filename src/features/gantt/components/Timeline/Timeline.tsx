@@ -3,7 +3,7 @@ import { memo } from "react"
 import type { TDateString } from "../../gantt.type"
 import type { IDayColumn } from "../../utils/date.utils"
 import type { TProjectPeriod } from "../../utils/layout.utils"
-import type { IMemberGroup } from "../../utils/member.utils"
+import type { IMemberRowGroup } from "../../ganttRows.utils"
 import { MemberSummaryBar } from "../MemberSummaryBar"
 import { ProjectBar } from "../ProjectBar"
 import { TimelineGrid } from "../TimelineGrid"
@@ -12,9 +12,8 @@ import styles from "./Timeline.module.scss"
 import { useTimeline } from "./useTimeline"
 
 interface ITimelineProps {
-  memberGroups: IMemberGroup[]
-  /** 折りたたみ中の担当者 ID */
-  collapsedMemberIds: ReadonlySet<string>
+  /** 担当者ごとの行のまとまり（開閉と行の並びは `MemberList` と同じものを受け取る） */
+  rowGroups: IMemberRowGroup[]
   columns: IDayColumn[]
   rangeStart: TDateString
   rangeDays: number
@@ -35,12 +34,11 @@ interface ITimelineProps {
 
 /**
  * 右側のタイムライン本体。背景の縦線・今日の線・帯を重ねて描く。
- * 行の並びと高さは `MemberList` と同じ（担当者行 → 開いていれば案件行と「案件を追加」行）にして、左右をそろえる。
+ * 行の種別・順序・開閉・高さは `MemberList` と同じ行モデル（`ganttRows.utils.ts`）に従い、種別ごとに描くだけにして左右をそろえる。
  * 日付ヘッダーは `TimelineDateHeader` が別に受け持つ。
  */
 export const Timeline = memo(function Timeline({
-  memberGroups,
-  collapsedMemberIds,
+  rowGroups,
   columns,
   rangeStart,
   rangeDays,
@@ -49,52 +47,47 @@ export const Timeline = memo(function Timeline({
   onSelectProject,
   onChangeProjectPeriod,
 }: ITimelineProps) {
-  const { bodyWidth, memberRowHeight, projectRowHeight, memberRows } =
-    useTimeline({
-      memberGroups,
-      collapsedMemberIds,
-      rangeDays,
-      editingProjectId,
-    })
+  const { bodyWidth, getRowProps, isEditingProject } = useTimeline({
+    rangeDays,
+    editingProjectId,
+  })
 
   return (
     <div className={styles.body} style={{ width: bodyWidth }}>
       <TimelineGrid columns={columns} />
       <TodayLine rangeStart={rangeStart} rangeDays={rangeDays} today={today} />
-      {memberRows.map((memberRow) => (
-        <div key={memberRow.memberId}>
-          <div className={styles.memberRow} style={{ height: memberRowHeight }}>
-            <MemberSummaryBar
-              projects={memberRow.projects}
-              rangeStart={rangeStart}
-              rangeDays={rangeDays}
-            />
-          </div>
-          {memberRow.isExpanded && (
-            <>
-              {memberRow.projectViews.map(({ project, isEditing }) => (
-                <div
-                  key={project.id}
-                  className={styles.projectRow}
-                  style={{ height: projectRowHeight }}
-                >
-                  <ProjectBar
-                    project={project}
-                    rangeStart={rangeStart}
-                    rangeDays={rangeDays}
-                    isEditing={isEditing}
-                    onSelect={onSelectProject}
-                    onChangePeriod={onChangeProjectPeriod}
-                  />
-                </div>
-              ))}
-              {/* 左リストの「案件を追加」行と高さをそろえるための空行 */}
-              <div
-                className={styles.projectRow}
-                style={{ height: projectRowHeight }}
-              />
-            </>
-          )}
+      {rowGroups.map(({ memberId, memberGroup, rows }) => (
+        <div key={memberId}>
+          {rows.map((row) => {
+            switch (row.kind) {
+              case "member":
+                return (
+                  <div key={row.key} {...getRowProps(row.kind)}>
+                    <MemberSummaryBar
+                      projects={memberGroup.projects}
+                      rangeStart={rangeStart}
+                      rangeDays={rangeDays}
+                    />
+                  </div>
+                )
+              case "project":
+                return (
+                  <div key={row.key} {...getRowProps(row.kind)}>
+                    <ProjectBar
+                      project={row.project}
+                      rangeStart={rangeStart}
+                      rangeDays={rangeDays}
+                      isEditing={isEditingProject(row.project.id)}
+                      onSelect={onSelectProject}
+                      onChangePeriod={onChangeProjectPeriod}
+                    />
+                  </div>
+                )
+              case "addProject":
+                // 左リストの「案件を追加」行と高さをそろえるための空行
+                return <div key={row.key} {...getRowProps(row.kind)} />
+            }
+          })}
         </div>
       ))}
     </div>

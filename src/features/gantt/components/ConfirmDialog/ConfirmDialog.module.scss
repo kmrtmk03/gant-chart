@@ -34,13 +34,13 @@
 }
 
 .confirm {
-  border-color: tokens.$color-danger;
-  background: tokens.$color-danger;
+  border-color: tokens.$color-danger-solid;
+  background: tokens.$color-danger-solid;
   color: tokens.$color-on-primary;
 
+  // ホバーは明るくすると白文字との比が下がるため、暗くする
   &:hover:not(:disabled) {
-    border-color: tokens.$color-danger;
-    background: tokens.$color-danger;
-    filter: brightness(1.1);
+    border-color: tokens.$color-danger-solid-hover;
+    background: tokens.$color-danger-solid-hover;
   }
 }
