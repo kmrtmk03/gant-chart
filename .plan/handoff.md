@@ -84,13 +84,14 @@ PR #36（ブランチ `fix/phase12-review-fixes`）を `develop` にマージ済
 - 対応済み・クローズ済み: #26 保存データが壊れたら `GanttCorruptedDataError` で読み書きを止める（画面からの退避ボタンは「今は不要」とオーナーが回答）/ #27 完了日のテストをタイムゾーン非依存に / #29 担当者を再追加したときのスクロール初期位置 / #31 サンプルデータの日付 / #32 日付ヘッダーの文字の縦位置
 - #25 キーボードの並び替え: オーナーがクローズ（不要）
 - #24 複数タブの上書き: 今は「同時編集はない」前提のまま据え置き（open）。Firestore 移行時の対応を [14-firestore-migration-todo.md](14-firestore-migration-todo.md) に残した
-- オーナーの回答（2026-11-10）に沿って、issue ごとにブランチを切って次の順で進める（各ブランチは `develop` から）:
-  1. #28 削除の確認ボタン（danger 色に白文字）も白文字のコントラストを 4.5 以上にする（`$color-danger-solid`。ブランチ `fix/danger-button-contrast`）
-  2. #30 左リストとタイムラインの行の構造を 1 つの行モデルにそろえる（行の種別を増やす予定があるため優先度を上げた）
-  3. #33 `useGanttPage` から `useProjectReorder`（並び替えとそのエラー）と `useBarPeriodChange`（期間変更とそのエラー）の 2 つだけ先に切り出す
-  4. #34 `gantt.utils.ts` を `features/gantt/utils/` に責務ごと（`date.utils.ts` / `layout.utils.ts` / `member.utils.ts` など。テストは隣）に分ける。担当者管理だけが使う検証は `MemberManageDialog` の近くへ
-  5. #35 グローバルの `button` の装飾と個別の上書きの整理（オーナーが「一旦着手」と回答）
-- **未確認**: 主ボタン（保存・追加・完了済み表示の選択・カレンダーの選択日）の見た目の目視（比は計算のみ。今日のバッジだけ確認）、日付をまたいだ後の #29 の動き
+- オーナーの回答（2026-11-10）に沿って、issue ごとにブランチを切って進め、すべて `develop` にマージ済み・クローズ済み:
+  - #28 削除の確認ボタンの白文字を 4.5:1 以上に（`$color-danger-solid`。PR #37）
+  - #33 `useGanttPage` から `useProjectReorder` と `useBarPeriodChange` を切り出し（PR #39）
+  - #30 左リストとタイムラインの行を 1 つの行モデル（`ganttRows.utils.ts`）から描く。行の種別を増やすときは `TGanttRow` と `getRowHeight`、左右の `switch` を直す（PR #40）
+  - #34 `gantt.utils.ts` を `utils/`（date / layout / member / reorder / error）に分割。担当者名の検証は `MemberManageDialog/memberName.utils.ts`（PR #41）
+  - #35 ボタンの標準の見た目を `button` 要素から外し、`Button` コンポーネントと `styles/_button.scss` の mixin（`base` / `appearance`）で明示的に付ける（PR #42）
+  - Codex レビューの issue は、#24（複数タブの上書き。Firestore 移行時に対応。[14-firestore-migration-todo.md](14-firestore-migration-todo.md)）だけが open
+- **未確認**: 主ボタン（保存・追加・完了済み表示の選択・カレンダーの選択日）と削除確認ボタンの見た目の目視（比は計算のみ。今日のバッジだけ確認）、日付をまたいだ後の #29 の動き、#30 以降のリファクタリング後の左リストのドラッグ並び替え・タイムラインの目視（ボタンの computed style の前後比較と、行の位置・高さの一致は確認済み）
 
 ### 未了（次のセッションで）
 
