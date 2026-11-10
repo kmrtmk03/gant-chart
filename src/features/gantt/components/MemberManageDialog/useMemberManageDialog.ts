@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent, SyntheticEvent } from "react"
 
-import {
-  hasSameNameMember,
-  toError,
-  validateMemberName,
-} from "../../gantt.utils"
-import type { IMemberGroup } from "../../gantt.utils"
 import { useDragReorder } from "../../hooks/useDragReorder"
+import { toError } from "../../utils/error.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
+import { hasSameNameMember, validateMemberName } from "./memberName.utils"
 
 interface IUseMemberManageDialogParams {
   /** 担当者（表示順）と配下の案件。案件の数の表示と、削除の確認に使う */

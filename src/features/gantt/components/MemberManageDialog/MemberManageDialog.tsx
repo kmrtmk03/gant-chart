@@ -1,4 +1,4 @@
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 import { ConfirmDialog } from "../ConfirmDialog"
 import { MemberManageRow } from "../MemberManageRow"
 import styles from "./MemberManageDialog.module.scss"

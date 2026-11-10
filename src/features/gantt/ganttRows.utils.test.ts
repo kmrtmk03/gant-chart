@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { MEMBER_ROW_HEIGHT, PROJECT_ROW_HEIGHT } from "./gantt.constants"
 import type { IMember, IProject } from "./gantt.type"
-import type { IMemberGroup } from "./gantt.utils"
+import type { IMemberGroup } from "./utils/member.utils"
 import {
   applyProjectOrder,
   buildMemberRowGroups,

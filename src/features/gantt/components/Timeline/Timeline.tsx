@@ -1,7 +1,8 @@
 import { memo } from "react"
 
 import type { TDateString } from "../../gantt.type"
-import type { IDayColumn, TProjectPeriod } from "../../gantt.utils"
+import type { IDayColumn } from "../../utils/date.utils"
+import type { TProjectPeriod } from "../../utils/layout.utils"
 import type { IMemberRowGroup } from "../../ganttRows.utils"
 import { MemberSummaryBar } from "../MemberSummaryBar"
 import { ProjectBar } from "../ProjectBar"

@@ -1,13 +1,13 @@
 import { format } from "date-fns"
 
 import { DRAG_THRESHOLD_PX } from "../../gantt.constants"
+import { parseDateString } from "../../utils/date.utils"
 import {
+  type TProjectPeriod,
   moveProjectDates,
-  parseDateString,
   pxToDays,
   resizeProjectDates,
-  type TProjectPeriod,
-} from "../../gantt.utils"
+} from "../../utils/layout.utils"
 
 /** ドラッグの種類。帯の中央をつかむと移動、左右の端をつかむと伸縮 */
 export type TBarDragMode = "move" | "resize-start" | "resize-end"

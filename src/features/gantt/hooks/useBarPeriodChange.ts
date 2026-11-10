@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react"
 
 import type { TProjectUpdate } from "../gantt.type"
-import { toError } from "../gantt.utils"
-import type { TProjectPeriod } from "../gantt.utils"
+import { toError } from "../utils/error.utils"
+import type { TProjectPeriod } from "../utils/layout.utils"
 
 interface IUseBarPeriodChangeParams {
   /**

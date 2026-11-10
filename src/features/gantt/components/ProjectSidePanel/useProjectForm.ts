@@ -7,7 +7,7 @@ import type {
   TDateString,
   TProjectInput,
 } from "../../gantt.type"
-import { toError } from "../../gantt.utils"
+import { toError } from "../../utils/error.utils"
 import type { IProjectFormValues, TProjectFormErrors } from "./projectForm.type"
 import {
   createInitialFormValues,

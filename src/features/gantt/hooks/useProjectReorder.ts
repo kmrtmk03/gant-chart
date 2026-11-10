@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react"
 
-import { moveIdAmongVisible, toError } from "../gantt.utils"
-import type { IMemberGroup } from "../gantt.utils"
+import { toError } from "../utils/error.utils"
+import { moveIdAmongVisible } from "../utils/reorder.utils"
+import type { IMemberGroup } from "../utils/member.utils"
 
 /**
  * 並び替えた案件を、手元の案件の一覧から見つけられなかったときの文言。

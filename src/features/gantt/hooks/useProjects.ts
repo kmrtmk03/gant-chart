@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import type { IProject, TProjectInput, TProjectUpdate } from "../gantt.type"
-import { toError } from "../gantt.utils"
+import { toError } from "../utils/error.utils"
 import type { IGanttRepository } from "../repositories/ganttRepository.type"
 
 /**

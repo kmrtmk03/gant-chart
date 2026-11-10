@@ -4,7 +4,7 @@ import {
   DAY_COLUMN_WIDTH,
 } from "../../gantt.constants"
 import type { TDateString } from "../../gantt.type"
-import { getMonthSegments, type IDayColumn } from "../../gantt.utils"
+import { type IDayColumn, getMonthSegments } from "../../utils/date.utils"
 import styles from "./TimelineDateHeader.module.scss"
 
 interface IUseTimelineDateHeaderParams {

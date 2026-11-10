@@ -1,5 +1,5 @@
 import type { IProject, TDateString } from "../../gantt.type"
-import type { TProjectPeriod } from "../../gantt.utils"
+import type { TProjectPeriod } from "../../utils/layout.utils"
 import { useProjectBar } from "./useProjectBar"
 
 interface IProjectBarProps {

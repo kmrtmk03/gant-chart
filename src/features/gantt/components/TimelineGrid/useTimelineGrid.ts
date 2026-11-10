@@ -1,5 +1,5 @@
 import { DAY_COLUMN_WIDTH } from "../../gantt.constants"
-import type { IDayColumn } from "../../gantt.utils"
+import type { IDayColumn } from "../../utils/date.utils"
 import styles from "./TimelineGrid.module.scss"
 
 interface IUseTimelineGridParams {

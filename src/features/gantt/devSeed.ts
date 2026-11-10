@@ -5,7 +5,7 @@ import {
   DEFAULT_RANGE_DAYS_BEFORE,
 } from "./gantt.constants"
 import type { TProjectInput } from "./gantt.type"
-import { addDays, getToday, toDateString } from "./gantt.utils"
+import { addDays, getToday, toDateString } from "./utils/date.utils"
 import type { IGanttRepository } from "./repositories/ganttRepository.type"
 
 /**

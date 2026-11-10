@@ -2,13 +2,13 @@ import { useCallback, useMemo, useState } from "react"
 
 import { seedSampleData } from "../devSeed"
 import type { TProjectInput } from "../gantt.type"
+import { getDayColumns } from "../utils/date.utils"
+import { toError } from "../utils/error.utils"
 import {
   countCompletedProjects,
   excludeCompletedProjects,
-  getDayColumns,
   groupProjectsByMember,
-  toError,
-} from "../gantt.utils"
+} from "../utils/member.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
 import { useBarPeriodChange } from "./useBarPeriodChange"
 import { useCollapsedMembers } from "./useCollapsedMembers"
