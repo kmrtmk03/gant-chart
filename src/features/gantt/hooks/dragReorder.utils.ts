@@ -1,5 +1,5 @@
 import { DRAG_THRESHOLD_PX } from "../gantt.constants"
-import { moveIdToIndex } from "../gantt.utils"
+import { moveIdToIndex } from "../utils/reorder.utils"
 
 // MEMO: ドラッグによる並び替え（`useDragReorder`）の状態遷移を、ポインターイベントから切り離した純粋関数にまとめる。
 // 座標はすべて今の画面の座標（clientY）。行の位置は、呼び出し側（フック）がポインターの動きやスクロールのたびに測り直して渡す

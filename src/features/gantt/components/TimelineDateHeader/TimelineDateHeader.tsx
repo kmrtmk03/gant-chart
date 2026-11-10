@@ -1,7 +1,7 @@
 import { memo } from "react"
 
 import type { TDateString } from "../../gantt.type"
-import type { IDayColumn } from "../../gantt.utils"
+import type { IDayColumn } from "../../utils/date.utils"
 import styles from "./TimelineDateHeader.module.scss"
 import { useTimelineDateHeader } from "./useTimelineDateHeader"
 

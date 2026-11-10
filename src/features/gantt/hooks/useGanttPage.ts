@@ -2,20 +2,20 @@ import { useCallback, useMemo, useState } from "react"
 
 import { seedSampleData } from "../devSeed"
 import type { TProjectInput } from "../gantt.type"
+import { getDayColumns } from "../utils/date.utils"
+import { toError } from "../utils/error.utils"
 import {
   countCompletedProjects,
   excludeCompletedProjects,
-  getDayColumns,
   groupProjectsByMember,
-  moveIdAmongVisible,
-  toError,
-  type TProjectPeriod,
-} from "../gantt.utils"
+} from "../utils/member.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
+import { useBarPeriodChange } from "./useBarPeriodChange"
 import { useCollapsedMembers } from "./useCollapsedMembers"
 import { useCompletedVisibility } from "./useCompletedVisibility"
 import { useMemberManagement } from "./useMemberManagement"
 import { useMembers } from "./useMembers"
+import { useProjectReorder } from "./useProjectReorder"
 import { useProjects } from "./useProjects"
 import { useSidePanel } from "./useSidePanel"
 import { useTimelineRange } from "./useTimelineRange"
@@ -26,13 +26,6 @@ const repository = createGanttRepository()
 
 /** サンプルデータを入れる操作を画面に出してよいか。本番ビルドでは出さない */
 const CAN_SEED_SAMPLE_DATA = process.env.NODE_ENV !== "production"
-
-/**
- * 並び替えた案件を、手元の案件の一覧から見つけられなかったときの文言。
- * 別のタブで案件・担当者が削除された直後などに起きる（一覧を読み込み直せば直る）
- */
-const STALE_PROJECTS_MESSAGE =
-  "案件の一覧が古くなっています。ページを再読み込みしてから並べ替えてください"
 
 /**
  * ガントチャートのページ全体のフック。責務別のフックを束ね、画面に必要な値と操作をまとめて返す。
@@ -150,81 +143,13 @@ export function useGanttPage() {
     }
   }, [isSeeding, reloadMembers, reloadProjects])
 
-  // 帯のドラッグによる期間の保存に失敗したときのエラー。画面の下に出し、閉じるか次の保存で消す
-  const [periodChangeError, setPeriodChangeError] = useState<Error | null>(null)
-
-  /**
-   * 帯のドラッグで変えた期間を保存する。失敗は例外にせず `periodChangeError` に載せる
-   * （帯は保存が終わると元の位置に戻るので、失敗したことを画面で知らせる）。
-   * `Timeline` の React.memo を保つため、参照は `updateProject` が変わらない限り同じ。
-   */
-  const handleChangeProjectPeriod = useCallback(
-    async (projectId: string, period: TProjectPeriod) => {
-      setPeriodChangeError(null)
-      try {
-        await updateProject(projectId, period)
-      } catch (caught) {
-        setPeriodChangeError(toError(caught))
-      }
-    },
-    [updateProject],
-  )
-
-  const handleDismissPeriodChangeError = useCallback(() => {
-    setPeriodChangeError(null)
-  }, [])
-
-  // 左のリストで案件を並べ替えたときの保存に失敗したときのエラー。画面の下に出し、閉じるか次の保存で消す
-  const [projectReorderError, setProjectReorderError] = useState<Error | null>(
-    null,
-  )
-
-  /**
-   * 左のリストのドラッグで並べ替えた案件の並びを保存する。失敗は例外にせず `projectReorderError` に載せる
-   * （リストは保存が終わると元の並びに戻るので、失敗したことを画面で知らせる）。
-   *
-   * `orderedVisibleIds` は見えている案件（完了済みを隠しているときは未完了だけ）の並べ替え後の並び、
-   * `movedId` は動かした案件。repository にはその担当者の全案件の id を渡す必要があるので、
-   * 隠れている完了済みの案件の前後関係を保って全体の並びに戻してから保存する（`moveIdAmongVisible`）。
-   * 参照は `reorderProjects` と案件の一覧が変わらない限り同じ（`MemberList` の React.memo を保つため）。
-   */
-  const handleReorderProjects = useCallback(
-    async (memberId: string, orderedVisibleIds: string[], movedId: string) => {
-      setProjectReorderError(null)
-      // 全体の並び（表示順）
-      const allIds = allMemberGroups
-        ?.find((group) => group.member.id === memberId)
-        ?.projects.map((project) => project.id)
-      // 並べ替える前の見えている並び（全体の並びから、見えている id だけを同じ順で取り出す）
-      const visibleIdSet = new Set(orderedVisibleIds)
-      const orderedIds =
-        allIds === undefined
-          ? null
-          : moveIdAmongVisible(
-              allIds,
-              allIds.filter((id) => visibleIdSet.has(id)),
-              movedId,
-              orderedVisibleIds.indexOf(movedId),
-            )
-      // 担当者・動かした案件が手元の一覧に見つからない（別のタブで削除された直後など）ときは保存しない。
-      // 見えている並びのまま渡すと、完了済みを隠しているときに id が足りず、
-      // repository の分かりにくい検証エラーになるため、原因の分かる文言を出す
-      if (orderedIds === null) {
-        setProjectReorderError(new Error(STALE_PROJECTS_MESSAGE))
-        return
-      }
-      try {
-        await reorderProjects(memberId, orderedIds)
-      } catch (caught) {
-        setProjectReorderError(toError(caught))
-      }
-    },
-    [allMemberGroups, reorderProjects],
-  )
-
-  const handleDismissProjectReorderError = useCallback(() => {
-    setProjectReorderError(null)
-  }, [])
+  // 帯のドラッグによる期間の保存と、左のリストでの案件の並び替えの保存（どちらも失敗はエラーとして持つ）。
+  // 並び替えは、隠れている完了済みの案件の前後関係を保つため、完了済みも含めた allMemberGroups を渡す
+  const barPeriodChange = useBarPeriodChange({ updateProject })
+  const projectReorder = useProjectReorder({
+    allMemberGroups,
+    reorderProjects,
+  })
 
   // 編集中の案件は state に持たず、projectId から一覧を引いて求める（データと表示をずらさない）。
   // 他のタブで削除されるなどして見つからないときは null になり、パネルは出さない
@@ -303,17 +228,9 @@ export function useGanttPage() {
       close: closePanel,
     },
     // 帯のドラッグ（期間の保存と、失敗したときのエラー）
-    barDrag: {
-      changePeriod: handleChangeProjectPeriod,
-      error: periodChangeError,
-      dismissError: handleDismissPeriodChangeError,
-    },
+    barDrag: barPeriodChange,
     // 左のリストでの案件の並び替え（並びの保存と、失敗したときのエラー）
-    projectReorder: {
-      reorder: handleReorderProjects,
-      error: projectReorderError,
-      dismissError: handleDismissProjectReorderError,
-    },
+    projectReorder,
     // 担当者の管理ダイアログ（開閉と、追加・名前変更・並び替え・削除の操作）
     memberManagement,
     // 折りたたみ

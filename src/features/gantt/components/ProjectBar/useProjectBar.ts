@@ -3,7 +3,7 @@ import type { CSSProperties, MouseEvent } from "react"
 
 import { BAR_COLORS } from "../../gantt.constants"
 import type { IProject, TDateString } from "../../gantt.type"
-import { getBarLayout, type TProjectPeriod } from "../../gantt.utils"
+import { type TProjectPeriod, getBarLayout } from "../../utils/layout.utils"
 import { formatBarAriaLabel, formatBarPeriodLabel } from "./barDrag.utils"
 import styles from "./ProjectBar.module.scss"
 import { useBarDrag } from "./useBarDrag"

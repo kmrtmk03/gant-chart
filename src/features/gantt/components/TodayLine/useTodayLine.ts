@@ -1,6 +1,6 @@
 import { DAY_COLUMN_WIDTH } from "../../gantt.constants"
 import type { TDateString } from "../../gantt.type"
-import { getTodayOffset } from "../../gantt.utils"
+import { getTodayOffset } from "../../utils/layout.utils"
 
 interface IUseTodayLineParams {
   rangeStart: TDateString

@@ -5,7 +5,11 @@ import { format } from "date-fns"
 
 import { isDateString } from "../../gantt.guards"
 import type { TDateString } from "../../gantt.type"
-import { isHoliday, parseDateString, toDateString } from "../../gantt.utils"
+import {
+  isHoliday,
+  parseDateString,
+  toDateString,
+} from "../../utils/date.utils"
 import styles from "./DateField.module.scss"
 
 interface IUseDateFieldParams {

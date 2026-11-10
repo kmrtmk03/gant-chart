@@ -2,7 +2,10 @@ import { useCallback, useState } from "react"
 import type { ChangeEvent, CSSProperties, FormEvent } from "react"
 
 import type { IMember } from "../../gantt.type"
-import { hasSameNameMember, validateMemberName } from "../../gantt.utils"
+import {
+  hasSameNameMember,
+  validateMemberName,
+} from "../MemberManageDialog/memberName.utils"
 import type { IDragReorderRowState } from "../../hooks/useDragReorder"
 import styles from "./MemberManageRow.module.scss"
 
