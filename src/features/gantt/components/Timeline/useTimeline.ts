@@ -4,7 +4,7 @@ import {
   PROJECT_ROW_HEIGHT,
 } from "../../gantt.constants"
 import type { IProject } from "../../gantt.type"
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 
 interface IUseTimelineParams {
   memberGroups: IMemberGroup[]

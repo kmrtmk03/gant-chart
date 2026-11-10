@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { DAY_COLUMN_WIDTH, DRAG_THRESHOLD_PX } from "../../gantt.constants"
-import type { TProjectPeriod } from "../../gantt.utils"
+import type { TProjectPeriod } from "../../utils/layout.utils"
 import {
   formatBarAriaLabel,
   formatBarPeriodLabel,

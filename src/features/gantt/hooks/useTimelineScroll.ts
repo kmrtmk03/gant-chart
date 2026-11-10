@@ -10,7 +10,7 @@ import {
   TODAY_SCROLL_MARGIN_DAYS,
 } from "../gantt.constants"
 import type { TDateString } from "../gantt.type"
-import { addDays, diffInDays } from "../gantt.utils"
+import { addDays, diffInDays } from "../utils/date.utils"
 
 /** 範囲を一度に広げたとき、全体が右にずれる幅（px）。広げた直後のスクロール位置の補正に使う */
 const EXTEND_PX = RANGE_EXTEND_DAYS * DAY_COLUMN_WIDTH

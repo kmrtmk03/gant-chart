@@ -6,7 +6,7 @@ import {
   RANGE_EXTEND_DAYS,
 } from "../gantt.constants"
 import type { TDateString } from "../gantt.type"
-import { addDays, diffInDays, getToday } from "../gantt.utils"
+import { addDays, diffInDays, getToday } from "../utils/date.utils"
 
 /** 何も購読しない subscribe。範囲の起点は外から変化を通知されないため */
 const subscribeNothing = () => () => {}

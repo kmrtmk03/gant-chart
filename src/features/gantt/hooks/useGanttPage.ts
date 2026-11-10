@@ -2,15 +2,15 @@ import { useCallback, useMemo, useState } from "react"
 
 import { seedSampleData } from "../devSeed"
 import type { TProjectInput } from "../gantt.type"
+import { getDayColumns } from "../utils/date.utils"
+import { toError } from "../utils/error.utils"
+import type { TProjectPeriod } from "../utils/layout.utils"
 import {
   countCompletedProjects,
   excludeCompletedProjects,
-  getDayColumns,
   groupProjectsByMember,
-  moveIdAmongVisible,
-  toError,
-  type TProjectPeriod,
-} from "../gantt.utils"
+} from "../utils/member.utils"
+import { moveIdAmongVisible } from "../utils/reorder.utils"
 import { createGanttRepository } from "../repositories/createGanttRepository"
 import { useCollapsedMembers } from "./useCollapsedMembers"
 import { useCompletedVisibility } from "./useCompletedVisibility"

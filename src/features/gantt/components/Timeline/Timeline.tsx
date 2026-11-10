@@ -1,11 +1,9 @@
 import { memo } from "react"
 
 import type { TDateString } from "../../gantt.type"
-import type {
-  IDayColumn,
-  IMemberGroup,
-  TProjectPeriod,
-} from "../../gantt.utils"
+import type { IDayColumn } from "../../utils/date.utils"
+import type { TProjectPeriod } from "../../utils/layout.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 import { MemberSummaryBar } from "../MemberSummaryBar"
 import { ProjectBar } from "../ProjectBar"
 import { TimelineGrid } from "../TimelineGrid"

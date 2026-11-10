@@ -1,4 +1,4 @@
-import type { IDayColumn } from "../../gantt.utils"
+import type { IDayColumn } from "../../utils/date.utils"
 import styles from "./TimelineGrid.module.scss"
 import { useTimelineGrid } from "./useTimelineGrid"
 

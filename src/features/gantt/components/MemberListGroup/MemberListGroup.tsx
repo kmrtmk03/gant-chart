@@ -1,6 +1,6 @@
 import { memo } from "react"
 
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 import { MemberListProjectRow } from "../MemberListProjectRow"
 import styles from "./MemberListGroup.module.scss"
 import { useMemberListGroup } from "./useMemberListGroup"

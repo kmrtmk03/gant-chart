@@ -1,5 +1,5 @@
 import type { TDateString } from "../../gantt.type"
-import { formatYearMonth } from "../../gantt.utils"
+import { formatYearMonth } from "../../utils/date.utils"
 import {
   formatCompletedToggleLabel,
   formatCompletedToggleShortLabel,

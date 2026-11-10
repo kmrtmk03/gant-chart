@@ -1,4 +1,4 @@
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 
 interface IUseMemberListParams {
   memberGroups: IMemberGroup[]

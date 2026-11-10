@@ -2,7 +2,7 @@ import type { CSSProperties } from "react"
 
 import { BAR_COLORS } from "../../gantt.constants"
 import type { IProject, TDateString } from "../../gantt.type"
-import { getBarLayout } from "../../gantt.utils"
+import { getBarLayout } from "../../utils/layout.utils"
 import styles from "./MemberSummaryBar.module.scss"
 
 interface IUseMemberSummaryBarParams {

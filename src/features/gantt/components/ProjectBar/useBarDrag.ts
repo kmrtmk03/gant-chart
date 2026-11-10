@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { PointerEvent as ReactPointerEvent } from "react"
 
-import type { TProjectPeriod } from "../../gantt.utils"
+import type { TProjectPeriod } from "../../utils/layout.utils"
 import {
   getBarDragResult,
   getDraggedPeriod,

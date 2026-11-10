@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react"
 
 import { MEMBER_ROW_HEIGHT, PROJECT_ROW_HEIGHT } from "../../gantt.constants"
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberGroup } from "../../utils/member.utils"
 import { useDragReorder } from "../../hooks/useDragReorder"
 
 interface IUseMemberListGroupParams {
