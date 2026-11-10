@@ -1,0 +1,8 @@
+@use "tokens";
+@use "button";
+
+// 標準の見た目のボタン。色を変えたいときは Button を使わず、
+// 個別のクラスで `@include button.appearance;` を取り込んで上書きする（クラスの読み込み順に頼らないため）
+.button {
+  @include button.appearance;
+}

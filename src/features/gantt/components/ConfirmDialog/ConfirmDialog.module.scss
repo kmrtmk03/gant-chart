@@ -1,4 +1,5 @@
 @use "tokens";
+@use "button";
 
 .dialog {
   width: min(380px, calc(100vw - #{tokens.$space-6} * 2));
@@ -34,6 +35,8 @@
 }
 
 .confirm {
+  @include button.appearance;
+
   border-color: tokens.$color-danger;
   background: tokens.$color-danger;
   color: tokens.$color-on-primary;

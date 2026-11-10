@@ -1,0 +1,39 @@
+@use "tokens";
+
+// ボタンの共通のスタイルを、2 段階の mixin で提供する。どちらも `@include button.xxx;` で明示的に取り込み、
+// ボタン全体（`button`）には適用しない（`globals.scss` は最低限のリセットだけを持つ。
+// 専用の見た目のボタンが、基本の見た目を打ち消さなくて済むようにするため）。
+//
+// - `base`: 並べ方・角丸・文字の太さ・色の切り替え（transition）だけ。帯・つかみ・行いっぱいのボタンなど、
+//   枠・背景・余白を自分で決める専用の見た目のボタンが、取り込んだうえで必要なものを上書きする
+// - `appearance`: `base` に、枠・背景・余白・ホバーの標準の見た目を足したもの。
+//   `Button` コンポーネントと、色だけ変えたい個別のボタン（保存・削除など）が取り込む。
+//   色を変えるときは、取り込んだあとに同じセレクターの中で上書きする（クラスの読み込み順に頼らないため）
+@mixin base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$space-1;
+  border-radius: tokens.$radius-sm;
+  font-weight: 500;
+  transition:
+    background-color tokens.$transition-fast,
+    border-color tokens.$transition-fast,
+    color tokens.$transition-fast;
+}
+
+@mixin appearance {
+  @include base;
+
+  min-height: 32px;
+  padding: 0 tokens.$space-3;
+  border: 1px solid tokens.$color-border-strong;
+  background: tokens.$color-elevated;
+  color: tokens.$color-text;
+  font-size: tokens.$font-size-base;
+
+  &:hover:not(:disabled) {
+    border-color: tokens.$color-border-hover;
+    background: tokens.$color-elevated-hover;
+  }
+}

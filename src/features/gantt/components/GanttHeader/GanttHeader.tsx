@@ -1,4 +1,5 @@
 import type { TDateString } from "../../gantt.type"
+import { Button } from "../Button"
 import styles from "./GanttHeader.module.scss"
 import { useGanttHeader } from "./useGanttHeader"
 
@@ -42,15 +43,15 @@ export function GanttHeader({
     <header className={styles.header}>
       <h1 className={styles.title}>ガントチャート</h1>
       <div className={styles.controls}>
-        <button type="button" onClick={onScrollBackward} aria-label="前へ">
+        <Button type="button" onClick={onScrollBackward} aria-label="前へ">
           ◀
-        </button>
-        <button type="button" onClick={onScrollToToday}>
+        </Button>
+        <Button type="button" onClick={onScrollToToday}>
           今日
-        </button>
-        <button type="button" onClick={onScrollForward} aria-label="次へ">
+        </Button>
+        <Button type="button" onClick={onScrollForward} aria-label="次へ">
           ▶
-        </button>
+        </Button>
       </div>
       <span className={styles.range}>{rangeLabel}</span>
       <button

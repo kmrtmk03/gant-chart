@@ -1,4 +1,5 @@
 @use "tokens";
+@use "button";
 
 .header {
   display: flex;
@@ -69,6 +70,8 @@
 
 // 右端に寄せる「完了済みを表示」の切り替えボタン。押されている（表示している）ときは主色にする
 .completedToggle {
+  @include button.appearance;
+
   margin-left: auto;
   font-size: tokens.$font-size-base;
   white-space: nowrap;

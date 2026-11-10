@@ -1,3 +1,4 @@
+import { Button } from "../Button"
 import styles from "./ConfirmDialog.module.scss"
 import { useConfirmDialog } from "./useConfirmDialog"
 
@@ -46,9 +47,9 @@ export function ConfirmDialog({
       </h2>
       <p className={styles.message}>{message}</p>
       <div className={styles.actions}>
-        <button type="button" disabled={isBusy} onClick={onCancel}>
+        <Button type="button" disabled={isBusy} onClick={onCancel}>
           キャンセル
-        </button>
+        </Button>
         <button
           type="button"
           className={styles.confirm}

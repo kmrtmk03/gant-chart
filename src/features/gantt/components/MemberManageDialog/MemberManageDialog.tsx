@@ -1,4 +1,5 @@
 import type { IMemberGroup } from "../../gantt.utils"
+import { Button } from "../Button"
 import { ConfirmDialog } from "../ConfirmDialog"
 import { MemberManageRow } from "../MemberManageRow"
 import styles from "./MemberManageDialog.module.scss"
@@ -77,14 +78,14 @@ export function MemberManageDialog({
         <h2 id={titleId} className={styles.title}>
           担当者を管理
         </h2>
-        <button
+        <Button
           type="button"
           aria-label="閉じる"
           disabled={isBusy}
           onClick={onClose}
         >
           ✕
-        </button>
+        </Button>
       </header>
 
       {rows.length === 0 ? (

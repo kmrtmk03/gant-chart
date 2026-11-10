@@ -1,6 +1,7 @@
 import { memo } from "react"
 
 import type { IMemberGroup } from "../../gantt.utils"
+import { Button } from "../Button"
 import { MemberListGroup } from "../MemberListGroup"
 import styles from "./MemberList.module.scss"
 import { useMemberList } from "./useMemberList"
@@ -59,9 +60,9 @@ export const MemberList = memo(function MemberList({
         />
       ))}
       <div className={styles.footer}>
-        <button type="button" onClick={onManageMembers}>
+        <Button type="button" onClick={onManageMembers}>
           担当者を管理
-        </button>
+        </Button>
       </div>
     </div>
   )

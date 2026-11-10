@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "../Button"
 import { GanttHeader } from "../GanttHeader"
 import { MemberList } from "../MemberList"
 import { MemberManageDialog } from "../MemberManageDialog"
@@ -26,9 +27,9 @@ export function GanttChart() {
     return (
       <div className={styles.message} role="alert">
         <p>データを読み込めませんでした。{chart.loadErrorMessage}</p>
-        <button type="button" onClick={chart.retryLoad}>
+        <Button type="button" onClick={chart.retryLoad}>
           再読み込み
-        </button>
+        </Button>
       </div>
     )
   }
@@ -61,17 +62,17 @@ export function GanttChart() {
       {chart.isEmpty ? (
         <div className={styles.empty}>
           <p>まず担当者を追加してください</p>
-          <button type="button" onClick={chart.manageMembers}>
+          <Button type="button" onClick={chart.manageMembers}>
             担当者を管理
-          </button>
+          </Button>
           {emptyState.canSeedSampleData && (
-            <button
+            <Button
               type="button"
               disabled={emptyState.isSeeding}
               onClick={emptyState.seedSampleData}
             >
               サンプルデータを入れる（開発用）
-            </button>
+            </Button>
           )}
           {emptyState.seedErrorMessage && (
             <p role="alert">
@@ -118,17 +119,17 @@ export function GanttChart() {
         {barDrag.errorMessage && (
           <div className={styles.notice} role="alert">
             <p>期間を保存できませんでした。{barDrag.errorMessage}</p>
-            <button type="button" onClick={barDrag.dismissError}>
+            <Button type="button" onClick={barDrag.dismissError}>
               閉じる
-            </button>
+            </Button>
           </div>
         )}
         {projectReorder.errorMessage && (
           <div className={styles.notice} role="alert">
             <p>並び順を保存できませんでした。{projectReorder.errorMessage}</p>
-            <button type="button" onClick={projectReorder.dismissError}>
+            <Button type="button" onClick={projectReorder.dismissError}>
               閉じる
-            </button>
+            </Button>
           </div>
         )}
       </div>
