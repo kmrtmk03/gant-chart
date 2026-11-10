@@ -1,4 +1,5 @@
 @use "tokens";
+@use "button";
 
 // 左端に並び替えのつかみ、その右に色の丸と案件名を置く。行の形は担当者行・「案件を追加」の行
 // （MemberListGroup.module.scss）とそろえる。挿入位置の線（::before / ::after）の基準にするため position: relative にする
@@ -54,6 +55,8 @@
 
 // 案件行いっぱいに広げ、色の丸と案件名をまとめてクリックできるようにする
 .projectButton {
+  @include button.base;
+
   display: flex;
   flex: 1;
   justify-content: flex-start;

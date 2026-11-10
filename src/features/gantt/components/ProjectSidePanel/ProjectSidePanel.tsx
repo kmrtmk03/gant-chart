@@ -4,6 +4,7 @@ import type {
   TDateString,
   TProjectInput,
 } from "../../gantt.type"
+import { Button } from "../Button"
 import { ConfirmDialog } from "../ConfirmDialog"
 import { DateField } from "../DateField"
 import styles from "./ProjectSidePanel.module.scss"
@@ -61,9 +62,9 @@ export function ProjectSidePanel({
         <div className={styles.heading}>
           <h2 className={styles.title}>{panel.title}</h2>
         </div>
-        <button type="button" aria-label="閉じる" onClick={onClose}>
+        <Button type="button" aria-label="閉じる" onClick={onClose}>
           ✕
-        </button>
+        </Button>
       </header>
 
       <form className={styles.form} noValidate onSubmit={panel.handleSubmit}>
@@ -202,9 +203,9 @@ export function ProjectSidePanel({
             </button>
           )}
           <span className={styles.spacer} />
-          <button type="button" disabled={panel.isSubmitting} onClick={onClose}>
+          <Button type="button" disabled={panel.isSubmitting} onClick={onClose}>
             キャンセル
-          </button>
+          </Button>
           <button
             type="submit"
             className={styles.saveButton}

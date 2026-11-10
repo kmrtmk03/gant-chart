@@ -1,4 +1,5 @@
 @use "tokens";
+@use "button";
 
 .root {
   position: relative;
@@ -6,6 +7,8 @@
 
 // 入力欄と同じ見た目のボタン。幅いっぱいに広げ、文字は左寄せにする
 .button {
+  @include button.appearance;
+
   width: 100%;
   justify-content: flex-start;
   text-align: left;
@@ -54,13 +57,16 @@
   font-size: tokens.$font-size-base;
 }
 
-// globals.scss のボタンの基本スタイル（枠・余白・背景）を、カレンダーの中では打ち消す
+// カレンダーの中のボタン（react-day-picker のもの）。枠・余白・背景は既定の style.css に任せ、
+// 色の切り替え（transition）と角丸、ホバーの色だけをページに合わせる
 .popover :global(.rdp-root) button {
-  min-height: 0;
-  padding: 0;
-  border-color: transparent;
-  background: none;
+  gap: tokens.$space-1;
+  border-radius: tokens.$radius-sm;
   color: inherit;
+  transition:
+    background-color tokens.$transition-fast,
+    border-color tokens.$transition-fast,
+    color tokens.$transition-fast;
 
   &:hover:not(:disabled) {
     background: tokens.$color-hover;

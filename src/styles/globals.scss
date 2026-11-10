@@ -30,33 +30,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-// ---- ボタンの基本形 ----
-// 各コンポーネントは色（主ボタン・削除ボタンなど）だけを上書きする。
-// クラスを持たないボタン（閉じる・キャンセルなど）はこの見た目になる
+// ---- ボタンのリセット ----
+// 全ボタンに共通する最低限だけを置く（フォント・カーソル・無効のとき）。
+// 枠・背景・余白などの標準の見た目は、`Button` コンポーネントか `styles/_button.scss` の mixin で明示的に付ける
 button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: tokens.$space-1;
-  min-height: 32px;
-  padding: 0 tokens.$space-3;
-  border: 1px solid tokens.$color-border-strong;
-  border-radius: tokens.$radius-sm;
-  background: tokens.$color-elevated;
-  color: tokens.$color-text;
   font: inherit;
-  font-size: tokens.$font-size-base;
-  font-weight: 500;
   cursor: pointer;
-  transition:
-    background-color tokens.$transition-fast,
-    border-color tokens.$transition-fast,
-    color tokens.$transition-fast;
-
-  &:hover:not(:disabled) {
-    border-color: tokens.$color-border-hover;
-    background: tokens.$color-elevated-hover;
-  }
 
   &:disabled {
     opacity: 0.45;

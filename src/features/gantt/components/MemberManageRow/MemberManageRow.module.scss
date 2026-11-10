@@ -1,4 +1,5 @@
 @use "tokens";
+@use "button";
 
 // 挿入位置の線（::before / ::after）の基準にするため position: relative にする
 .row {
@@ -64,6 +65,8 @@
 }
 
 .deleteButton {
+  @include button.appearance;
+
   border-color: transparent;
   background: none;
   color: tokens.$color-danger;
