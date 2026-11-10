@@ -91,8 +91,7 @@ export function GanttChart() {
             <div className={styles.corner} style={chart.cornerStyle} />
             <TimelineDateHeader columns={chart.columns} today={chart.today} />
             <MemberList
-              memberGroups={chart.memberGroups}
-              collapsedMemberIds={chart.collapsedMemberIds}
+              rowGroups={chart.rowGroups}
               onToggleMember={chart.toggleMember}
               onAddProject={chart.addProject}
               onSelectProject={sidePanel.selectProject}
@@ -100,8 +99,7 @@ export function GanttChart() {
               onManageMembers={chart.manageMembers}
             />
             <Timeline
-              memberGroups={chart.memberGroups}
-              collapsedMemberIds={chart.collapsedMemberIds}
+              rowGroups={chart.rowGroups}
               columns={chart.columns}
               rangeStart={chart.rangeStart}
               rangeDays={chart.rangeDays}

@@ -1,14 +1,12 @@
 import { memo } from "react"
 
-import type { IMemberGroup } from "../../gantt.utils"
+import type { IMemberRowGroup } from "../../ganttRows.utils"
 import { MemberListGroup } from "../MemberListGroup"
 import styles from "./MemberList.module.scss"
-import { useMemberList } from "./useMemberList"
 
 interface IMemberListProps {
-  memberGroups: IMemberGroup[]
-  /** 折りたたみ中の担当者 ID */
-  collapsedMemberIds: ReadonlySet<string>
+  /** 担当者ごとの行のまとまり（開閉と行の並びは `Timeline` と同じものを受け取る） */
+  rowGroups: IMemberRowGroup[]
   onToggleMember: (memberId: string) => void
   /** 担当者の案件リスト下の「案件を追加」を押したとき。追加先の担当者 ID を渡す */
   onAddProject: (memberId: string) => void
@@ -28,30 +26,26 @@ interface IMemberListProps {
 
 /**
  * 左のリスト。担当者（親）→ 案件（子）の 2 階層で並べる。
- * 行の高さは `Timeline` と同じ定数を使い、左右の行をそろえる。
+ * 行のまとまり（開閉・行の並び・高さ）は `Timeline` と同じ `rowGroups` を受け取って描くだけにし、左右の行をそろえる。
  * 担当者 1 人ぶん（担当者行・案件の行・「案件を追加」）は `MemberListGroup` が描き、
  * 最下部に「担当者を管理」ボタンを置く。
  * 案件名をクリックすると、帯のクリックと同じく編集用のサイドパネルを開く。
  * 案件の左端のつかみをドラッグすると、同じ担当者の中で並べ替えられる。
  */
 export const MemberList = memo(function MemberList({
-  memberGroups,
-  collapsedMemberIds,
+  rowGroups,
   onToggleMember,
   onAddProject,
   onSelectProject,
   onReorderProjects,
   onManageMembers,
 }: IMemberListProps) {
-  const { groups } = useMemberList({ memberGroups, collapsedMemberIds })
-
   return (
     <div className={styles.list}>
-      {groups.map((group) => (
+      {rowGroups.map((rowGroup) => (
         <MemberListGroup
-          key={group.memberId}
-          memberGroup={group.memberGroup}
-          isExpanded={group.isExpanded}
+          key={rowGroup.memberId}
+          rowGroup={rowGroup}
           onToggleMember={onToggleMember}
           onAddProject={onAddProject}
           onSelectProject={onSelectProject}
