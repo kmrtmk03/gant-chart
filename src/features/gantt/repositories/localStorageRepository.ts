@@ -1,11 +1,5 @@
 import { CURRENT_SCHEMA_VERSION, STORAGE_KEYS } from "../gantt.constants"
-import {
-  isDateString,
-  isMember,
-  isMemberList,
-  isProject,
-  isProjectList,
-} from "../gantt.guards"
+import { isMemberList, isProjectList } from "../gantt.guards"
 import type {
   IMember,
   IProject,
@@ -18,9 +12,18 @@ import {
   GanttCorruptedDataError,
   GanttNotFoundError,
   GanttUnsupportedSchemaError,
-  GanttValidationError,
 } from "./ganttRepository.errors"
 import type { IGanttRepository } from "./ganttRepository.type"
+import {
+  buildReorderedMembers,
+  buildReorderedProjects,
+  filterProjectsOfMember,
+  getCurrentDateTime,
+  getNextSortOrder,
+  resolveCompletedAt,
+  validateMember,
+  validateProject,
+} from "./ganttRepository.utils"
 import {
   type IStorageEntry,
   migrateSchemaV1ToV2,
@@ -106,43 +109,6 @@ function writeEntriesOrRestore(
   }
 }
 
-/** 現在日時を ISO 8601 の文字列で返す（createdAt / updatedAt 用） */
-function getCurrentDateTime(): string {
-  return new Date().toISOString()
-}
-
-/**
- * 更新後の完了日時を決める。
- * - `isCompleted` が省略されたら今のまま
- * - true: 未完了なら今の日時を入れる。すでに完了していれば、最初に完了にした日時を変えない
- * - false: 未完了（null）に戻す
- */
-function resolveCompletedAt(
-  current: string | null,
-  isCompleted: boolean | undefined,
-  timestamp: string,
-): string | null {
-  if (isCompleted === undefined) return current
-  if (!isCompleted) return null
-  return current ?? timestamp
-}
-
-/**
- * 一番下に足すときの sortOrder（渡した一覧の最大値 + 1。空なら 0）を返す。
- * 担当者は全員を、案件は追加先の担当者の案件だけを渡す
- */
-function getNextSortOrder(items: { sortOrder: number }[]): number {
-  return items.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0)
-}
-
-/** 指定した担当者の案件だけを取り出す */
-function filterProjectsOfMember(
-  projects: IProject[],
-  memberId: string,
-): IProject[] {
-  return projects.filter((project) => project.memberId === memberId)
-}
-
 /**
  * 保存されているスキーマのバージョンを読む。
  * 未保存、または正の整数として読めない値のときは null を返す。
@@ -153,31 +119,6 @@ function readSchemaVersion(storage: Storage): number | null {
 
   const version = Number(raw)
   return Number.isInteger(version) && version >= 1 ? version : null
-}
-
-/** 担当者を保存してよいか確かめる。不正なら GanttValidationError を投げる */
-function validateMember(member: IMember): void {
-  if (!isMember(member)) {
-    throw new GanttValidationError("担当者の入力が不正です")
-  }
-}
-
-/**
- * 案件を保存してよいか確かめる。不正なら GanttValidationError を投げる。
- * 画面に出しやすいよう、よくある誤り（日付）は個別のメッセージにしてから、残りを型ガードでまとめて確かめる。
- */
-function validateProject(project: IProject): void {
-  if (!isDateString(project.startDate) || !isDateString(project.endDate)) {
-    throw new GanttValidationError(
-      `日付は実在する "YYYY-MM-DD" 形式で指定してください（開始日: ${project.startDate}、終了日: ${project.endDate}）`,
-    )
-  }
-  if (project.startDate > project.endDate) {
-    throw new GanttValidationError("開始日は終了日以前の日付にしてください")
-  }
-  if (!isProject(project)) {
-    throw new GanttValidationError("案件の入力が不正です")
-  }
 }
 
 /**
@@ -242,28 +183,11 @@ export class LocalStorageRepository implements IGanttRepository {
   }
 
   async reorderMembers(orderedIds: string[]): Promise<IMember[]> {
-    const members = this.readMembers()
-    const memberById = new Map(members.map((member) => [member.id, member]))
-
-    if (new Set(orderedIds).size !== orderedIds.length) {
-      throw new GanttValidationError("並び替えの id が重複しています")
-    }
-
-    // 渡された順に sortOrder を 0 から振り直す。順番が変わらない担当者は updatedAt も変えない
-    const timestamp = getCurrentDateTime()
-    const reordered = orderedIds.map((id, index) => {
-      const member = memberById.get(id)
-      if (member === undefined) throw new GanttNotFoundError("member", id)
-      if (member.sortOrder === index) return member
-      return { ...member, sortOrder: index, updatedAt: timestamp }
-    })
-
-    // 重複も未知の id もないので、件数が同じなら全員がちょうど 1 回ずつ含まれている
-    if (reordered.length !== members.length) {
-      throw new GanttValidationError(
-        "並び替えには、すべての担当者の id を指定してください",
-      )
-    }
+    const reordered = buildReorderedMembers(
+      this.readMembers(),
+      orderedIds,
+      getCurrentDateTime(),
+    )
 
     this.writeMembers(reordered)
     return reordered
@@ -373,37 +297,11 @@ export class LocalStorageRepository implements IGanttRepository {
   ): Promise<IProject[]> {
     this.assertMemberExists(memberId)
     const projects = this.readProjects()
-    // 並び替えの対象は指定した担当者の案件だけ。別の担当者の案件の id は「存在しない」として扱う
-    const projectById = new Map(
-      filterProjectsOfMember(projects, memberId).map((project) => [
-        project.id,
-        project,
-      ]),
+    const reordered = buildReorderedProjects(
+      filterProjectsOfMember(projects, memberId),
+      orderedIds,
+      getCurrentDateTime(),
     )
-
-    if (new Set(orderedIds).size !== orderedIds.length) {
-      throw new GanttValidationError("並び替えの id が重複しています")
-    }
-
-    // 渡された順に sortOrder を 0 から振り直す。順番が変わらない案件は updatedAt も変えない
-    const timestamp = getCurrentDateTime()
-    const reordered = orderedIds.map((id, index) => {
-      const project = projectById.get(id)
-      if (project === undefined) {
-        throw new GanttValidationError(
-          `並び替えの id に、この担当者の案件ではない id が含まれています（${id}）`,
-        )
-      }
-      if (project.sortOrder === index) return project
-      return { ...project, sortOrder: index, updatedAt: timestamp }
-    })
-
-    // 重複も余計な id もないので、件数が同じならその担当者の案件がちょうど 1 回ずつ含まれている
-    if (reordered.length !== projectById.size) {
-      throw new GanttValidationError(
-        "並び替えには、その担当者のすべての案件の id を指定してください",
-      )
-    }
 
     // 保存順（配列の並び）は変えず、並び替えた案件だけを差し替える
     const reorderedById = new Map(

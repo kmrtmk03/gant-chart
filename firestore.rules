@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// すべての読み書きを拒否する。
+// このアプリは Firestore に直接アクセスせず、サーバー側（Route Handler）から
+// Firebase Admin SDK 経由でだけ読み書きする。Admin SDK は Security Rules の対象外なので、
+// この設定でもアプリは動く。クライアントから直接アクセスできる経路を作らないための設定。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
