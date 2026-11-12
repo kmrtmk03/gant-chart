@@ -77,8 +77,9 @@ export function validateProject(project: IProject): void {
 /**
  * 担当者の並び替えの結果を作る。保存はしない。
  * 渡された順に sortOrder を 0 から振り直し、`orderedIds` の順に並べた全担当者を返す。
- * 順番が変わらない担当者は updatedAt も変えず、元のオブジェクトをそのまま返す
- * （呼び出し側は `result[i] !== members[...]` ではなく、sortOrder の変化で書き込み対象を判断してよい）。
+ * 順番が変わらない担当者は updatedAt も変えず、元のオブジェクトをそのまま返す。
+ * 戻り値は `orderedIds` の順なので、`members` と添え字は対応しない。
+ * 書き込み対象を絞るときは、担当者の id ごとに、元の `sortOrder` と戻り値の `sortOrder` を比べる。
  *
  * @param members 現在の全担当者
  * @param orderedIds 並び替え後の全担当者の id
@@ -118,6 +119,8 @@ export function buildReorderedMembers(
  * 1 人の担当者の案件の並び替えの結果を作る。保存はしない。
  * 渡された順に sortOrder を 0 から振り直し、`orderedIds` の順に並べた案件を返す。
  * 順番が変わらない案件は updatedAt も変えず、元のオブジェクトをそのまま返す。
+ * 戻り値は `orderedIds` の順なので、`projectsOfMember` と添え字は対応しない。
+ * 書き込み対象を絞るときは、案件の id ごとに、元の `sortOrder` と戻り値の `sortOrder` を比べる。
  *
  * @param projectsOfMember 対象の担当者の全案件（`filterProjectsOfMember` で絞ったもの）
  * @param orderedIds 並び替え後のその担当者の全案件の id
