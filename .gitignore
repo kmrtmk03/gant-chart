@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# MCP サーバーの設定（自分のマシン固有のパスを含むためコミットしない）
+.mcp.json
+
 # vercel
 .vercel
 
