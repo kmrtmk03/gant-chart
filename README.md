@@ -42,6 +42,24 @@ BASIC_AUTH_PASSWORD=好きなパスワード
 - **本番（`pnpm build` → `pnpm start`）で未設定のときは、すべてのアクセスを 401 で拒否する**（設定し忘れて公開するのを防ぐため）
 - manifest とアイコンは PWA のインストール判定のため、認証の対象外にしている
 
+### Firebase（Firestore）の環境変数
+
+データを Firestore に保存するための準備（Firebase 連携の途中段階）。**今の画面は、まだ localStorage に保存している。** 次の環境変数は、サーバー側のコード（`src/features/gantt/server/`）からだけ読まれる。
+
+```
+FIREBASE_PROJECT_ID=プロジェクト ID
+FIREBASE_CLIENT_EMAIL=サービスアカウントのメールアドレス
+FIREBASE_PRIVATE_KEY="サービスアカウントの秘密鍵（改行は \n の 2 文字のまま 1 行で書く）"
+```
+
+- 値は Firebase コンソールで発行したサービスアカウントの鍵（JSON）から写す。鍵は秘密情報なので、コミットしない・チャットや PR に貼らない
+- **`NEXT_PUBLIC_` を付けない**（付けるとブラウザに公開される）
+- **ローカル開発（`pnpm dev`）も、ここに書いたプロジェクトの本番の Firestore につながる。** エミュレーターは使っていないため、開発中の操作は本番のデータに反映される
+- Firebase App Hosting など、デフォルト認証情報を使える環境では `FIREBASE_PROJECT_ID` だけでよい
+- 環境変数がなくても、`pnpm build` と `pnpm test` は通る（Firebase は最初に使うときに初期化される）
+- Security Rules は [firestore.rules](firestore.rules) のとおり、**すべて拒否**にしている。アプリはサーバー側の Admin SDK（ルールの対象外）からだけ Firestore に触れ、ブラウザからは直接アクセスできない。ルールを変えたときは、Firebase コンソールに同じ内容を設定する
+- Firestore のロケーションは大阪（`asia-northeast2`）。作成後は変更できない
+
 ## 起動
 
 ```bash
@@ -111,7 +129,7 @@ pnpm start
 
 ## 技術構成
 
-Next.js 16（App Router、`src/` 構成）/ TypeScript（strict）/ Sass + CSS Modules / date-fns / `@holiday-jp/holiday_jp`（祝日）/ react-day-picker（カレンダー）/ Vitest / ESLint / Prettier
+Next.js 16（App Router、`src/` 構成）/ TypeScript（strict）/ Sass + CSS Modules / date-fns / `@holiday-jp/holiday_jp`（祝日）/ react-day-picker（カレンダー）/ firebase-admin（Firestore。サーバー側のみ。連携は実装中）/ Vitest / ESLint / Prettier
 
 - ガントチャートの実装は `src/features/gantt/` に集約している（コンポーネント・フック・型・定数・repository）
 - Basic 認証は `src/proxy.ts`（Next.js 16 では `middleware.ts` ではなく `proxy.ts`）
