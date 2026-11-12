@@ -40,14 +40,26 @@ function readEnv(name: string): string | undefined {
 /**
  * 認証情報を選んで Admin SDK のアプリを初期化する。
  * 1. FIREBASE_CLIENT_EMAIL と FIREBASE_PRIVATE_KEY があれば、サービスアカウントで初期化する（Vercel など）
- * 2. なければ、アプリケーションのデフォルト認証情報で初期化する（Firebase App Hosting / Cloud Run）
+ * 2. 両方とも未設定なら、アプリケーションのデフォルト認証情報で初期化する（Firebase App Hosting / Cloud Run）
  *
- * @throws Error サービスアカウントを使うのに FIREBASE_PROJECT_ID がないとき
+ * 片方だけ設定されているのは設定ミス（貼り忘れ）なので、デフォルト認証情報には進まず、
+ * 不足している変数名を示すエラーにする（進むと、最初の読み書きで原因の分かりにくい認証エラーになるため）。
+ *
+ * @throws Error 認証情報が片方しかないとき、またはサービスアカウントを使うのに FIREBASE_PROJECT_ID がないとき
  */
 function createApp(): App {
   const projectId = readEnv(ENV_PROJECT_ID)
   const clientEmail = readEnv(ENV_CLIENT_EMAIL)
   const privateKey = readEnv(ENV_PRIVATE_KEY)
+
+  // サービスアカウントの 2 つは「両方ある」か「両方ない」のどちらかでなければならない
+  if ((clientEmail === undefined) !== (privateKey === undefined)) {
+    const missingName =
+      clientEmail === undefined ? ENV_CLIENT_EMAIL : ENV_PRIVATE_KEY
+    throw new Error(
+      `[gantt] ${missingName} が設定されていません。サービスアカウントを使うときは ${ENV_CLIENT_EMAIL} と ${ENV_PRIVATE_KEY} の両方を設定してください（デフォルト認証情報を使う環境では、両方とも未設定にします）`,
+    )
+  }
 
   if (clientEmail !== undefined && privateKey !== undefined) {
     if (projectId === undefined) {
