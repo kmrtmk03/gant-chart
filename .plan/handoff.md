@@ -3,7 +3,7 @@
 フェーズごとにセッション（と AI エージェント）を切り替えて進めるための引き継ぎ資料。
 **新しいセッションは、作業を始める前にこのファイルを最初に読むこと。** フェーズが終わるたびに「進捗」と「次のセッションへの申し送り」を更新する。
 
-- 最終更新: 2026-11-12（**Firebase 連携のフェーズ 13 が完了**（ブランチ `feat/firebase-foundation`。PR は未作成）。下記 4-00000000 章。更新: Claude Sonnet 5.5）（その前: **Firebase 連携の事前準備が完了**。Firestore を大阪で作成、鍵を `.env.local` に設定、保管用ブランチ `archive/localstorage-version` を作成。下記 4-0000000 章。更新: Claude Sonnet 5.5）（その前: 2026-11-10、**フェーズ 12 が完了**。手動確認がすべて済み、スマホ関連はオーナーの判断で対象外になった。下の 4-000000 章。更新: Claude Sonnet 5.5）（その前: 2026-11-10、Codex レビューの PR #36 が `develop` にマージされ、#26・#27・#29・#31・#32 をクローズ、#25 はオーナーがクローズ。オーナーの回答を反映し、issue ごとのブランチで #28 → #30 → #33 → #34 → #35 の順に進める。Firestore 移行時の持ち越し事項は [14-firestore-migration-todo.md](14-firestore-migration-todo.md)。更新: Claude Sonnet 5.5）（その前: 2026-10-30、フェーズ 12 の仕上げ・README の PR #22 が `develop` にマージされた。Codex のレビューの issue #24〜#35 は対応済み・確認待ちを下の 4-000000 章に整理。残りの手動確認は未了。更新: Claude Sonnet 5.5）（その前: フェーズ 11 の PR #20 が `develop` にマージされた）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
+- 最終更新: 2026-11-12（**Firebase 連携のフェーズ 13 が完了**（PR #48 を `develop` にマージ済み）。下記 4-00000000 章。更新: Claude Sonnet 5.5）（その前: **Firebase 連携の事前準備が完了**。Firestore を大阪で作成、鍵を `.env.local` に設定、保管用ブランチ `archive/localstorage-version` を作成。下記 4-0000000 章。更新: Claude Sonnet 5.5）（その前: 2026-11-10、**フェーズ 12 が完了**。手動確認がすべて済み、スマホ関連はオーナーの判断で対象外になった。下の 4-000000 章。更新: Claude Sonnet 5.5）（その前: 2026-11-10、Codex レビューの PR #36 が `develop` にマージされ、#26・#27・#29・#31・#32 をクローズ、#25 はオーナーがクローズ。オーナーの回答を反映し、issue ごとのブランチで #28 → #30 → #33 → #34 → #35 の順に進める。Firestore 移行時の持ち越し事項は [14-firestore-migration-todo.md](14-firestore-migration-todo.md)。更新: Claude Sonnet 5.5）（その前: 2026-10-30、フェーズ 12 の仕上げ・README の PR #22 が `develop` にマージされた。Codex のレビューの issue #24〜#35 は対応済み・確認待ちを下の 4-000000 章に整理。残りの手動確認は未了。更新: Claude Sonnet 5.5）（その前: フェーズ 11 の PR #20 が `develop` にマージされた）（その前: フェーズ 10 の PR #17 が `develop` にマージされた。仕上げの前に、画面の使い勝手の調整をフェーズ 11 として追加し、プラン [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) を作成した。仕上げはフェーズ 12 に繰り下げた。更新: Claude Opus 5.5）
 
 ---
 
@@ -37,7 +37,7 @@
 | 10 | [11-phase10-project-complete.md](11-phase10-project-complete.md) | Sonnet 5.5（実際は Opus 5.5 が担当） | ✅ 完了（PR #17 を `develop` にマージ済み。下記 4-0000 章） |
 | 11 | [12-phase11-ui-adjustments.md](12-phase11-ui-adjustments.md) | Sonnet 5.5 | ✅ 完了（PR #20 を `develop` にマージ済み。下記 4-00000 章） |
 | 12 | [13-phase12-polish-review.md](13-phase12-polish-review.md) | Sonnet 5.5 / Codex | ✅ 完了（仕上げ・README は PR #22、Codex レビューの対応は PR #36〜#42 を `develop` にマージ済み。手動確認も済み。下記 4-000000 章） |
-| 13 | [15-firebase-integration.md](15-firebase-integration.md) の 5 章 | Sonnet 5.5 | ✅ 実装・検証は完了（ブランチ `feat/firebase-foundation`、コミット 4 件。**PR は未作成**。下記 4-00000000 章） |
+| 13 | [15-firebase-integration.md](15-firebase-integration.md) の 5 章 | Sonnet 5.5 | ✅ 完了（PR #48 を `develop` にマージ済み。下記 4-00000000 章） |
 | 14〜17 | [15-firebase-integration.md](15-firebase-integration.md)（Firebase 連携の残り 4 フェーズ） | Opus 5.5 / Sonnet 5.5 / Codex | ⏳ 未着手。**フェーズ 14 から、1 フェーズずつ別セッションで進める** |
 
 ---
@@ -66,12 +66,18 @@
 
 ## 4-00000000. フェーズ 13 の完了状況（2026-11-12）
 
-ブランチ `feat/firebase-foundation`（`develop` の `0864b72` から作成）。コミットは次の 4 件。**push・PR は未実施**（依頼があったときだけ行う）。
+ブランチ `feat/firebase-foundation`（`develop` の `0864b72` から作成）。PR #48 を `develop` にマージ済み（マージコミット `08399cc`）。コミットは次の 4 件に、セルフレビューの修正 2 件（下記）を足した 6 件。
 
 1. `refactor`: `repositories/ganttRepository.utils.ts` を新設し、`localStorageRepository.ts` の非公開関数を移した。`getCurrentDateTime` / `resolveCompletedAt` / `getNextSortOrder` / `filterProjectsOfMember` / `validateMember` / `validateProject`。並び替えは `buildReorderedMembers(members, orderedIds, timestamp)` / `buildReorderedProjects(projectsOfMember, orderedIds, timestamp)`（現在の一覧と id を受け取り、変更後の一覧を返す。不正なら投げる）にして、`reorderMembers` / `reorderProjects` から使っている。`ganttRepository.utils.test.ts`（27 件）を追加
 2. `feat`: `firebase-admin` 14.5.0 を追加。`server/firebaseAdmin.ts` の `getFirestoreClient()`（最初に呼ばれたときに初期化。`getApps()` で二重初期化を防ぐ。`FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` があればサービスアカウント、なければ ADC。空文字は未設定扱い）。`.env.example` に Firebase のひな形を追加
 3. `feat`: `firestore.rules`（すべて拒否）。エミュレーターの設定は足していない
 4. `docs`: README に Firebase の環境変数の節を追加
+
+### セルフレビューの対応（PR #48）
+
+- 修正済み: `firebaseAdmin.ts` で `FIREBASE_CLIENT_EMAIL` と `FIREBASE_PRIVATE_KEY` の片方だけが設定されているとき、デフォルト認証情報へ進まず、不足している変数名を示すエラーを投げる（`88c18f4`）。`buildReorderedMembers` / `buildReorderedProjects` の JSDoc を実装に合わせて直した（`becb4f8`）
+- **持ち越し（フェーズ 17）**: `firestore.rules` はどこからもデプロイされない（`firebase.json` を置いていないため）。コンソールのルールと食い違っても気づく仕組みがない。README の整備で、`firebase.json` に `firestore.rules` だけを指す最小の設定を足すか、「手動で設定し、このファイルは控え」と明記するか決める
+- `server-only` の動作は確認済み: クライアントコンポーネントから `firebaseAdmin.ts` を import すると `pnpm build` が失敗し、Route Handler から import した場合は Firebase の環境変数なしでも通る。`pnpm add server-only` は不要。なお GET の Route Handler は `await connection()` を呼ばないと静的（`○`）にプリレンダリングされる（フェーズ 15 で入れる）
 
 ### 確認結果
 
@@ -81,7 +87,7 @@
 
 ### 未確認・注意
 
-- `firebaseAdmin.ts` はまだどこからも import されていないため、**`pnpm build` の成功は、`server-only` が効くこと（クライアントから import するとビルドが失敗すること）や、環境変数なしでのビルド時の読み込みを確かめたものではない**。フェーズ 15 で `route.ts` から使うときに確かめる
+- `firebaseAdmin.ts` はまだ本番のコードのどこからも import されていない（`server-only` の動作は上のとおり使い捨てのファイルで確認した）。実際の `route.ts` からの利用は、フェーズ 15 で確かめる
 - `pnpm add` が `@firebase/util` と `protobufjs` のビルドスクリプトを無視した。どちらも実行時には不要なので `pnpm-workspace.yaml` の `allowBuilds` を `false` にした
 - 接続時に `The credentials option is deprecated…` という警告が 1 回出る（Google 側のライブラリが出すもので、動作には影響しない）。直せるかはフェーズ 14 以降で、必要なら調べる
 - `docs/`（`01-data-layer.md` など）はまだ更新していない。`ganttRepository.utils.ts` と `server/` の説明はフェーズ 17 でまとめて反映する（プランどおり）
@@ -470,7 +476,7 @@ PR #36（ブランチ `fix/phase12-review-fixes`）を `develop` にマージ済
 
 ## 7. 次のセッションへの申し送り
 
-- 次にやること: **Firebase 連携のフェーズ 14**（[15-firebase-integration.md](15-firebase-integration.md) の 5 章「フェーズ 14」。担当は Opus 5.5、ブランチは `feat/firestore-repository`）。**フェーズ 13 の PR が `develop` にマージされてから**、`develop` を最新にして切ること（フェーズ 14 は 13 の `ganttRepository.utils.ts` と `firebaseAdmin.ts` を使う）。着手前に開始の合意を取ること。フェーズ 13 の状況は上の 4-00000000 章。以下は、その前の状況（参考）
+- 次にやること: **Firebase 連携のフェーズ 14**（[15-firebase-integration.md](15-firebase-integration.md) の 5 章「フェーズ 14」。担当は Opus 5.5、ブランチは `feat/firestore-repository`）。フェーズ 13 の PR #48 はマージ済みなので、`develop` を最新にして（`git fetch origin develop` → 遅れていれば `pull --ff-only`）から切ること（フェーズ 14 は 13 の `ganttRepository.utils.ts` と `firebaseAdmin.ts` を使う）。着手前に開始の合意を取ること。フェーズ 13 の状況は上の 4-00000000 章。以下は、その前の状況（参考）
 - （参考）**MVP の実装と確認はすべて完了**（フェーズ 12 も完了）。open の Codex レビューの issue は #24（複数タブの上書き）だけで、Firestore 移行時に [14-firestore-migration-todo.md](14-firestore-migration-todo.md) に沿って対応する。それ以外は、オーナーの指示に従う（Firebase への移行は全体プランの対象外で、始めるときは設計から）
 - 担当: フェーズ 9・10 は Opus 5.5、フェーズ 11（調整）は Sonnet 5.5、フェーズ 12（仕上げ）は Sonnet 5.5 / Codex
 - クラウドのセッションの環境の注意（フェーズ 10 で判明）: 既定の Node が 22・pnpm が 10 で、`engines`（Node 24 以上・pnpm 11 以上）に合わず `pnpm` のコマンドが動かない。`source /opt/nvm/nvm.sh && nvm install 24` → `corepack enable && corepack prepare pnpm@11.5.2 --activate` → `pnpm install --frozen-lockfile` で動くようになる。Playwright は `/opt/node22/lib/node_modules` にあるので、確認用のスクリプトは `NODE_PATH=/opt/node22/lib/node_modules /usr/local/bin/node` で動かす
